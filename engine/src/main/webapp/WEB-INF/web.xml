@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!--
+ ~ Copyright (c) 2012, THE BOARD OF TRUSTEES OF THE LELAND STANFORD JUNIOR UNIVERSITY
+ ~ All rights reserved.
+ ~
+ ~ Redistribution and use in source and binary forms, with or without modification,
+ ~ are permitted provided that the following conditions are met:
+ ~
+ ~    Redistributions of source code must retain the above copyright notice,
+ ~    this list of conditions and the following disclaimer.
+ ~    Redistributions in binary form must reproduce the above copyright notice,
+ ~    this list of conditions and the following disclaimer in the documentation
+ ~    and/or other materials provided with the distribution.
+ ~    Neither the name of the STANFORD UNIVERSITY nor the names of its contributors
+ ~    may be used to endorse or promote products derived from this software without
+ ~    specific prior written permission.
+ ~
+ ~ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ ~ ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ ~ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ ~ IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ ~ INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ ~ BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ ~ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ ~ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ ~ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ ~ OF THE POSSIBILITY OF SUCH DAMAGE.
+ -->
+
+<!DOCTYPE web-app
+PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+"http://java.sun.com/dtd/web-app_2_3.dtd">
+
+<web-app>
+
+  <!-- Define filter mappings for the defined filters
+       <filter-mapping>
+       <filter-name>Servlet Mapped Filter</filter-name>
+       <servlet-name>invoker</servlet-name>
+       </filter-mapping>
+       <filter-mapping>
+       <filter-name>Path Mapped Filter</filter-name>
+       <url-pattern>/servlet/*</url-pattern>
+       </filter-mapping-->
+
+
+  <!-- Define example application events listeners
+       <listener>
+       <listener-class>listeners.ContextListener</listener-class>
+       </listener -->
+
+  <!-- Define servlets that are included application -->
+
+  <servlet>
+    <servlet-name>CycladesServlet</servlet-name>
+    <servlet-class>org.cyclades.engine.CycladesServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
+
+    <init-param>
+      <param-name>minimizeMemoryFootprint</param-name>
+      <param-value>true</param-value>
+    </init-param>
+
+    <!-- This value is a comma separated list of the directories    -->
+    <!-- from which to load Nyxlets. Any entries starting with      -->
+    <!-- "http" will be used only to search for and load properties --> 
+    <!-- files matching Nyxlet names, just like the conventional    -->
+    <!-- directories. Loading Nyxlets via http is not yet supported.-->
+    <init-param>
+      <param-name>nyxletDirectories</param-name>
+      <param-value>nyxlets,admin</param-value>
+    </init-param>
+
+    <!--    Define a debug mode for the system. See definitions     -->
+    <!--    below (Is it up to the developer to implement/not       -->
+    <!--    implement/not implement these standards). Modes are     -->
+    <!--    integer values and are passed along to each Nyxlet.     -->
+    <!--    0       = OFF (This should be the production setting)   -->
+    <init-param>
+      <param-name>debugMode</param-name>
+      <param-value>0</param-value>
+    </init-param>
+
+    <!-- Set this to false to disable engine reloads                -->
+    <!-- (i.e. with "action=reload")                                -->
+    <init-param>
+      <param-name>enableEngineReload</param-name>
+      <param-value>true</param-value>
+    </init-param>
+
+    <!-- You can replace this GenericInitializationDelegate with    -->
+    <!-- your own implementation as needed. See the specified class -->
+    <!-- as an example. This is a comma separated list of classes   -->
+    <!-- to instantiate as initialization delegates.                -->
+    <init-param>
+      <param-name>initializationDelegates</param-name>
+      <param-value>org.cyclades.engine.impl.GenericInitializationDelegate</param-value>
+    </init-param>
+
+    <!-- You can replace this GenericAuthDelegate with your own     -->
+    <!-- implementation as needed. See the specified class as an    -->
+    <!-- example.                                                   -->
+    <init-param>
+      <param-name>authDelegate</param-name>
+      <param-value>org.cyclades.engine.auth.impl.GenericAuthDelegate</param-value>
+    </init-param>
+
+    <!-- You can choose the class loader strategy of the framework  -->
+    <!-- collective: All nyxlets are loaded into the same class     -->
+    <!--    loader                                                  -->
+    <!-- isolated: Each nyxlet is loaded into its own class loader  -->
+    <init-param>
+      <param-name>classLoaderStrategy</param-name>
+      <param-value>collective</param-value>
+    </init-param>
+    
+    <!--            Nyxlet Service virtualization settings          -->
+    <!-- This file is comprised of a JSONObject (hash) of Strings   -->
+    <!-- as keys, and arrays of strings as the values.              -->
+    <!-- The key is the name of the service, and the value is a     -->
+    <!-- JSONArray of strings of targets to search for the said     -->
+    <!-- service. An empty array assumes local only. The target     -->
+    <!-- "local" looks locally. Targets are searched in the order   -->
+    <!-- defined.                                                   -->
+    <init-param>
+      <param-name>nyxletRegistry</param-name>
+      <param-value>registry</param-value>
+    </init-param>
+    
+    <!--            Email Notification Settings                     -->
+    <!-- This is the email setting for the notification events      -->
+    <!-- in the form:                                               -->
+    <!-- email_list(comma separated)|from_email|SMTP_server|Level   -->
+    <!-- Level is one of ERROR,WARN,INFO or DEBUG                   -->
+    <!-- Leaving this commented out will send no email.             -->
+    <!-- Alternatively, an email appender can be created in the     -->
+    <!-- log4j properties file and associated with the              -->
+    <!-- notificationLogger specified below for a similar result.   -->
+    <!-- This is the current preferred mechanism.                   -->
+    <!--<init-param>
+      <param-name>notificationEmailData</param-name>
+      <param-value>sample@mycompany.org,sample2@mycompany.org|services@mycompany.org|mysmtpserver|ERROR</param-value>
+    </init-param>-->
+    
+    <!--            Logging Notification Settings                   -->
+    <!-- This is the logging setting for the notification events.   -->
+    <!-- It will be the name of the log4j logger to use. If this is -->
+    <!-- not specified, by default "notify" will be used.           -->
+    <!--<init-param>
+      <param-name>notificationLogger</param-name>
+      <param-value>mynotificationlogger</param-value>
+    </init-param>-->
+  </servlet>
+
+  <servlet-mapping>
+    <servlet-name>CycladesServlet</servlet-name>
+    <url-pattern>/*</url-pattern>
+  </servlet-mapping>
+
+</web-app>

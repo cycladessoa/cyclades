@@ -1,0 +1,327 @@
+/*******************************************************************************
+ * Copyright (c) 2012, THE BOARD OF TRUSTEES OF THE LELAND STANFORD JUNIOR UNIVERSITY
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ *    Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *    Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *    Neither the name of the STANFORD UNIVERSITY nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software without
+ *    specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ *******************************************************************************/
+import groovy.json.*
+
+task deploy() {
+    description = '** deploy Nyxlet and Property; [backup, deploy, reload]'
+    
+    doLast() {
+        def backupResult, postResult, postPropResult, reloadResult
+        def slurper = new JsonSlurper()
+        def targets = slurper.parseText('['+base_engine_url_list+']')
+        targets.each {
+            //println "--------------------------------------------------------------"
+            //println "Starting process to deploy nyxlet to ${parsedItem}..."
+            backupResult = callCurl("backupNyxlet()",
+                                    it.url,
+                                    ['-s', it.url+"/admin/WEB-INF/backup/nyxlets."+nyxletbackup+"?action=zipdirectory&data-type=xml&source=WEB-INF/nyxlets&password="+it.password],
+                                    "status-code=\"200\"",
+                                    false)  
+            if (backupResult == 0) {
+                postResult = callCurl("postNyxlet()",
+                                      it.url,
+                                      ['-s', "-HSTROMA:true", "--data-binary", "@"+"./build/libs/"+nyxletname+".nyxlet", it.url+"/admin/WEB-INF/nyxlets/"+nyxletname+".nyxlet?data-type=xml&password="+it.password],
+                                      "status-code=\"200\"",
+                                      false)    
+                if (new File("./conf/"+nyxletname+".properties").exists()) {
+                    postPropResult = callCurl("postNyxlet()",
+                                              it.url,
+                                              ['-s', "-HSTROMA:true", "--data-binary", "@"+"./conf/"+nyxletname+".properties", it.url+"/admin/WEB-INF/nyxlets/"+nyxletname+".properties?data-type=xml&password="+it.password],
+                                              "status-code=\"200\"",
+                                              false)
+                }
+                if (postResult == 0) {
+                    reloadResult = callCurl("reloadService()",
+                                            it.url,
+                                            ['-s', it.url+"?action=reload"],
+                                            "Number of Nyxlets loaded",
+                                            false)
+                }
+            }
+        }
+    }
+}
+
+task undeploy() {
+    description = '** undeploy Nyxlet and Property; [backup, undeploy, reload]'
+    
+    doLast() {
+		def backupResult, deleteResult, deletePropResult, reloadResult
+		def slurper = new JsonSlurper()
+		def targets = slurper.parseText('['+base_engine_url_list+']')
+		targets.each {
+			//println "--------------------------------------------------------------"
+			//println "Starting process to undeploy nyxlet from ${parsedItem}..."
+			backupResult = callCurl("backupNyxlet()",
+									it.url,
+									['-s', it.url+"/admin/WEB-INF/backup/nyxlets."+nyxletbackup+"?action=zipdirectory&data-type=xml&source=WEB-INF/nyxlets&password="+it.password],
+									"status-code=\"200\"",
+									false)    
+			if (backupResult == 0) {
+				deleteResult = callCurl("deleteNyxlet()",
+										it.url,
+										['-s', it.url+"/admin/WEB-INF/nyxlets/"+nyxletname+".nyxlet?action=delete&data-type=xml&password="+it.password],
+										"status-code=\"200\"",
+										false)
+	
+				deletePropResult = callCurl("deleteNyxletProp()",
+											it.url,
+											['-s', it.url+"/admin/WEB-INF/nyxlets/"+nyxletname+".properties?action=delete&data-type=xml&password="+it.password],
+											"status-code=\"200\"",
+											true)
+	
+				if (deleteResult == 0) {
+					reloadResult = callCurl("reloadService()",
+											it.url,
+											['-s', it.url+"?action=reload"],
+											"Number of Nyxlets loaded",
+											false)
+				}
+			}
+		}
+    }
+}
+
+task rollback() {
+    description = '** rollback current deployment to prior snapshot image'
+
+    doLast() {
+		def loadAdminResult, deleteResult, extractResult, reloadResult
+		def slurper = new JsonSlurper()
+		def targets = slurper.parseText('['+base_engine_url_list+']')
+		targets.each {
+			//println "--------------------------------------------------------------"
+			//println "Starting process to rollback nyxlet in ${parsedItem}..."
+			loadAdminResult = callCurl("loadAdminMode()",
+									   it.url,
+									   ['-s', it.url+"?action=reload&uris=admin"],
+									   "Number of Nyxlets loaded",
+									   false)
+			if (loadAdminResult == 0) {
+				deleteResult = callCurl("deleteNyxletDir()",
+										it.url,
+										['-s', it.url+"/admin/WEB-INF/nyxlets?action=delete&dir&data-type=xml&password="+it.password],
+										"status-code=\"200\"",
+										false)
+	
+				extractResult = callCurl("extractArchivedNyxletDir()",
+											it.url,
+											['-s', it.url+"/admin/WEB-INF/nyxlets?action=unzipdirectory&data-type=xml&source=WEB-INF/backup/nyxlets."+nyxletbackup+"&password="+it.password],
+											"status-code=\"200\"",
+											true)
+	
+				if (extractResult == 0) {
+					reloadResult = callCurl("reloadService()",
+											it.url,
+											['-s', it.url+"?action=reload"],
+											"Number of Nyxlets loaded",
+											false)
+				}
+			}
+		}
+    }
+}
+
+task backupNyxlet() {
+    description = 'backup present Nyxlet'
+ 
+    doLast() {
+		if (project.hasProperty('base_engine_url') && project.hasProperty('nyxletpassword')) {
+			callCurl("backupNyxlet()",
+					 base_engine_url,
+					 ['-s', base_engine_url+"/admin/WEB-INF/backup/nyxlets."+nyxletbackup+"?action=zipdirectory&data-type=xml&source=WEB-INF/nyxlets&password="+nyxletpassword],
+					 "status-code=\"200\"",
+					 false)
+		} else {
+			println "Error! Property base_engine_url and/or nyxletpassword is/are not defined."
+		} 
+    }
+}
+
+task postNyxlet() {
+    description = 'deploy only the Nyxlet binary'
+    
+    doLast() {
+		if (project.hasProperty('base_engine_url') && project.hasProperty('nyxletpassword')) {
+			callCurl("postNyxlet()",
+					 base_engine_url,
+					 ['-s', "-HSTROMA:true", "--data-binary", "@"+"./build/libs/"+nyxletname+".nyxlet", base_engine_url+"/admin/WEB-INF/nyxlets/"+nyxletname+".nyxlet?data-type=xml&password="+nyxletpassword],
+					 "status-code=\"200\"",
+					 false)
+		} else {
+			println "Error! Property base_engine_url and/or nyxletpassword is/are not defined."
+		} 
+    }
+}
+
+task deleteNyxlet() {
+    description = 'undeploy only the Nyxlet binary'
+ 
+    doLast() {
+		if (project.hasProperty('base_engine_url') && project.hasProperty('nyxletpassword')) {
+			callCurl("deleteNyxlet()",
+					 base_engine_url,
+					 ['-s', base_engine_url+"/admin/WEB-INF/nyxlets/"+nyxletname+".nyxlet?action=delete&data-type=xml&password="+nyxletpassword],
+					 "status-code=\"200\"",
+					 false)
+		} else {
+			println "Error! Property base_engine_url and/or nyxletpassword is/are not defined."
+		} 
+    }
+}
+
+task deleteNyxletDir() {
+    description = 'remove the Nyxlet directory; including all the contents'
+
+    doLast() {
+		if (project.hasProperty('base_engine_url') && project.hasProperty('nyxletpassword')) {
+			callCurl("deleteNyxletDir()",
+					 base_engine_url,
+					 ['-s', base_engine_url+"/admin/WEB-INF/nyxlets?action=delete&dir&data-type=xml&password="+nyxletpassword],
+					 "status-code=\"200\"",
+					 false)
+		} else {
+			println "Error! Property base_engine_url and/or nyxletpassword is/are not defined."
+		} 
+    }
+}
+
+task postNyxletProp() { 
+    description = 'deploy Nyxlet property only'
+ 
+    doLast() {
+		if (project.hasProperty('base_engine_url') && project.hasProperty('nyxletpassword') && new File("./conf/"+nyxletname+".properties").exists()) {
+			callCurl("postNyxletProp()",
+					 base_engine_url,
+					 ['-s', "-HSTROMA:true", "--data-binary", "@"+"./conf/"+nyxletname+".properties", base_engine_url+"/admin/WEB-INF/nyxlets/"+nyxletname+".properties?data-type=xml&password="+nyxletpassword],
+					 "status-code=\"200\"",
+					 false)
+		} else {
+			println "Error! Property base_engine_url and/or nyxletpassword is/are not defined."
+		} 
+    }
+}
+
+task deleteNyxletProp() {
+    description = 'undeploy only the Nyxlet property'
+
+    doLast() {
+		if (project.hasProperty('base_engine_url') && project.hasProperty('nyxletpassword')) {
+			callCurl("deleteNyxletProp()",
+					 base_engine_url,
+					 ['-s', base_engine_url+"/admin/WEB-INF/nyxlets/"+nyxletname+".properties?action=delete&data-type=xml&password="+nyxletpassword],
+					 "status-code=\"200\"",
+					 true)
+		} else {
+			println "Error! Property base_engine_url and/or nyxletpassword is/are not defined."
+		} 
+    }
+}
+
+task reloadService() {
+    description = 'perform an action=reload on target service'
+
+    doLast() {
+		if (project.hasProperty('base_engine_url')) {
+			callCurl("reloadService()",
+					 base_engine_url,
+					 ['-s', base_engine_url+"?action=reload"],
+					 "Number of Nyxlets loaded",
+					 true)
+		} else {
+			println "Error! Property base_engine_url is not defined."
+		} 
+    }
+}
+
+task loadAdminMode() {
+    description = 'enable Nyxlet\'s administration mode; use with caution only'
+
+    doLast() {
+		if (project.hasProperty('base_engine_url')) {
+			callCurl("loadAdminMode()",
+					 base_engine_url,
+					 ['-s', base_engine_url+"?action=reload&uris=admin"],
+					 "Number of Nyxlets loaded",
+					 true)
+		} else {
+			println "Error! Property base_engine_url is not defined."
+		} 
+    }
+} 
+
+task extractArchivedNyxletDir() {
+    description = 'restore the archived Nyxlet and Property from prior snapshot'
+
+    doLast() {
+		if (project.hasProperty('base_engine_url') && project.hasProperty('nyxletpassword')) {
+			callCurl("extractArchivedNyxletDir()",
+					 base_engine_url,
+					 ['-s', base_engine_url+"/admin/WEB-INF/nyxlets?action=unzipdirectory&data-type=xml&source=WEB-INF/backup/nyxlets."+nyxletbackup+"&password="+nyxletpassword],
+					 "status-code=\"200\"",
+					 true)
+		} else {
+			println "Error! Property base_engine_url and/or nyxletpassword is/are not defined."
+		} 
+    }
+}
+
+
+def callCurl(opsMsg, url, paramList, retCode, enableWarning) {
+    //println "--------------------------------------------------------------"
+    //println opsMsg.toString() + ": processing host for " + url.toString()
+    //println "retCode = " + retCode.toString()
+    def curlResult, curlLog
+    new ByteArrayOutputStream().withStream { os ->
+        curlResult = exec {
+            executable = 'curl'
+            args = paramList
+            standardOutput = os
+            errorOutput = os
+        }
+        curlLog = os.toString()
+        os.close()
+    }
+    //println opsMsg.toString() + ": result is " + curlResult.getExitValue()
+    if (curlResult.getExitValue() == 0 && curlLog.contains(retCode.toString())) {
+        //println opsMsg.toString() + ": Success! " + curlLog
+        //code 0 = success
+        return 0
+    } else {
+        if (enableWarning) {
+            println opsMsg.toString() + ": Warning! " + curlLog
+            //code 2 = warning
+            return 2
+        } else {
+            println opsMsg.toString() + ": Error! " + curlLog
+            //code 1 = error
+            return 1
+        }
+    }
+}
+

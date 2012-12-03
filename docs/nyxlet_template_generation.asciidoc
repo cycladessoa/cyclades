@@ -1,0 +1,55 @@
+////////////////////////////////////////////////////////////////////////////////
+Copyright (c) 2012, THE BOARD OF TRUSTEES OF THE LELAND STANFORD JUNIOR UNIVERSITY
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+   Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+   Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+   Neither the name of the STANFORD UNIVERSITY nor the names of its contributors
+   may be used to endorse or promote products derived from this software without
+   specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.
+////////////////////////////////////////////////////////////////////////////////
+
+= Nyxlet Template Generation Instructions
+
+== Overview
+
+This document describes the steps involved for Nyxlet developers to generate a Nyxlet Template workspace. The generated Nyxlet will be ready to build and deploy with a sample Action Handler. You must have *Gradle* installed to build. You must additionally have a running Cyclades Engine instance if a deployment is to be done. 
+
+[NOTE]
+The Cyclades Service Engine binary distribution will also exist within a Nyxlet's workspace _build/libs_ directory after a successful build. This will be in the form of a "cyclades*.war" file. Simply copy this file to your Tomcat installation's "webapps" directory and be sure to name it "cyclades.war".  
+
+== Instructions
+
+. Download and install the Cyclades Source Distribution in your directory of choice <cyclades installation directory>
+
+. From within the directory where you would like to generate your Nyxlet Template <nyxlet template dir>, run the command _./<cyclades installation directory>/cyclades/bin/nyxlet_gen.sh my_first_nyxlet_
+
+. From within the directory "<nyxlet template dir>/nyxlet-my_first_nyxlet" run the command _gradle clean build_
+
+. If you wish to deploy the Nyxlet to a running Cyclades Engine Instance
+	.. If running on localhost, simply run the command _gradle deploy_, by default localhost will be the deployment target
+	.. If running on another machine, or set of machines
+		... Modify the "base_engine_url_list" property in gradle.properties. This can be a comma separated list if deploying to multiple nodes
+		... Example: _base_engine_url_list={"url":"http://server1.mycompany.org:8080/cyclades","password":""},{"url":"http://server2.mycompany.org:8080/cyclades","password":""}_
+
+
+.Addition Notes
+* You may use any name for your Nyxlet instead of "my_first_nyxlet", please use alphanumeric characters and underscores only.
+* Once generated, feel free to modify the package names, documents, JUnit tests etc. to reflect your company's/organization's taste.

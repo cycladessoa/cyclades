@@ -1,0 +1,115 @@
+////////////////////////////////////////////////////////////////////////////////
+Copyright (c) 2012, THE BOARD OF TRUSTEES OF THE LELAND STANFORD JUNIOR UNIVERSITY
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+   Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+   Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+   Neither the name of the STANFORD UNIVERSITY nor the names of its contributors
+   may be used to endorse or promote products derived from this software without
+   specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.
+////////////////////////////////////////////////////////////////////////////////
+
+= Capability Extended Duration Test Results
+:toc:
+
+[red yellow-background]#IMPORTANT: Please update this document and remove this directive when you are done#
+
+== Document Version
+1.0
+
+== Intent
+The intent of this document is to provide a record for consumer reference on extended duration testing results of this capability
+
+== Name
+sayhello
+
+== Test Runs
+
+=== My First Run, four million requests
+
+==== Date
+4/14/12
+
+==== Objective
+Sample extended duration test for this capability. We want to make sure we can safely run 4000000 requests through our hypothetical service. We're checking for resource leaks etc.
+
+==== Request Format
+
+----
+http://localhost:8080/cyclades/NYXLET_NAME?action=sayhello&name=foo&data-type=xml
+----
+
+==== Environment Details
+
+* Pool 
+	** N/A
+* Load Balancer Details
+	** N/A
+* Servers
+	** localhost
+	** VM
+	** 3 Gigs Memory
+	** 100 Gigs Disk
+
+==== Test Details
+
+This test will be run using SOASTA CloudTest Lite. The test can be found at _location goes here_.
+
+|=========================================================
+|Concurrent Requests/Workers	|100
+|Num Requests Per Worker	|40000
+|Total Anticipated Requests	|4000000
+|JVM Free Memory Prior To Test	|1731543272
+|JVM Total Memory Prior To Test |1760100352
+|JVM Max Memory Prior To Test 	|3129933824
+|=========================================================
+
+==== Test Results
+
+|=========================================================
+|Started			|4/14/12 8:00AM
+|Finished			|4/14/12 8:30AM
+|Total Requests			|4000000
+|Total Successful Requesta	|4000000
+|Total Failed Requests		|0
+|Requests Per Second		|500
+|Average Response Time (ms)	|100
+|JVM Free Memory After Test  	|1731531568
+|JVM Total Memory After Test    |1760100352
+|JVM Max Memory After Test    	|3129933824
+|=========================================================
+
+[NOTE]
+JVM memory readings can be taken with the following request to the engine: _http://localhost:8080/cyclades?action=memorywithgc_. This request will return the memory values after requesting garbage collection to the JVM.
+
+[NOTE]
+Please add additional statistics, i.e. any tool output or diagrams/images that may apply and help dignose and record data moving forward. 
+
+==== Assessment
+
+This run looks ok. We probably need to run it a bit harder next time, but so far no red flags have been detected by the folks involved with this assessment. The next run may be a continuous test over night. 
+
+== Modifications To This Document
+
+[options="header"]
+|=========================================================
+|Author			|Date		|Version	|Details
+|<name>			|<date>		|1.0		|Document Creation
+|=========================================================

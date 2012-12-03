@@ -1,0 +1,110 @@
+////////////////////////////////////////////////////////////////////////////////
+Copyright (c) 2012, THE BOARD OF TRUSTEES OF THE LELAND STANFORD JUNIOR UNIVERSITY
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+   Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+   Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+   Neither the name of the STANFORD UNIVERSITY nor the names of its contributors
+   may be used to endorse or promote products derived from this software without
+   specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.
+////////////////////////////////////////////////////////////////////////////////
+
+= Service Capablity Contract: orchestratesayhello
+:toc:
+
+== Document Version
+1.0
+
+== Intent
+The intent of this document is to provide a contract for consumer reference on use of this capability
+
+== Name
+orchestratesayhello
+
+== Description
+This capability is meant as an example of how services can be invoked by other services. This capability actually requests the "sayhello" capability of this service. The request is made through the VirtualizedSTROMARequest APIs, so the actual engine utilized could be local or remote, based on how the registry is configured.
+
+== State Management
+This service capability is stateless
+
+== Owner
+TBD
+
+== Interface
+
+=== Interface Classification
+* STROMA
+* synchronous
+
+=== Expected Input
+
+.Special URI rules
+
+* N/A
+
+.Parameters
+
+* None
+
+.Meta Data
+
+* N/A
+
+==== XML request variations
+[NOTE]
+This is just a simple exmple for reference. Please see STROMA specification for details.
+----
+http://localhost:8080/cycladesengine/helloworld?action=orchestratesayhello&data-types=xml
+----
+
+==== JSON request variations
+[NOTE]
+This is just a simple exmple for reference. Please see STROMA specification for details.
+----
+http://localhost:8080/cycladesengine/helloworld?action=orchestratesayhello&data-types=json
+----
+
+=== Expected Output
+
+==== XML
+----
+<response service="helloworld" action="orchestratesayhello" error-code="0" ><map message="The &quot;message&quot; value returned from the &quot;sayhello&quot; action of the &quot;helloworld&quot; service is:[Hello World: [!!EXAMPLE_NAME!!] ]">
+----
+
+==== JSON
+----
+{"service":"helloworld","action":"orchestratesayhello","error-code":"0","data":{"message":"The \"message\" value returned from the \"sayhello\" action of the \"helloworld\" service is:[Hello World: [!!EXAMPLE_NAME!!] ]"}}
+----
+
+== Additional Orchestration Capability Details
+
+None
+
+== Functional Requirements
+
+* This capability will demonstrate that a developer of a service could make a service request and remain agnostic as to where the target service resides (local or remote). The result will be the same. Furthermore, one can experiment with the registry and broker settings to verify the registry failover capabilities.
+
+== Non Functional Requirements
+
+* SLA/QoS
+ - N/A
+
+* Security
+ - N/A

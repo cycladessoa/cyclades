@@ -1,0 +1,116 @@
+////////////////////////////////////////////////////////////////////////////////
+Copyright (c) 2012, THE BOARD OF TRUSTEES OF THE LELAND STANFORD JUNIOR UNIVERSITY
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+   Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+   Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+   Neither the name of the STANFORD UNIVERSITY nor the names of its contributors
+   may be used to endorse or promote products derived from this software without
+   specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.
+////////////////////////////////////////////////////////////////////////////////
+
+= Service Capablity Contract: sayhellochainable
+:toc:
+
+== Document Version
+1.0
+
+== Intent
+The intent of this document is to provide a contract for consumer reference on use of this capability
+
+== Name
+sayhellochainable
+
+== Description
+This capability is meant to be used as an example of how a service may be implemented as an intended member of a chained orchestration that can work with inter service chain data. This is simply an example of how data can be extracted via the supplied inter service chain data exchange mechanisms. Services that are components of a chained orchestration do not need to utilize information from these mechanisms, the behavior is completely up to the designers.
+
+== State Management
+This service capability is stateless
+
+== Owner
+TBD
+
+== Interface
+
+=== Interface Classification
+* STROMA
+* synchronous
+
+=== Expected Input
+
+.Special URI rules
+
+* N/A
+
+.Parameters
+
+* *name* [optional] A name to append to the end of the Hello World message. Multiple values will be appended as well.
+
+.Meta Data
+
+* N/A
+
+==== XML request variations
+[NOTE]
+This is just a simple exmple for reference. Please see STROMA specification for details.
+----
+http://localhost:8080/cycladesengine/helloworld?action=sayhello&name=Tom&data-type=xml
+----
+
+==== JSON request variations
+[NOTE]
+This is just a simple exmple for reference. Please see STROMA specification for details.
+----
+http://localhost:8080/cycladesengine/helloworld?action=sayhellochainable&name=Tom&data-type=json
+----
+
+=== Expected Output
+
+==== XML
+----
+<response service="helloworld" action="sayhellochainable" error-code="0" ><map count="1" message="(original message) Hello World [Tom] "></map></response>
+----
+
+==== JSON
+----
+{"service":"helloworld","action":"sayhellochainable","error-code":"0","data":{"message":"(original message) Hello World [Tom] ","count":"1"}}
+----
+
+== Additional Orchestration Capability Details
+
+* Only chainable to and from the same capability (done as an example of constraining the chaining of this capability)
+* This capability will act as a point to point service, as well as a response consumer if it is a member of a chained orchestration.
+* Both STROMAResponse and Map Channel data portals will be implemented. This service will give priority to the Map Channel if the data exists.
+* Map Channel data will be the following
+        ** *message*: A String representation of the "message" field in the reponse
+        ** *count*: An Integer representation of the "count" field in the response
+* The reponse/output when chained will contain a message with a nested value reflecting the amount of successful invocations accomplished via the orchestration.
+
+== Functional Requirements
+
+* This capability will be very similar to the sayhello capability with the additional functionality of specific logic when inter service chain data is detected.
+
+== Non Functional Requirements
+
+* SLA/QoS
+ - N/A
+
+* Security
+ - N/A

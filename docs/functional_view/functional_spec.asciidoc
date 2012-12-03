@@ -1,0 +1,238 @@
+////////////////////////////////////////////////////////////////////////////////
+Copyright (c) 2012, THE BOARD OF TRUSTEES OF THE LELAND STANFORD JUNIOR UNIVERSITY
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+   Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+   Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+   Neither the name of the STANFORD UNIVERSITY nor the names of its contributors
+   may be used to endorse or promote products derived from this software without
+   specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.
+////////////////////////////////////////////////////////////////////////////////
+
+= Cyclades Service Oriented Architecture (SOA) Functional Specification
+:toc:
+
+== Version
+1.0
+
+== Overview
+
+This document is a specification for an architecture that can assist in realization of a service oriented approach for product development and functional organization. This specification will be as technology agnostic as possible, leaving the technical details of the architecture for the "development view" of an architecture definition. The focus of this document will be a high level functional view of the core elements of the SOA.
+
+== Element Specification
+
+=== Service Engine
+
+The purpose of the service engine is to host the building blocks of SOA, the services. The "engine" will provide a standardized platform for service development, deployment, access and maintenence. By abstracting away environment details, developers can concentrate on developing functionality (services), leaving the details of transport protocols and additional tasks of building something like a web application from scratch to the engine implementation. The engine will provide functionality to realize a platform as a federation of functionality (services) that can be developed, deployed, accessed and maintainted in a standard manner. 
+
+.Service Federation
+
+image::service_federation.jpg[]
+
+One of the most important aspects of functionality that the engine will provide is service access. The engine will allow for service access and orchestration in various strategic manners:
+
+* Point to Point Access
+	** A service can be directly invoked. This is the traditional service access method.
+* Composition
+	** Consumers and services themselves will be able to invoke other services, orchestrating a number of more general services and their functionality for a more targeted and specific aggregate functionality (i.e. business logic).
+* Chaining
+	** Consumers and services themselves will be able to orchestrate services in a manner where the output of one service is used as the input of the next service (i.e. pipeline). 
+* Service Request Brokering
+	** Composition and chaining capabilities will be made available at the protocol layer by a service broker. All orchestration capabilities will be available and composable within a request to the engine. This essentially empowers all levels of the architecture to take on the role of orchestration controller, including the orchestration initiator.
+	** The service broker will be able to service requests and responses over a variety of transport protocols/mechanisms by utilizing adapter plugins. _HTTP and AMQP (RabbitMQ)are supported by default, one can imagine other adapters enabling request and response brokering over alternate MQ implementations, socket libraries etc..., for example._ 
+
+Due to the intrinsic orchestration and brokering capabilities of the engine's design, it is possible, and likely for there to exist a federation of service engines, each with its own dedicated set of functionality (service federation). Service consumers can therefore target functionality provided by a specific service running within a specific engine. 
+
+[NOTE] 
+There are various reasons as to why this would be done, from scalability reasons to security. More details on this can be recorded as scenarios.
+
+.Engine Federation (trans-engine orchestration)
+
+image::engine_federation.jpg[]
+
+The general responsibility of the service engine is to provide the "standard platform" for service development, deployment, access, maintenence and evolution.
+
+=== Service and Service Capabilities
+
+A service is the building block of a service oriented architecture. It is essentially a functional unit of work assiciated with a defined task. A service is frequently comprised of multiple tasks centered around a general theme. These tasks will be referred to as "service capabilities". Although service designers and developers are free to create any functionality desired, some standard formatting and patterns are required for a service to be "pluggable" into the system (service engine). The use of these patterns enable a service to be utilized to its fullest potential throughout the system, and ultimately the enterprise. Engineers can focus on developing and delivering specified functionality while leveraging the intrinsic SOA capabilities and benefits of the host platform (service engine). Developers will have access to standardized documentation, development, build and deployment processes and templates to guide and accelerate the delivery of the required functionality. The general responsibility of a service is to act as an agent for development, delivery and maintenence of functionality within the standard platform. 
+
+[NOTE]
+Example of a service: a "user" service exists that may be comprised of two capabilities centered around a "user" domain object (or entity), one may be "get_user" and the other may be "add_user", utilized for getting and adding users into the existing system, respectively.
+
+=== Service Contract
+
+Ideally, the service development process should begin with the creation and initial version of a service contract. The service contract provides everything a service consumer needs to know in order to utilize the said service. After discovery of the service, a potential consumer will utilize the service contract to access the service functionality. The service contract will act as a mediator between consumers and the actual service implementation, maintaining the right level of abstraction as to avoid unhealthy coupling to technology or service implementation details. There will be sample documentation available for getting started on a service contract. 
+
+.Very basic example of possible sections in a service contract
+
+* Version
+* Service Name
+* Description
+* Owner
+* Service Handle
+* Service Capabilities
+* (for each service capability)
+	** Interface
+		*** Interface classification
+		*** Expected Input
+		*** Expected Output
+	** Additional Orchestration Capability Details
+	** Functional Requirements
+	** Non Functional Requirements
+
+[NOTE]
+Sample service requests and responses should ideally also exist to further aid in the comprehension of service interaction.
+
+=== Service Profile
+
+The service profile is the primary reference utilized for service discovery. This document contains data that can be used to locate a service (even index-able). This is typically the first data and/or document that a service consumer encounters on a search of the service inventory. It is beneficial to get even a partially completed service profile published prior to service development as to notify potential consumers of progress. _Publishing a service profile as early as possible may also aid in avoiding duplicate efforts._ There will be sample documentation available for getting started on a service profile.
+
+.Very basic example of possible sections in a service profile
+
+* Version
+* Service Name
+* Purpose
+	** Short
+	** Detailed
+* Service Model
+* Tags
+* Owner
+* Status
+* Deployment Overview
+	** Service Handle
+	** Interface Classification
+	** Dependencies (other services etc...)
+	** Deployment Location (tier, cluster etc...)
+
+=== Service Registry
+
+The service registry is a document that contains the service inventory of an enterprise, or a specific sub domain of it. This document will contain a list of services and any supplemental information at this top level that will help in the comprehension of the service and its functionality. Each service entry will also include a link to the service profile and the service contract. 
+
+=== Build System
+
+There will be two main components of the build system, the "Service engine" build and the "Service" build.
+
+==== Service Engine (The Platform)
+
+The Service Engine will have its own build system. There will be two deliverables resulting from a Service Engine build:
+
+* Service Engine runtime libraries and configuration
+	** This  deliverable will be deployed as the Service Engine runtime environment, or Service host. 
+* Service compile time dependencies on the service engine runtime
+	** This deliverable will be included in every "Service" build system to resolve the compile time dependencies of a Service on the Service Engine. 
+
+==== Service
+
+Each Service will have its own build system. There will be a standard build system templating process for services, automating the creation of a a workspace with a fully functional "hello world" type service. The automation process (could be as simple as running a script) will create a complete workspace comprised of the following:
+
+* An initial file structure correctly reflecting the desired service name
+* An initial code base that builds and runs (can be simply implemented as a "Hello World" service)
+* Hooks in place for JavaDoc, JUnit, checkstyle and other development verification and optimization tools
+* Documentation templates generated for SOA items
+	** Service Profile
+	** Service Contract
+* Warning mechanisms in place for any critical items that have not been completed, for example, there may be a warning output to the build console if the service contract template has not been modified
+
+The runtime artifact of a Service build will be a file (some sort of archive, most likely a form of a "jar" file) to drop into a specified location for the engine to load.
+
+=== Deployment
+
+There will be two main artifacts generated by the build system for deployment, the "Service Engine" and the "Service" runtime elements.
+
+==== Service Engine
+
+For our purposes...the Service Engine will be implemented as a web application (i.e. Servlet) that can be deployed within a Servlet container (i.e Tomcat). There will be a configuration mechanism to tune the runtime of the Service Engine, a "web.xml" resource, for example, for a Servlet deployment.
+
+==== Service
+
+A Service deployment in its simplest form will consist of placing the artifacts generated from the build system into a designated directory for the Service Engine to load.
+
+Services will be loaded in one of the following events:
+
+* On Service Engine startup and initialization
+* When a client submits a "reload" command to the Service Engine: This will "hot load" the services, leaving any current active requests uninterrupted.
+
+=== Service Federation
+
+As mentioned earlier, the service engine enables service access and orchestration in many flexible ways. This functionality is critical for service reuse, one of the main priniciples of SOA. At the foundation of the service engine's capability to orchestrate services is the STROMA and X-STROMA protocols. These protocols establish a standardized and expected pattern for service request and response formats. These protocols are the connective mechanism of the service inventory. The ability of services to exist as independent automic units of functionality coupled with the service engine's capability of service to service, and even engine to engine communication through STROMA and X-STROMA enables the realization of a highly federated architecture.
+
+[NOTE]
+Although services must be *STROMA* compliant to be utilized by the service engine's built in orchestration mechanisms, services _can_ be designed taking none of this into consideration, i.e. running as a completely independent web app, only with the organizational benefits of running a service from within the service engine.
+
+Please see the following document for details on the STROMA/X-STROMA protocols: link:../STROMA_X-STROMA.html[STROMA/X-STROMA Specification]
+
+== Examples and High Level Scenarios
+
+[NOTE]
+Due to the potentially large amount of examples and scenarios that can be extracted from an entire architecture, we will try to capture the ones most significant to realizing a SOA. We can expand further on functional scenarios in a scenario specific document within an Arichetcure Definition.
+
+=== Orchestration Examples
+
+Orchestration is a recurring theme in SOA. Orchestration is essentially the act of arranging the input and ouput of selected services to achieve an aggregated result. The service engine facilitates the following orchestration concepts:
+
+* A service is capable of aggregating the functionality of other services, and therefore take on the role of "orchestration controller".
+* Any external application is capable of aggregating the functionality of other services, and therefore take on the role of "orchestration controller" (utilizing STROMA/X-STROMA).
+* One form of orchestration is "composition", which is the general aggregation of service functionality...much like a method/function call in a programming language.
+* Another form of orchestration is "chaining", which is an arrangement where the output of one service becomes the input of the next one specified in the chain, and so on (AKA pipes and filters paradigm).
+
+[NOTE]
+The following diagrams are used to help display the orchestration flow. Each box represents a service invocation. The arrow together with the value next to it represent the order of service access. If the numeric value contains a divider, i.e. "1/2", this means that there is a response to the corresponding request. In this example the request would be step "1" and the response would be step "2" (indicating a request to a service that is not an orchestration controller, or, doesnt call any other services). The absense of a divider signifies that there is no response in the transaction, typical of a chained orchestration as you will see below. A sequence diagram would be better suited for a complete representation of orchestrations, and transactions in general. This compact format is used here for convenience.
+
+.Diagram of example general composition type orchestration levels
+
+image::service_orchestration.jpg[]
+
+.Diagram of example chained type orchestration
+
+image::service_chaining.jpg[]
+
+[NOTE]
+Cyclades SOA has the requirement (Quality Property) that all forms of orchestration for services have the capability to perform as well as local method invocations. For example, if all services reside on one given node, and an orchestration of those services is requested on that node, the performance of that service request can be as efficient as method requests within one large application on that node. Mechanisms will be made available to service developers to accomplish this as desired.
+
+== Supplemental: Additional Perspectives And The Resulting Quality Properties (Intended For Stakeholder Discussion)
+
+[NOTE]
+Due to the fact that this functional specification is for a SOA implementation, the following items may not entirely make sense applied solely at this level. For example, the items below are equally as important for the individual "service implementations" as the "service engine" that federates them. In other words, the items below should be taken into considerations at all levels of "the architecture".
+
+* Security
+* Performance and Scalability
+        ** Overview: The ability of the architecture to function within its performance requirements and its ability to handle increased load
+        ** Response Time
+        ** Throughput
+        ** Scalability (Ability of a system to handle an increased workload)
+        ** Predictability (Similar transactions complete in a similar amount of time)
+        ** Hardware Resource Requirements (to be described in the Deployment View)
+        ** Peak Load Behavior  (Where is the "knee" in our performance graph)
+* Evolution
+        ** Overview: The Evolution Perspective targets the ability of the architecture to be flexible when presented with change.
+        ** Life Expectancy: ~10 years?…i.e. must be resilient to change.
+        ** Possible Tactics
+        *** Replaceable Elements where applicable, i.e extesive use of variation and extension points
+        *** Semantic Cohesion
+        *** Loose Coupling
+        *** Abstraction
+
+== Modifications To This Document
+
+[options="header"]
+|=========================================================
+|Author         	|Date           |Version        |Details
+|Tom Angelopoulos	|12/02/2011	|1.0		|Document Creation
+|=========================================================

@@ -1,0 +1,193 @@
+////////////////////////////////////////////////////////////////////////////////
+Copyright (c) 2012, THE BOARD OF TRUSTEES OF THE LELAND STANFORD JUNIOR UNIVERSITY
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+   Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+   Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+   Neither the name of the STANFORD UNIVERSITY nor the names of its contributors
+   may be used to endorse or promote products derived from this software without
+   specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.
+////////////////////////////////////////////////////////////////////////////////
+
+= Nyxlet Lifecycle Management
+:toc:
+
+== Abstract
+
+This document explains the lifecycle management mechanisms provided for a Nyxlet (Cyclades Engine Service).
+
+== Introduction
+
+Life cycle management is an important aspect of a service. Below are three basic time frames critical to a service's life cycle, and tasks each may be responsible for:
+
+. Initialization: When a service is starting up
+	** Initialization of resources, i.e.  configuration files
+	** Any verification of critical resources... i.e.  configuration files exist, show stoppers for this service and if they are associated with a fault etc...
+. Runtime: During the availablity cycle of a service, or the time after it has successfully initialized and started
+	** Validating that the service is up and running correctly... i.e. the Database connection works
+	** Taking action when there is a fault, i.e. disabling/enabling the service or fixing an issue
+. Destruction: When a service is shutting down
+	** Cleaning up resources... i.e. closing any file handles or resources that may leak if not close properly
+
+A Nyxlet (more specifically a STROMA compliant Nyxlet) is comprised of a Main class (the actual Nyxlet itself) and a set of ActionHandlers, which are classes that correspond to "actions" and ultimately service incoming requests. This is essentially organized into a hierarchy as below, where a Nyxlet contains a set of ActionHandlers:
+
+* Nyxlet Class (MyNyxlet)
+        ** ActionHandler Class (MyActionHandler-1)
+        ** ActionHandler Class (MyActionHandler-2)
+        ** ActionHandler Class (MyActionHandler-3)
+        ** etc...
+
+Both the Nyxlet class and the ActionHandler class have APIs that support initialization, runtime health check diagnosis and destruction. The APIs provided are "init", "isHealthy" and "destroy", respectively. 
+
+* *init*: Designed to initialize required resources and execute any initialization type verifications. This will be called on Nyxlet startup.
+* *isHealthy*: Designed to verify the Nyxlet is up and running correctly. This will be called at a specified interval by the container... i.e. every 5 minutes.
+* *destroy*: Designed to release any resources that require special attention during the shut down phase of a Nyxlet's lifecycle
+
+As you can tell by the hierarchy, the general concept (and good practice) is anything that can be accomplished once for the entire Nyxlet (including all ActionHandlers) would be done in the Nyxlet class, and anything that is ActionHandler specific would be done in the ActionHandler class.
+
+== Nyxlet and ActionHandler "init" API
+
+Developers wishing to implement initialization code at the Nyxlet level can do so by including the following code and adding their initialization after the "super.init()" line. 
+
+[NOTE]
+It is important that if the "init" method is declared..it is utilized correctly as below...all developer code must exist where the comment "// Your code goes here...." exists.
+
+.Main Nyxlet Class "init" template implementation
+----
+public void init () throws CycladesException {
+    final String eLabel = "Main.init: ";
+    try {
+        super.init();
+        // Your code goes here....
+    } catch (Exception e) {
+        throw new CycladesException(eLabel + e);
+    }
+}
+----
+
+Developers wishing to implement initialization code at the ActionHandler level can do so by including the following code and adding their initialization to the method. 
+
+.ActionHandler Class (The actual service point for a request) "init" template implementation
+----
+@Override
+public void init () throws Exception {
+ // your code here
+}
+----
+
+[NOTE]
+Omitting the "init" method from an ActionHandler will result in a no-op for that ActionHandler. Omitting the "init" method from a Nyxlet will result in a no-op for that Nyxlet...all ActionHandlers belonging to that Nylxet will still have the opportunity to run their "init". If there is no initialization code needed, simply omit these methods.
+
+
+== Nyxlet and ActionHandler "isHealthy" API
+
+The Cyclades engine will execute a diagnosis of all loaded Nyxlets on demand (action=healthcheck on the base Cyclades URL). This diagnosis gives each Nyxlet and its ActionHandlers the ability for self diagnosis. 
+
+[NOTE]
+Although both classes (Nyxlet and ActionHandler) contain the method signature "isHealthy", it is important to clarify that they can be somewhat independent in nature. The Cyclades engine will envoke a Nyxlet's "isHealthy" method...in turn, a Nyxlet's "isHealthy" method *may* invoke the "isHealthy" method of each of its ActionHandlers. Alternatively, the Nyxlet's "isHealthy" method can do something else. It is ultimately up to the developer to decide the desired behavior, we'll cover some basic implementations to help aid the process.
+
+The following Nyxlet "isHealthy" implementation will do the following:
+
+. Call the super class's "isHealty" method, which in turn will loop through all of the action handlers belonging to this Nyxlet and call their "isHealthy" methods
+. If any of the ActionHandlers "isHealthy" method returns a false (indication of an unhealthy state) this method will return a false
+
+To summarize, the implementation below will check the health of every ActionHandler belonging to the Nyxlet and present itself as unhealthy (return false) if any return false.
+
+[NOTE]
+The Nyxlet method "setActive" enables the deactivation and activation of your Nyxlets. Please do not use this API unless you are absolutely certain that it is necessary. Deactivating a Nyxlet will result in a dectivation response until that Nyxlet is activated again.
+
+.Main Nyxlet Class "isHealthy" template implementation
+----
+@Nyxlet
+public class Main extends STROMANyxlet {
+
+    ...
+
+    @Override
+    public boolean isHealthy () throws CycladesException {
+        /***************************************************************************************/
+        /** Each action handler can override the "isHealthy()" method. If desired this health **/
+        /** check can be extended to include checking each ActionHandler individually         **/
+        /** (calling super.isHealthy() as done below does this for you). If this is done      **/
+        /** please be sure to override the "isHealthy()" method for each of your action       **/
+        /** handlers to return something meaningful                                           **/
+        /***************************************************************************************/
+        if (super.isHealthy()) {
+            // Recovery condition
+            //setActive(true);
+            return true;
+        } else {
+            //logError("Deactiviating the service");
+            //setActive(false);
+            return false;
+        }
+    }
+}
+----
+
+.ActionHandler Class (The actual service point for a request) template implementation
+----
+@AHandler("sayhello")
+public class SimpleHelloWorld extends ActionHandler {
+
+    ...
+
+    @Override
+    public boolean isHealthy () throws Exception {
+        return true;
+    }
+}
+----
+
+[NOTE]
+Omitting the "isHealthy" method from an ActionHandler will result in "isHealthy" always returning "true" for that ActionHandler. Omitting the "isHealty" method from a Nyxlet will result in "isHealthy" always returning "true" for that Nyxlet (and subsequently no ActionHandlers will be verified).
+
+== Nyxlet and ActionHandler "destroy" API
+
+Developers wishing to implement destruction/tear down code at the Nyxlet level can do so by including the following code and adding their destruction after the "super.destroy()" line.
+
+[NOTE]
+It is important that if the "destroy" method is declared..it is utilized correctly as below...all developer code must exist where the comment "// Your code goes here...." exists.
+
+.Main Nyxlet Class "destroy" template implementation
+----
+public void destroy () throws CycladesException {
+    final String eLabel = "Main.destroy: ";
+    try {
+        super.destroy();
+        // Your code goes here....
+    } catch (Exception e) {
+        throw new CycladesException(eLabel + e);
+    }
+}
+----
+
+Developers wishing to implement destruction/tear down code at the ActionHandler level can do so by including the following code and adding their destruction anywhere in the method.
+
+.ActionHandler Class (The actual service point for a request) "destroy" template implementation
+----
+@Override
+public void destroy () throws Exception {
+ // your code here
+}
+----
+
+[NOTE]
+Omitting the "destroy" method from an ActionHandler will result in a no-op for that ActionHandler. Omitting the "destroy" method from a Nyxlet will result in a no-op for that Nyxlet...all ActionHandlers belonging to that Nylxet will still have the opportunity to run their "destroy". If there is no destruction code needed, simply omit these methods.

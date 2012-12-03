@@ -1,0 +1,220 @@
+/*******************************************************************************
+ * Copyright (c) 2012, THE BOARD OF TRUSTEES OF THE LELAND STANFORD JUNIOR UNIVERSITY
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ *    Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *    Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *    Neither the name of the STANFORD UNIVERSITY nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software without
+ *    specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ *******************************************************************************/
+
+repositories {
+    mavenCentral()
+}
+
+apply plugin: 'war'
+apply plugin: 'maven'
+apply plugin: 'signing'
+apply from: 'tasks.gradle'
+
+version = main_version + '.' + build_number
+ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
+group = 'com.github.cycladessoa'
+archivesBaseName = 'cyclades'
+
+List<String> listKey = new ArrayList<String>()
+List<String> listValue = new ArrayList<String>()
+
+allprojects {
+    apply plugin: 'eclipse'
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'checkstyle'	
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: sonatypeUsername, password: sonatypePassword)
+            }
+            pom.project {
+               name 'Cyclades'
+               packaging 'jar'
+               description 'Cyclades is a Services Engine'
+               url 'http://github.com/cycladessoa'
+               scm {
+                   url 'scm:git@github.com:cycladessoa/cyclades.git'
+                   connection 'scm:git@github.com:cycladessoa/cyclades.git'
+                   developerConnection 'scm:git@github.com:cycladessoa/cyclades.git'
+               }
+               licenses {
+                   license {
+                       name 'BSD License, Version 3.0'
+                       url 'http://www.w3.org/Consortium/Legal/2008/03-bsd-license.html'
+                       distribution 'repo'
+                   }
+               }
+               developers {
+                   developer {
+                       id 'cycladessoa'
+                       name 'Cyclades SOA'
+                   }
+                   developer {
+                       id 'cyclades-tangel'
+                       name 'Tom Angelopous'
+                   }
+                   developer {
+                       id 'cycladessoa-cthai'
+                       name 'Charleston Thai'
+                   }
+               }
+           }
+        }
+    }
+}
+
+task sourcesZip(type: Zip) {
+    classifier = 'sources'
+    from projectDir
+    include 'LICENSE.txt' 
+    include 'bin/**/*'
+    include 'doc*/**/*'
+    include 'engine/**/*'
+    include 'nyxlets/**/*'
+    include '*.gradle'
+    include '*.properties'
+    include '*.gpg'
+ 
+    exclude 'engine/build/**/*'
+    exclude 'nyxlets/build/**/*'
+    exclude 'nyxlets/*/build/**/*'
+}
+
+artifacts {
+    archives war
+ 
+    archives sourcesZip
+}
+
+signing {
+    sign configurations.archives
+}
+signArchives.onlyIf { ext.isReleaseVersion }
+
+war {
+    def arts = configurations.runtime - configurations.providedRuntime
+    classpath = arts.filter { f->
+        f.path.endsWith('.jar')
+    }
+
+    //include engine WEB-INF files
+    from (project(':engine').files('src/main/webapp/WEB-INF')) {
+        into('WEB-INF')
+    }
+    def nyxletList = ['hello_world', 'service_broker'] //NYXLET-END-1
+    for (nyxlet in nyxletList) {
+        from (project(':nyxlets:'+nyxlet).file('build/libs')) {
+            include('*.nyxlet')
+            into('WEB-INF/nyxlets')
+        }
+        from (project(':nyxlets:'+nyxlet).file('conf')) {
+            include('*.properties')
+            into('WEB-INF/nyxlets')
+        }
+    }
+
+    // Admin Nyxlets
+    def adminNyxletList = ['admin'] //NYXLET-END-1
+    for (nyxlet in adminNyxletList) {
+        from (project(':nyxlets:'+nyxlet).file('build/libs')) {
+            include('*.nyxlet')
+            into('WEB-INF/admin')
+        }
+        from (project(':nyxlets:'+nyxlet).file('conf')) {
+            include('*.properties')
+            into('WEB-INF/admin')
+        }
+    }
+  
+    //strip out the version format from nyxlet filename
+    rootSpec.allSpecs*.rename('(.*)helloworld-'+nyxlet_hello_world_version+'.'+build_number+'.nyxlet(.*)', '$1helloworld.nyxlet$2')
+    rootSpec.allSpecs*.rename('(.*)servicebroker-'+nyxlet_service_broker_version+'.'+build_number+'.nyxlet(.*)', '$1servicebroker.nyxlet$2')
+    rootSpec.allSpecs*.rename('(.*)admin-'+nyxlet_admin_version+'.'+build_number+'.nyxlet(.*)', '$1admin.nyxlet$2')
+    //NYXLET-END-4
+
+    manifest {
+        attributes 'Main-Class': 'org.cyclades.engine.CycladesEngine'
+        attributes 'Provider': "Cyclades SOA"
+        attributes 'Extension-Name': 'Cyclades'
+        attributes 'Implementation-Title': System.getProperty("user.name")
+        attributes 'Implementation-Vendor-Id': "CycladesSOA"
+        attributes 'Implementation-Version': version
+        attributes 'Built-With': 'gradle-' + GradleVersion.current()
+        attributes 'Cyclades-Engine': engine_version + '-' + build_number
+        attributes 'Nyxlet-hello_world': nyxlet_hello_world_version + '-' + build_number 
+        attributes 'Nyxlet-service_broker': nyxlet_service_broker_version + '-' + build_number
+        attributes 'Nyxlet-admin': nyxlet_admin_version + '-' + build_number
+        //NYXLET-END-3
+    }
+}
+war.doFirst() {
+    configurations.runtime.each { f->
+        project.ext.dArray = "$f"
+        project.ext.dResult = project.ext.dArray.split("/")
+        project.ext.dSize = project.ext.dResult.size()
+        listKey.add(project.ext.dResult[project.ext.dSize-5])
+        listValue.add(project.ext.dResult[project.ext.dSize-1])
+    }
+}
+war.doLast() {
+    for (i in 0..listKey.size()-1) {
+        project.ext.tmpKey = listKey.get(i)
+        if (project.ext.tmpKey.contains('.'))  {
+            project.ext.tmpKey = project.ext.tmpKey.replaceAll('\\.', '-')
+        }
+        ant.jar(destfile: war.archivePath, update: true) {
+            delegate.manifest {
+                attribute(name: project.ext.tmpKey, value: listValue.get(i))
+            }
+        }
+    }
+}
+
+dependencies {
+    providedCompile group: 'junit', name: 'junit', version: '4.8.2'
+    providedCompile group: 'com.puppycrawl.tools', name: 'checkstyle', version: '5.5'
+    providedCompile group: 'servletapi', name: 'servlet-api', version: '2.4'    //servlet-api-2.4.jar
+
+    compile project(':engine')
+    compile project(':nyxlets:hello_world')
+    compile project(':nyxlets:service_broker')
+    compile project(':nyxlets:admin')
+    //NYXLET-END-2
+}
+

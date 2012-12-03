@@ -1,0 +1,41 @@
+
+               - Nyxlet Template for nyxlet-NYXLET_NAME -
+
+1. Please reference the INSTALL file to setup your development environment first.
+
+2. Here is a set of tools and a framework for running and deploying services.
+
+--------------------------------------------------------------------
+Source Structure Layout
+--------------------------------------------------------------------
+|- build.gradle                       --- GRADLE build script
+|- gradle.properties                  --- GRADLE property file
+|- docs\                              --- Documentations
+|- conf\
+|- src\ 
+   |- main\ 
+      |- java\
+      |- resource\
+      |- webapp\
+   |- test\
+      |- java\
+      |- resource\
+      |- webapp\
+
+3. How to build
+
+'gradle clean'                          -- Clean the project environment
+'gradle build'                          -- generate the bits for the cyclades binaries
+'gradle -P<ver>=<value> ... build'      -- generate the based on the specified version; otherwise, default will be '1.0'
+                                           ----------------------------------------
+                                           Available properties & sample values are
+                                           ----------------------------------------
+                                           -Pbuild_number=10 (default is set to SNAPSHOT)
+                                           -Pmain_version=1.1
+ 
+ -------------------------------------------
+ Output will look like this
+ -------------------------------------------
+ ./build/libs/nyxlet-NYXLET_NAME-<VERSION>.nyxlet
+ -------------------------------------------
+

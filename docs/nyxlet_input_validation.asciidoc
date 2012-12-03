@@ -1,0 +1,194 @@
+////////////////////////////////////////////////////////////////////////////////
+Copyright (c) 2012, THE BOARD OF TRUSTEES OF THE LELAND STANFORD JUNIOR UNIVERSITY
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+   Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+   Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+   Neither the name of the STANFORD UNIVERSITY nor the names of its contributors
+   may be used to endorse or promote products derived from this software without
+   specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.
+////////////////////////////////////////////////////////////////////////////////
+
+= Nyxlet Input Validation
+:toc:
+
+== Abstract
+
+This document explains the concept of "FieldValidators" used by a STROMANyxlet to validate service input. 
+
+== Introduction
+
+It is frequently desireable to validate the input to a service prior to any processing that has to take place. For example, one may want to make sure a field or parameter exists, or that it is a valid number between 1 and 100...etc. The following are some reasons for timely field validation:
+
+* To avoid ambiguous runtime errors that may leave the system in an inconsistent state or cause confusion.
+* To provide a concise list of faults and reasons clarifying what went wrong to end users.
+* The ability to encapsulate the validation code where possible for source code clarity and maintainability
+
+Although Nyxlet developers are free to validate their input in any way they choose, or simply not validate at all, the Cyclades Service Engine provides a FieldValidator Framework to facilitate validation development. 
+
+[NOTE]
+Please see the package _org.cyclades.engine.validator_ in the Cyclades Engine API for class details. Additional general examples can also be found in the _helloworld_ Nyxlet.
+
+== How It Works
+
+A FieldValidator is the unit of validation for Nyxlet input. There can be different types of FieldValidators for different types of input...and for different ways of validating input. Developers can easily create their own FieldValidators, either from scratch or by extending existing FieldValidators. There are infinite possibilities, we'll focus on some basic examples. Here are the core FieldValidator supported types:
+
+* PARAMETERS
+	** Validator type that takes in the entire parameter Map for validation (a Map<String, List<String>>)
+* PARAMETER_LIST
+	** Validator type that takes in the value of a specific parameter for validation (a List<String> of values)
+* JSON
+	** Validator type that takes in the entire _data_ value as JSON
+	** These validators will be ignored it the data-type is not set to JSON
+* XML
+	** Validator type that takes in the entire _data_ value as XML
+	** These validators will be ignored it the data-type is not set to XML
+* _ONE_OF_
+	** Validator that contains a child list of validators
+	** Returns success if at least one of the child validators succeeds, otherwise returns failure
+	** Can be considered to be an OR statement
+* _ALL_OF_
+        ** Validator that contains a child list of validators
+        ** Returns success only if all of the child validators succeed, otherwise returns failure
+        ** Can be considered to be an AND statement
+* _IF_THEN_
+        ** Validator that contains two child validators
+	** If the first validator evaluates with faults, success is returned, no further validation will occur
+        ** If the first validator evaluates with no no faults, the result  of the second validator is returned
+
+Each Nyxlet has a default list of FieldValidators, which is empty. Validators should be added in the "init" method of the Nyxlet. The FieldValidators will be executed in order, and prior to the "handle" method being called on your ActionHandler. By default, all validators in this list will be executed. One or more failures are conisdered an error. All FieldValidators that are executed and report an error will be reflected in the error message.
+
+[NOTE]
+Each validator can be configured to terminate further validation from continuing. Please see the API, and note the "terminal" parameter.
+
+Here is an example taken from the _HelloWorldValidationExample_ ActionHandler of the _helloworld_ Nyxlet:
+
+----
+public void init () throws Exception {
+    // Initialize FieldValidators.
+    // The examples below are meant as sample uses cases. Note that these will be executed in the
+    // order that they are added.
+    // Add a validator (defined below) that ensures there exists at least three parameters
+    this.getFieldValidators().add(new AtLeast3ParametersExist(false));
+    // Add a built in validator that ensures there is a name parameter and it is not empty
+    // Note the "true" for the second parameter, this implies "do not validate any further if this validation fails"
+    this.getFieldValidators().add(new ParameterHasValue("name", true));
+    // Add a validator (defined below) that ensures there is a name parameter, it is not empty and it has 5 characters
+    this.getFieldValidators().add(new ParameterHas5Characters("name", false));
+}
+----
+
+The two developer defined FieldValidators are included below:
+
+----
+/**
+ * Example FieldValidator that extends another FieldValidator that already does what we want
+ * NOTE: You can also extend ParameterListValidator and start from scratch if desired.
+ */
+class ParameterHas5Characters extends ParameterHasValue {
+
+    public ParameterHas5Characters(String key) {
+        super(key);
+    }
+
+    public ParameterHas5Characters(String key, boolean terminal) {
+        super(key, terminal);
+    }
+
+    @Override
+    public ValidationFaultElement validate(List<String> values) throws Exception {
+        // Let's reuse the already existing validation we extended
+        ValidationFaultElement vfe = super.validate(values);
+        if (vfe != null) return vfe;
+        // We now are sure there is a value, let's verify there it has 5 characters...
+        if (values.get(0).length() != DESIRED_LENGTH) {
+            return new ValidationFaultElement("\"" + getKey() + "\" does not have desired character length \"" + DESIRED_LENGTH + "\"");
+        }
+        return null;
+    }
+
+    private static final int DESIRED_LENGTH = 5;
+}
+
+/**
+ * Example ParametersValidator...this type of validator takes in all of the parameters at once...giving
+ * developers the opportunity to verify all the parameters atomically.
+ *
+ */
+class AtLeast3ParametersExist extends ParametersValidator {
+
+    public AtLeast3ParametersExist () {
+        super();
+    }
+
+    public AtLeast3ParametersExist (boolean terminal) {
+        super(terminal);
+    }
+
+    public ValidationFaultElement validate (Map<String, List<String>> parameters) throws Exception {
+        // Simple verify there is at least one parameter
+        if (parameters == null || parameters.size() < 3) return new ValidationFaultElement("There are less than three parameters!");
+        return null;
+    }
+
+}
+----
+
+Some framework provided FieldValidators:
+
+* ParameterExists
+	** A parameter simply exists
+* ParameterHasValue
+	** A parameter exists and has a non null or empty String value
+* ParameterHasIntegerValue
+	** A parameter exists and is a valid Integer value
+	** An upper and lower bound can be set for this FieldValidator. If not specified, the default language (Java) Integer bounds are used.
+* NoJSON
+	** JSON will not be supported
+* NoXML
+	** XML will not be supported
+* AllOf
+	** Contiains a list of child validators
+	** All validators must eveluate without faults for this to succeed
+* IfThen
+	** Validator that contains two child validators
+        ** If the first validator evaluates with faults, success is returned, no further validation will occur
+        ** If the first validator evaluates with no no faults, the result  of the second validator is returned
+* OneOf
+	** Contiains a list of child validators
+        ** At least one validator must eveluate without fault for this to succeed
+
+
+Some more examples of built in FieldValidators:
+
+----
+public void init () throws Exception {
+    # Validate there exists a parameter "year-born" with values between 1900 and 2020, inclusive
+    this.getFieldValidators().add(new ParameterHasIntegerValue ("year-born").setMin(1900).setMax(2020));
+    # Validate that at least one of the following parameters exists: "birth-day" or "birth-date"
+    this.getFieldValidators().add(new OneOf().add(new ParameterExists("birth-day")).add(new ParameterExists("birth-date")));
+    # Validate that if the parameter "number" exists, it is a valid integer between the values of 1 and 5, inclusive
+    this.getFieldValidators().add(new IfThen(new ParameterExists("number"), new ParameterHasIntegerValue("number").setMin(1).setMax(5)));
+}
+----
+
+== Error Response
+
+On validation error, the framework will send a response with the "error-code" value set to "4" and an "error-message" field comprised of all validation errors.

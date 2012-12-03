@@ -1,0 +1,150 @@
+////////////////////////////////////////////////////////////////////////////////
+Copyright (c) 2012, THE BOARD OF TRUSTEES OF THE LELAND STANFORD JUNIOR UNIVERSITY
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+   Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+   Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+   Neither the name of the STANFORD UNIVERSITY nor the names of its contributors
+   may be used to endorse or promote products derived from this software without
+   specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.
+////////////////////////////////////////////////////////////////////////////////
+
+= Nyxlet Agile Deployment Mechanisms
+:toc:
+
+== Abstract
+
+This document describes the supplied mechanisms for deployment at the *Nyxlet* level. 
+
+== Overview
+
+There may be circumstances when it is desireable to deploy a Nyxlet to a live Cyclades environment without redeploying the entire Cyclades Engine. While deploying an entire installation of the Cyclades Engine will always work, there are inherent drawbacks that accompany J2EE Servlet deployment. Deployment at the Nyxlet level provides the following advantages:
+
+* Very quick deployment
+* Can be done in a live environment without interrupting requests/access to that envoronment
+* A more agile build/release environment
+* Performance improvements over reloading Servlets
+
+While manual deployment at the Nyxlet level is always an option, there are mechanisms provided to simplify and standardize this process for an Enterprise. The deployment, undeployment and rollback procedures provided will be explained below.
+
+There are two mechanisms that can be utilized which essentially produce the same results:
+* The Gradle build system of your Nyxlet
+* Some provided shell scripts
+
+Although we will document both below...it is highly recommended that the Gradle build system is used for Nyxlet Agile Deployment as it is more convenient and less error prone than using the provided shell scripts. That being said...there is one critical configuration setting one must make to the Gradle file _gradle.properties_ in order for this to work properly:
+
+----
+base_engine_url_list={"url":"http://localhost:8080/cyclades","password":""},{"url":"http://services-dev-01.highwire.org:8080/cyclades","password":""}
+----
+
+A comma seperated list of entries reflecting target Engines where the Nyxlet will be pushed. The value above pushes to two servers. 
+
+== Nyxlet Deployment/Roll Out
+
+=== Using Gradle build system (recommended)
+
+From your Nyxlet workspace:
+
+----
+gradle deploy
+----
+
+[NOTE]
+The workspace obviously needs to be built before the result can be deployed, i.e. at some point a _gradle build_ should have been executed prior to the deploy task being utilized. One can simply execute _gradle clean build deploy_ to build the entire Nyxlet from scratch and deploy it using one command.
+
+=== Using scripts provided in Cyclades source distribution
+
+_nyxlet_deploy.sh_ can be found in the _bin_ directory of the cyclades repository. This script can be used to hot deploy a Nyxlet to an already running Cyclades Engine. The parameters are as follows:
+
+. *Target Cyclades Engine base URL* 
+	.. This is the target base URL of the Cyclades Engine where we want deployment to occur
+. *Password*
+	.. This is the password for the target Cyclades Engine's admin service. Although this is a required parameter, the target Cyclades Engine may not have enabled password authentication, and this value would be ignored.
+. *Backup file suffix*
+	.. This is the _key_ to use to roll back from this Nyxlet deployment. Internally this is used to name the backup file of the existing Nyxlet configuration prior to this deployment. Make sure to remember this value so it can be reused in the roll back procedure if needed.
+. *Nyxlet name*
+	.. This is the name of the Nyxlet that is to be deployed. This name should *not* have a suffix, as it will be used in naming the deployed Nyxlet and its properties file.
+. *Nyxlet to deploy*
+	.. This is the actual path of the Nyxlet file to deploy. This will be the actual contents (file bytes) of the deployed Nyxlet file.
+. *Nyxlet properties file to deploy* (optional)
+	.. This is the actual path of the Nyxlet properties file to deploy. This will be the actual contents (file bytes) of the deployed Nyxlet properties file.
+
+.Example Deployment
+----
+./nyxlet_deploy.sh http://services-dev-01.highwire.org:8080/cyclades my_password 1234 helloworld ../mydir/helloworld.nyxlet ../mydir/helloworld.properties
+----
+
+== Nyxlet Roll Back
+
+=== Using Gradle build system (recommended)
+
+From your Nyxlet workspace:
+
+----
+gradle rollback
+----
+
+=== Using scripts provided in Cyclades source distribution
+
+_nyxlet_rollback.sh_ can be found in the _bin_ directory of the cyclades repository. This script can be used to revert/roll back a Nyxlet Deployment via the _nyxlet_deploy.sh_ (as shown above) that has gone bad. The parameters are as follows:
+
+. *Target Cyclades Engine base URL* 
+        .. This is the target base URL of the Cyclades Engine where we want deployment rollback to occur
+. *Password*
+        .. This is the password for the target Cyclades Engine's admin service. Although this is a required parameter, the target Cyclades Engine may not have enabled password authentication, and this value would be ignored.
+. *Backup file suffix*
+        .. This is the _key_ to use to roll back from a previous Nyxlet deployment.
+
+----
+./nyxlet_rollback.sh http://services-dev-01.highwire.org:8080/cyclades my_password 1234
+----
+
+[NOTE]
+The rollback script places the Cyclades Engine in _admin_ mode prior to doing anything....meaning that only the Nyxlets from the _admin_ category/directory are loaded to ensure the Cyclades Engine is in a working and safe rollback state.
+
+== Nyxlet Un-Deployment
+
+=== Using Gradle build system (recommended)
+
+From your Nyxlet workspace:
+
+----
+gradle undeploy
+----
+
+=== Using scripts provided in Cyclades source distribution
+
+_nyxlet_undeploy.sh_ can be found in the _bin_ directory of the cyclades repository. This script can be used to undeploy/remove a Nyxlet. The parameters are as follows:
+
+. *Target Cyclades Engine base URL*
+        .. This is the target base URL of the Cyclades Engine where we want deployment rollback to occur
+. *Password*
+        .. This is the password for the target Cyclades Engine's admin service. Although this is a required parameter, the target Cyclades Engine may not have enabled password authentication, and this value would be ignored.
+. *Backup file suffix*
+        .. This is the _key_ to use to roll back from a previous Nyxlet deployment.
+. *Nyxlet name*
+        .. This is the name of the Nyxlet that is to be un-deployed. This name should *not* have a suffix, as it will be used in naming the deployed Nyxlet and its properties file.
+
+----
+./nyxlet_undeploy.sh http://services-dev-01.highwire.org:8080/cyclades my_password 1234 helloworld
+----
+
+[NOTE]
+An un-deployment can be rolled back using _nyxlet_rollback.sh_, just like a deployment.

@@ -1,0 +1,115 @@
+////////////////////////////////////////////////////////////////////////////////
+Copyright (c) 2012, THE BOARD OF TRUSTEES OF THE LELAND STANFORD JUNIOR UNIVERSITY
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+   Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+   Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+   Neither the name of the STANFORD UNIVERSITY nor the names of its contributors
+   may be used to endorse or promote products derived from this software without
+   specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.
+////////////////////////////////////////////////////////////////////////////////
+
+A specification and corresponding reference implementation for a service engine that aids in the realization of high performance service orchestration
+
+== Basic Features
+
+* Service Orchestration Engine running in Tomcat
+* Flexible service orchestration from within services (Java APIs) and at the protocol level (i.e. browser request)
+	** Composition
+	** Chaining (i.e. Unix pipes and filters paradigm)
+* Service template generation and deployment
+        ** Services are hot loadable. They can be deployed/redeployed without interruption to existing requests
+* RabbitMQ Service Broker target implementation included
+	** Asynchronous capabilities for all services via RabbitMQ with no additional development effort
+	** Other transport mechanism implentations are pluggable via Service Broker "targets"
+
+== Overview
+
+* This product is provided under the terms of the BSD license, please see "LICENSE.txt" for more information
+
+* Although this product is used in production enviroments, it is currently being transitioned to an Open Source Software project. That being said, there will be aspects of this project that will need refinement as its maturing process as an Open Source Software project progresses (documentation, APIs, bugs etc...). We are looking forward to the feedback and contributions that will improve this product for the OSS community.
+
+* More documentation will be viewable online shortly. In the meantime, you will need to generate the current documentation from this source distribution. Instructions on how to do this will be included below as part of the _Cyclades Quick Start Instructions (*nix platforms)_ section
+
+* The terms "Service" and "Nyxlet" are synonymous with respect to Cyclades SOA. A Nyxlet is simply a service module that is pluggable into the Cyclades Service Engine. We will offer a set of utility Nyxlets to build and//or deploy shortly. Each will exist as an independent repository. Developers will also be encouraged to offer their Nyxlets to the community. 
+
+= Cyclades Quick Start Instructions (*nix platforms)
+
+== Overview
+
+This document describes the steps involved for Service (Nyxlet) developers to generate a working Nyxlet Template workspace. The generated Nyxlet will be ready to build and deploy with sample ActionHandlers (where you will add your functionality). You must have *Gradle* installed to build. You must additionally have a running Cyclades Engine instance if a deployment is to be done. After we are done, you will have generated, deployed and used your first Cyclades service (Nyxlet). Please follow the instructions below.
+
+== Generate And Run Your First Service (Nyxlet)
+
+. Install Gradle (if you do not already have it): http://www.gradle.org
+
+. Install Tomcat (if you do not already have it): http://tomcat.apache.org (We're running on Tomcat 7) This could be a standard installation on any host, local or remote
+
+. Download and install (extract) a stable version of this repository (the Cyclades Source Distribution) within a directory of choice (example: "/cycladessoa")
+	.. https://github.com/cycladessoa/cyclades/archive/v1.0.0.4.zip (We'll assume the extracted directory is "/cycladessoa/cyclades" for our purposes)
+
+. From within the directory where you would like to generate your Nyxlet Template ("/cycladessoa/nyxlets"),  run the command _/cycladessoa/cyclades/bin/nyxlet_gen.sh my_first_nyxlet_
+
+. From within the directory "/cycladessoa/nyxlets/nyxlet-my_first_nyxlet" run the command _gradle clean build_
+
+. The Cyclades Service Engine binary distribution exists within a Nyxlet's workspace _build/libs_ directory after a successful build. This will be in the form of a "cyclades*.war" file. Simply copy this file to your Tomcat installation's "webapps" directory and be sure to name it "cyclades.war".
+
+. Restart Tomcat and verify the installation
+	.. http://localhost:8080/cyclades (Core Cyclades Service Engine status page should be displayed without error)
+	.. http://localhost:8080/cyclades?action=help (Help page displays without error)
+
+. Deploy the Nyxlet to a running Cyclades Engine Instance
+	.. If running on localhost, simply run the command _gradle deploy_ from within the "/cycladessoa/nyxlets/nyxlet-my_first_nyxlet" directory, by default localhost will be the deployment target
+	.. If running on another machine, or set of machines, modify your gradle.properties file prior to running the command _gradle deploy_
+		... Modify the "base_engine_url_list" property in "/cycladessoa/nyxlets/nyxlet-my_first_nyxlet/gradle.properties". This can be a comma separated list if deploying to multiple nodes
+
+.Example non-localhost configuration for two machines
+----
+base_engine_url_list={"url":"http://server1.mycompany.org:8080/cyclades","password":""},{"url":"http://server2.mycompany.org:8080/cyclades","password":""}
+----
+
+* You should be able to verify your Nyxlet is loaded by going to the following URL in your browser: http://localhost:8080/cyclades?action=loaded
+* You should be able to view all available actions on your Nyxlet by going to the following URL in your browser: http://localhost:8080/cyclades/my_first_nyxlet?data-type=xml&action=listactions
+
+.Additional Notes
+* You may use any name for your Nyxlet instead of "my_first_nyxlet", please use alphanumeric characters and underscores only.
+* Once generated, feel free to modify the package names, documents, JUnit tests etc. to reflect your company's/organization's taste.
+* Within your Cyclades Source Distribution, please see _/cycladessoa/cyclades/nyxlets/hello_world_ for more examples of how to use Cyclades (intra service orchestration, logging, request validation etc...)
+
+== Send Requests To Your Newly Created And Deployed Service/Nyxlet
+
+Copy and paste the entries in the file "/cycladessoa/nyxlets/nyxlet-my_first_nyxlet/REQUEST_EXAMPLES" to a browser. These are just a few examples of how to access and verify your service.
+
+== Generate Current Documentation
+
+. Install Gradle (if you do not already have it): http://www.gradle.org
+
+. Download and install "AsciiDoc" (if you do not already have it): http://www.methods.co.nz/asciidoc
+
+. From within the base directory of your Cyclades Source Distribution, run the command _./doc_gen.sh . generated_docs_ If you have not previously downloaded and installed the Cyclades Source Distribution, please do the following before generating the documentation:
+	.. Download and install (extract) a stable version of this repository (the Cyclades Source Distribution) within a directory of choice (example: "/cycladessoa")
+        	... https://github.com/cycladessoa/cyclades/archive/v1.0.0.4.zip (We'll assume the extracted directory is "/cycladessoa/cyclades" for our purposes)
+
+. Open the file "/cycladessoa/cyclades/generated_docs/index.html" in a browser window
+
+[NOTE]
+Please keep in mind this is an initial version of the documentation and we will be working on improvements throughout this project.
+
+

@@ -1,0 +1,137 @@
+////////////////////////////////////////////////////////////////////////////////
+Copyright (c) 2012, THE BOARD OF TRUSTEES OF THE LELAND STANFORD JUNIOR UNIVERSITY
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+   Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+   Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+   Neither the name of the STANFORD UNIVERSITY nor the names of its contributors
+   may be used to endorse or promote products derived from this software without
+   specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.
+////////////////////////////////////////////////////////////////////////////////
+
+= Nyxlet Logging Mechanisms
+:toc:
+
+== Abstract
+
+This document describes Nyxlet logging mechanisms that can be leveraged by Nyxlet developers.
+
+== Introduction
+
+The Cyclades Engine provides various mechanisms for developers providing services ranging from simply writing to a file to logging statements at different levels. The following document is intended mainly for STROMANyxlet developers, which will be the case for the majority, if not all of the time. These convenience APIs are provided to abstract the details of where and how the logging mechanisms are implemented, and simplify the logging process for developers.
+
+[NOTE]
+API specifics have not been included in this document for maintenance reasons. Please see the Cyclades Engine API documentation for the most up to date details on the logging APIs, and all APIs in general. Logging APIs relevant to this document can mainly be found in the classes "STROMANyxlet", "LoggingDelegate" and "LogWriterInterface". 
+
+== The LogWriter And LoggingDelegate classes
+
+A LogWriter is a resource declared in a Nyxlet's nyxlet_manifest.xml file. This resource is a container maintained handle to a file that can be used for writing directly to that file. This resource is opened, rotated and closed automatically by the framework. There can be multiple LogWriter's declared by a Nyxlet developer. 
+
+.From the helloworld Nyxlet
+----
+<!-- LogWriters (List these as property file entries in the form of [NAME]=[LOG_DIRECTORY]|[LOG_FILE_NAME]|[DATE_FORMAT]) -->
+<!-- Relative paths (not starting with "/" or containing ":") will be based in the "WEB-INF" directory of the Engine      -->
+<!-- Example entry: name=logs|mylog.log|yyyyMMdd                                                                          -->
+<attribute name='logWriters'>
+	<value><![CDATA[
+	   general=logs|helloworld.log|dd
+	]]></value>
+</attribute>
+<!-- LogWriters -->
+----
+
+.Logging API Examples of the LogWriterInterface class (please see the Cyclades API documentation for details, specifically the LogWriterInterface class)
+* write(...)
+* writeLine(...)
+* writeDatedLine(...)
+
+A LoggingDelegate is a wrapper to a LogWriter that enhances its capabilities. A LoggingDelegate adds logging specific functionality to an existing LogWriter. LoggingDelegates can be declared in the nyxlet_manifest.xml file and associated to any LogWriter. 
+
+.From the helloworld Nxylet 
+----
+<!-- LoggingDelegates (List these as property file entries in the form of [NAME]=[LOG_WRITER]|[LOG_LEVEL]) -->
+<!-- Example entry: logging_delegate_name=log_writer_name|ERROR                                            -->
+<!--    - "LOG_WRITER" must be the name of an existing logWriter declared above                            -->
+<!--    - "LOG_LEVEL" must be one of ERROR, WARN, INFO or DEBUG                                            -->
+<!--    - "LOG_LEVEL" can be overridden in the external properties file as:                                -->
+<!--        "LoggingDelegate.[loggingDelegateName].logLevel". An example entry that overrides the existing -->
+<!--        one below would be "LoggingDelegate.general.logLevel=DEBUG"                                    --> 
+<attribute name='loggingDelegates'>
+   <value><![CDATA[
+       general=general|WARN
+   ]]></value>
+</attribute>
+<!-- LoggingDelegates -->
+----
+
+.Logging API Examples of the LoggingDelegate class (please see the Cyclades API documentation for details, specifically the LoggingDelegate class)
+* log(...)
+* shouldLog(...)
+
+By default, your Nyxlet will contain a LogWriter named "general" and a LoggingDelegate associated with that LogWriter, also named "general". This combination will be used to write logging statements from your Nyxlet to that Nyxlet's own logging file. For example, if your Nyxlet is named "helloworld" and it is the 19th day of the month, the log will exist as ../WEB-INF/logs/helloworld.log.19. If the default LoggingDelegate is removed ("general"), all logging statements submited via the STROMANyxlet logging APIs will automatically go to the configured log4j log file.
+
+== Logging Levels
+
+* DEBUG
+* INFO
+* WARN
+* ERROR
+
+The logging level of a Nyxlet is set to WARN by default. this can be overriden by inserting the following statement into your Nyxlet's properties file:
+
+----
+LoggingDelegate.general.logLevel=DEBUG
+----
+
+The general convention is LoggingDelegate.[LoggingDelegate Name].logLevel=[LEVEL]. This convention allows you to set the logging level of any LoggingDelegate declared in your nyxlet_manifiest.xml file.
+
+.Logging APIs of the STROMANyxlet class (please see the Cyclades API documentation for details, specifically the STROMANyxlet class)
+* logDebug(...)
+* logInfo(...)
+* logWarn(...)
+* logError(...)
+
+The logging level of a LoggingDelegate can also be overriden on a per request basis with the reserved Cyclades parameter "log-level". This functionality has to be enabled per logging statement by the developer with a specific LoggingDelegate API. Please see Cyclades Specification and helloworld Nyxlet example for more details.
+
+Developers can access the LoggingDelegate directly for more flexible control. In general, the STROMANyxlet logging APIs are convenience wrappers to the default *general* LoggingDelegate. Any LoggingDelegate declared in the nyxlet_manifest.xml file can be directly accessed with the "getLoggingDelegate(<logging_delegate_name>)" API of your Nyxlet. Please see the Cyclades API documentation for the LoggingDelegate class, and sample usage in the helloworld Nyxlet.
+
+== Avoiding Logging Statements Or Logic Based On Logging Level
+
+The "shouldLog" API is provided in the parent Nyxlet for convenience purposes. This check can be used to avoid unnecessary logic may be best run only when necessary (only for "DEBUG" level logging, for example). Here is an example:
+
+----
+if (getParentNyxlet().shouldLog(LoggingEnum.DEBUG)) {
+	getParentNyxlet().logDebug("We are logging DEBUG MODE!!");
+}
+----
+
+[NOTE]
+See LoggingDelegate and LoggingEnum classes for additional access to these APIs if necessary.
+
+== Logging a Stack Trace
+
+A Stack Trace for any Exception can be logged by calling the "logStackTrace(...)" API of the STROMANyxlet class.
+
+== Logging A Notification
+
+A logging statement can be submitted to notification channels set up by operations via the "logNotify(...)" API of the STROMANyxlet class. This API, in addition, also logs to the usual logging mechanisms mentioned above. 
+
+[CAUTION]
+Please consult the operations team prior to using this logging mechanism as unnecessarily verbose notifications are undesireable. This mechanism is usually reserved for critical events that need immediate attention.

@@ -1,0 +1,269 @@
+////////////////////////////////////////////////////////////////////////////////
+Copyright (c) 2012, THE BOARD OF TRUSTEES OF THE LELAND STANFORD JUNIOR UNIVERSITY
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+   Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+   Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+   Neither the name of the STANFORD UNIVERSITY nor the names of its contributors
+   may be used to endorse or promote products derived from this software without
+   specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.
+////////////////////////////////////////////////////////////////////////////////
+
+= Cyclades Service Engine Specification
+:toc:
+
+== Abstract
+
+This document is the specification for the Cyclades Service Engine.
+
+== Introduction
+
+Cyclades is an implementation of the STROMA and X-STROMA protocol specification. It is intended to provide the foundation of a service oriented architecture, enabling the realization of an enterprise service development and runtime platform. Cylades is a Servlet implementation of STROMA/X-STROMA, which can run on Tomcat and commodity hardware. The intent of Cyclades is to achieve flexible, scalable and high performance SOA while abstracting many of the details of _how this is done_ from service development efforts. In other words, service developers can concentrate on delivering and reusing functionality. Additionally, while utilizing the SOA capabilities of the framework offers obvious advantages, this is not required. Services can take advantage of framework APIs to behave just like web applications themselves (i.e. Servlets), as this can be desireable at times.
+
+== The Cyclades Service Engine
+
+=== Build and Deployment
+
+The Cyclades Service Engine hosts services (named "Nyxlets", as we will refer to them moving forward). The artifacts of a Cyclades Service Engine build provide the libraries and developer APIs necessary to realize Nyxlets, both compile time and runtime. 
+
+.Cyclades Service Engine Library Structure
+image::LibraryStructure.jpg[]
+
+The Cyclades Service Engine is built along with any libraries that will comprise the "Service Platform". Nyxlets each have their own build that incorporates the artifacts of the Cyclades Service Engine build, making the "Platform" available to Nyxlet developers. Nyxlet developers can additionally include their own libraries for the build and runtime. The Cyclades Service Engine is deployed as a Servlet, so far tested with Tomcat. Deployemt of the "war" file is enough to have a running instance of the engine, and a sample "helloworld" Nyxlet. 
+
+=== Cyclades Engine Runtime Configuration
+
+The following are configuration setting in the "web.xml" file that can be customized:
+
+* *minimizeMemoryFootprint*
+	** "true" or "false, defaults to true. This basically is nothing more that a flag accessably by all Nyxlets suggesting conservative use of main memory. This does not have to be used.
+* *nyxletDirectories*
+	** This is a comma seperated list of directories where the engine will look for Nyxlets to load. If any paths specified are not absolute paths (starting with "/" or containing ":"), the specified directory will be considered relative to the Servlet's installation directory. The default is "nyxlets", which resolves to ../WEB_INF/nyxlets. These directories will be searched in order, the last of which will ultimately load the canonical Nyxlet if there are duplicates. By default, if a STROMA based Nyxlet does not override the "externalProperties" attribute in the "nyxlet_manifest.xml" file, property files for this Nyxlet will be loaded from the directories specified here (for external properties). In this case, the file name that will be searched for will be [service name].properties. Duplicate files can be encountered, which will result in any duplicate properties loaded last taking precedence. 
+* *debugMode*
+	** This is an integer value that should be "0" for all production purposes. This basically is nothing more than an integer value accessable by all Nyxlets suggesting a system wide debug mode. This does not have to be used. 
+* *enableEngineReload*
+	** "true" or "false, defaults to true. If "true", the Cyclades Engine will allow a reload of all of its Nyxlets via the "action=reload" directive. Nyxlet reloads are disabled otherwise.
+* *initializationDelegates*
+	** This is a comma seperated list of _classes_ to create and tear down on engine start up. These classes are intended as _variation points_ for initializing resources to be used by Nyxlets. These can be plugged in as needed for maintaining any global functionality of the "Platform". Each class specified must implement the interface _org.cyclades.engine.api.InitializationDelegate_. A no-op class is provided by default.
+* *authDelegate*
+	** This is a _class_ to utilize for authentication/authorization. This class is intended as a _variation point_ for maintaining auth resources to be used by Nyxlets. The class specified must implement the interface _org.cyclades.engine.auth.api.AuthDelegate_. A no-op class is provided by default.
+* *classLoaderStrategy*
+	** "collective" or "isolated", default setting of "collective" is provided. If "collective" is chosen, all Nyxlets will run within the same classloader, sharing all classes. If "isolated" is chosen, every Nyxlet will be assigned its own class loader, and _no_ Nyxlet level classes will be shared (i.e. multiple Nyxlets can run different versions of the same classes).
+* *nyxletRegistry*
+	** This is the URI resolving to the Service (Nyxlet) registry. If the path specified is not an absolute paths (starting with "/" or containing ":"), the specified directory will be considered relative to the Servlet's installation directory. The default is "registry", which resolves to ../WEB_INF/registry.
+
+=== Cyclades Engine Runtime Model (Class Loader Strategy)
+
+==== "collective" Class Loader Strategy
+
+In this mode, All Nyxlets share the same class loader. _This class loader follows the Java delegation model, delegating to lower tiers before searching locally._
+
+._collective_ Class Loader Model
+image::collective_class_loader.jpg[]
+
+==== "isolated" Class Loader Strategy
+
+In this mode, each Nyxlet has its own class loader (isolated from other Nyxlets). _These class loaders DO NOT follow the Java delegation model, searching locally first before delegating the search to the lower tiers._
+
+._isolated_ Class Loader Model
+image::isolated_class_loader.jpg[]
+
+=== Cyclades Engine Reserved Parameters
+
+==== Cyclades Engine Actions
+
+There are certain "actions" that can be applied to the Cyclades Engine itself. Since the Cyclades Engine exists as  a Servlet implementation, RESTful HTTP _GET_ request are the mechanisms by which these actions are requested. The actions are specifed as query parameters to the root directory of the Cyclades Engine Servlet in the following format:
+
+----
+http://localhost:8080/cycladesengine/?action=[action]
+----
+
+The following is a list of valid actions:
+
+* *help*
+	** Displays all available actions.
+* *buildinfo*
+	** Displays the system wide build information
+* *reload*
+	** Reload the Nyxlets. This will reload the Nyxlets from the directories specified in the web.xml file. The Nyxlet inventory after this action is requested will reflect the state of those directories at the time of the request (i.e. deleted, added or modified Nyxlets will be handled accordingly). _This can be considered a hot reload and should not interrupt any current service access._
+* *loaded*
+	** Display the Nyxlets currently loaded.
+* *healthcheck*
+	** Run a health check on all of the Nyxlets currently loaded and display the results.
+* *health*
+	** Display a general overall health state of the Nyxlets (minimalistic format). It is important to note that this value is cached from the last requested _healthcheck_ action.
+* *memory*
+	** Display the current JVM memory of the system.
+* *memorywithgc*
+	** Suggest garbage collection and then display the current JVM memory of the system.
+
+==== Cyclades Engine Service Requests (Base Parameters)
+
+In addition to the STROMA and X-STROMA specification, the Cyclades Engine implements the following reserved base parameters:
+
+* *log-level*
+	** One of "error", "warn", "info" and "debug". This enables a request parameter to override the designated system logging level setting, i.e. a user can be targeted with chattier logging levels for tracking or debugging purposes than the system initalization setting.
+* *rrd*
+	** "RESTful Request Dispatching" for HTTP access
+	** Can alternatively be declared as the HTTP header "RRD"
+	** The value of this will be the rrd group that the target Nyxlet belongs to. This can be one Nyxlet or multiple Nyxlets with dispatching rules
+	** The URI parts will be mapped accordingly to the Nyxlet "rrd" declaration and included in the request parameters
+	** Any query parameters specified with the same key will overried the URI mapping
+	** The rrd rules for a service are declared in its nyxlet_manifest.xml file along with the method overrided in the base Nyxlet class "isRRDMatch"
+	** See the Hello World Nyxlet as an example.
+	** This is an optional feature
+
+Each STROMA Nyxlet by default will contain a _listactions_ action handler that simply list all of the actions available in the Nyxlet. This can be ovverriden at the developer's descretion.
+
+== The Nyxlet
+
+A Nyxlet is a service that can be hosted by the Cyclades Engine.
+
+=== Nyxlet Development
+
+Each Nyxlet has its own build system (seperate from the Cyclades Service Engine _and_ other Nyxlets). Nyxlets are developed with artifacts from the Cyclades Engine build _and_ any other library dependencies that the Nyxlet developer requires (these must be deployed in the Nyxlet file if used, the Nyxlet build system will help facilitate this). Although not strictly required, Nyxlets typically are implementations of the STROMA protocol. The Cyclades Engine provides libraries and APIs to aid in the development of Nyxlets. There will also be a mechanism by which a template Nyxlet and workspace will be generated for developers as a primer. 
+
+=== Nyxlet Sample
+
+A sample Nyxlet can be found with the Cyclades Engine distribution (a simple hello world example).
+
+=== Nyxlet Deployment
+
+The output of a Nyxlet build (*.nyxlet file) need only exist in one of the directories specified in the Cyclades Engine "nyxletDirectories" configuration. One or more property files, named after the Nyxlet's name as specified in the nyxlet_manifest.xml resource for that Nyxlet, may also be present for this Nyxlet in those directories. 
+
+=== Nyxlet Orchestration
+
+Nyxlets can be orchestrated in multiple ways (See link:functional_view/functional_spec.html[functional specification] for general orchestration concepts). In order to achieve high performance orchestration there will be mechanisms availabe to developers for optimizing requests between Nyxlets (when residing on the same node). Examples will be provided in the example Nyxlet included in the core Cyclades distribution.
+
+== The Service Broker
+
+The Service Broker (servicebroker) Nyxlet can be configured to take advantage of X-STROMA capabilities for a distributed system. 
+
+=== Cyclades Examples Of Deployment Configuration Using HTTP Based Targets
+
+.Example of a three pool/cluster configuration
+image::service_broker_cluster.jpg[]
+
+[NOTE]
+_pool_ is synonymous to _cluster_ in this document. Alternatively, the _pools_ displayed above could simply be a single node/server, as they would behave in the exact same way. _Nyxlet_ is synonomous to _service_.
+
+.Global Service Registry ("registry" resource contents)
+----
+{
+"service-a":["services"]
+"service-b":["services-pool-2"]
+"service-c":["services-pool-3"]
+}
+----
+
+.Global "servicebroker.properties" resource contents - to be loaded by all nodes in all clusters
+----
+serviceProducerTargets=[{"target":"localhost","local":"true"},{"target":"services","authentication_data":"authenticate","auth_data_forwarding":"false","class":"org.cyclades.nyxlet.servicebrokernyxlet.message.producer.HTTPMessageProducer","target_resource":"http://services.mycompany.org:8080/cycladesengine/servicebroker"},{"target":"services-pool-2","authentication_data":"authenticate","auth_data_forwarding":"false","class":"org.cyclades.nyxlet.servicebrokernyxlet.message.producer.HTTPMessageProducer","target_resource":"http://services-pool-2.mycompany.org:8080/cycladesengine/servicebroker"},{"target":"services-pool-3","authentication_data":"authenticate","auth_data_forwarding":"false","class":"org.cyclades.nyxlet.servicebrokernyxlet.message.producer.HTTPMessageProducer","target_resource":"http://services-pool-3.mycompany.org:8080/cycladesengine/servicebroker"}]
+----
+
+[NOTE]
+The corresponding "local" instances of "servicebroker.properties" below will be loaded _in addition_ to the "global" instance mentioned above for each node in every pool/cluster. The alias created below will enhance brokering performance by eliminating a redundant _transport protocol level service request loop back_ "to self" when a service residing locally is requested via a brokered target. This is intended to reduce unnecessary network "noise".
+
+.Local "servicebroker.properties" resource contents ("services" pool) - to be loaded only by nodes in "services" pool/cluster
+----
+serviceProducerTargetAliases=[{"target":"localhost","aliases":["services"]}]
+----
+
+.Local "servicebroker.properties" resource contents ("services-pool-2" pool) - to be loaded only by nodes in "services-pool-2" pool/cluster
+----
+serviceProducerTargetAliases=[{"target":"localhost","aliases":["services-pool-2"]}]
+----
+
+.Local "servicebroker.properties" resource contents ("services-pool-3" pool) - to be loaded only by nodes in "services-pool-3" pool/cluster
+----
+serviceProducerTargetAliases=[{"target":"localhost","aliases":["services-pool-3"]}]
+----
+
+The configuration example above depicts a fully enabled Service Engine and service federation:
+
+* Clients can access Service Engines directly
+	** Enabled or disabled by IT and network access configuration
+* Clients can access Service Engines via a brokered request to another Service Engine (indirection)
+	** Enabled or disabled via the servicebroker.properties file (more specifically via _targets_)
+* Services can access other services in any other Service Engine (including the local one) via a brokered request to that other Service Engine
+        ** Enabled or disabled via the servicebroker.properties file (more specifically via _targets_)
+* Services can access other services in any other Service Engine (including the local one) simply by service name
+	** Through the Cyclades Engine developer API, enabled or disabled via the "registry" file
+
+[NOTE]
+This is an example of a flexible and highly federated configuration. This amount of acessibility is not always desired. If this is the case, simply adjust the Service Engine and network configuration to limit the federation and access as desired.
+
+.Full access enabled
+image::service_broker_cluster_access.jpg[]
+
+=== Cyclades Examples Of Asynchronous Deployment Configuration Using Default RabbitMQ Targets
+
+The Service Broker can implement targets that facilitate service communication over any type of technology. One of the most useful implementations that come with the default Service Broker is the asynchronous Message Producer and Message Consumer based targets. The current targets supported implement drivers for RabbitMQ. Once the Service Broker is configured correctly, any services loaded in the Cyclades Engine can be accessed asynchronously. Configurations ranging from basic asynchronous functionality to highly scaled and sophisticated queuing can be accomplished out of the box by configuring _serviceProducerTargets_ and _serviceConsumerTargets_. We'll cover some known and used patterns below. 
+
+[NOTE]
+This assumes you have a RabbitMQ server installed and running somewhere accessible by your Cycaldes Engine. You will have to modify the connection_string fields below to reflect your server name. RabbitMQ 2.8.2 has been run successfully using these examples.
+
+==== One Node/Cluster Service Broker Configuration
+
+In addtion to direct access to the Cyclades Engine, the following targets will enable asynchronous capabilty to your server setup once added to your servicebroker.properies file:
+
+----
+serviceProducerTargets=[{"target":"producer","authentication_data":"authenticate","auth_data_forwarding":"false","class":"org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.Producer","target_init_data":{"pool":"true","maxActive":"5","target_queue":"work_queue","connection_string":"amqp://guest:guest@mq.mycompany.org:5672","message_delivery_mode":"2","replyto_ha_policy":"all","replyto_durable":"true"}},{"target":"extractor","authentication_data":"authenticate","auth_data_forwarding":"false","class":"org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.Extractor","target_init_data":{"pool":"true","maxActive":"5","connection_string":"amqp://guest:guest@mq.mycompany.org:5672"}}]
+
+serviceConsumerTargets=[{"class":"org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.Consumer","target_init_data":{"target_queue":"work_queue","connection_string":"amqp://guest:guest@mq.mycompany.org:5672","consumer_tag":"work_queue-consumer","num_consumers":"5","cancel_recovery":"false","prefetch_count":"1","replyto_message_delivery_mode":"2","ha_policy":"all","durable":"true"}}]
+----
+
+This configuration creates two producer targets
+
+. producer: Allows for an X-STROMA request to be submitted to the specified queue (work_queue) asynchronously
+. extractor: A general target for fetching a message off of the specified queue 
+
+This configuration creates one consumer target
+
+. Consuming from the queue "work_queue" and placing the result in a specified queue within the X-STROMA request field "replyto". If no "replyto" field is specified the X-STROMA response will be discarded.
+
+This setup will utilize one node, or cluster to produce and consume X-STROMA requests. The "extract" target is there for convenience, it allows a user to fetch one message at a time from a specified queue via an X-STROMA request.
+
+.Basic message queue setup
+image::service_broker_cluster_access_mq.jpg[]
+
+Assuming you have the "helloworld" Nyxlet loaded, here are some sample requests to test out your configuration:
+
+.Example producer request (asynchronously submit service request)
+----
+http://localhost:8080/cyclades/servicebroker?target=producer&replyto=my_output_queue&data-type=xml&data=<data><requests><request service="helloworld"><parameters><parameter name="action" value="sayhello"/><parameter name="name" value="Foo"/></parameters></request></requests></data>
+----
+
+.Example extractor request (fetch results, one at a time, from the submitted requests above)
+----
+http://localhost:8080/cyclades/servicebroker?data-type=xml&target=extractor&queue=my_output_queue&data-type=xml&data=<data/>
+----
+
+==== Merging Consumers
+To be documented
+
+==== Raw message producers
+To be documented
+
+==== Raw message consumers
+To be documented
+
+==== Attaching response handlers to your serviceConsumerTargets
+To be documented

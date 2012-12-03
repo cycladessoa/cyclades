@@ -1,0 +1,80 @@
+
+               - Nyxlet request examples for nyxlet-NYXLET_NAME -
+
+NOTES: 
+ - You may need to change the server name of the requests if the Cyclades Service Engine is installed on a host other than "localhost". 
+ - These requests are intended to be copied and pasted to a browser, different request mechanisms exist for externally generated service requests
+   like the following, and for internally generated requests (Java APIs) from within Nyxlets/services. Please see Cyclades documentation
+   and examples for more details.
+
+1. Request examples for the HelloWorldActionHandler
+
+Direct Access
+
+http://localhost:8080/cyclades/NYXLET_NAME?name=myname
+http://localhost:8080/cyclades/NYXLET_NAME?data-type=json&action=GET&name=myname
+http://localhost:8080/cyclades/NYXLET_NAME?data-type=json&action=sayhello&name=myname
+http://localhost:8080/cyclades/NYXLET_NAME?data-type=xml&action=sayhello&name=myname&duration
+http://localhost:8080/cyclades/NYXLET_NAME?data-type=json&action=sayhello&data={"parameters":[{"name":"name","value":"myname"}]}
+http://localhost:8080/cyclades/NYXLET_NAME?data-type=json&data-out=xml&action=sayhello&data={"parameters":[{"name":"name","value":"myname"}]}
+http://localhost:8080/cyclades/NYXLET_NAME?data-type=xml&action=sayhello&data=<data><parameters><parameter name="name" value="myname"/></parameters></data>
+http://localhost:8080/cyclades/NYXLET_NAME?data-type=xml&data-out=json&action=sayhello&data=<data><parameters><parameter name="name" value="myname"/></parameters></data>
+
+Orchestration (Composition, or "Batched")
+
+JSON
+
+http://localhost:8080/cyclades/servicebroker?data-type=json&transaction-data=777&data={"requests":[{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhello"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhello"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhello"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhello"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhello"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhello"},{"name":"name","value":"Folks"},{"name":"transaction-data","value":"888"}]}}]}
+
+XML 
+
+http://localhost:8080/cyclades/servicebroker?data-type=xml&transaction-data=777&data=<data><requests><request service="NYXLET_NAME"><parameters><paramter name="action" value="sayhello"/><paramter name="name" value="Folks"/></parameters></request><request service="NYXLET_NAME"><parameters><paramter name="action" value="sayhello"/><paramter name="name" value="Folks"/></parameters></request><request service="NYXLET_NAME"><parameters><paramter name="action" value="sayhello"/><paramter name="name" value="Folks"/></parameters></request><request service="NYXLET_NAME"><parameters><paramter name="action" value="sayhello"/><paramter name="name" value="Folks"/></parameters></request><request service="NYXLET_NAME"><parameters><paramter name="action" value="sayhello"/><paramter name="name" value="Folks"/></parameters></request><request service="NYXLET_NAME"><parameters><paramter name="action" value="sayhello"/><paramter name="name" value="Folks"/><paramter name="transaction-data" value="888"/></parameters></request></requests></data>
+
+JSON Request with XML Response
+
+http://localhost:8080/cyclades/servicebroker?data-type=json&data-out=xml&transaction-data=777&data={"requests":[{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhello"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhello"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhello"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhello"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhello"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhello"},{"name":"name","value":"Folks"},{"name":"transaction-data","value":"888"}]}}]}
+
+
+2. Request examples for the HelloWorldChainableActionHandler
+
+NOTE: The request formats will be the same as above, with two differences
+    1.) The action will be set to "sayhellochainable"
+    2.) We will have the ability to chain this ActionHandler with the "chain=true" parameter setting on the X-STROMA level
+
+Direct Access
+
+http://localhost:8080/cyclades/NYXLET_NAME?data-type=json&action=sayhellochainable&name=myname
+http://localhost:8080/cyclades/NYXLET_NAME?data-type=xml&action=sayhellochainable&name=myname
+http://localhost:8080/cyclades/NYXLET_NAME?data-type=json&action=sayhellochainable&data={"parameters":[{"name":"name","value":"myname"}]}
+http://localhost:8080/cyclades/NYXLET_NAME?data-type=json&data-out=xml&action=sayhellochainable&data={"parameters":[{"name":"name","value":"myname"}]}
+http://localhost:8080/cyclades/NYXLET_NAME?data-type=xml&action=sayhellochainable&data=<data><parameters><parameter name="name" value="myname"/></parameters></data>
+http://localhost:8080/cyclades/NYXLET_NAME?data-type=xml&data-out=json&action=sayhellochainable&data=<data><parameters><parameter name="name" value="myname"/></parameters></data>
+
+Orchestration (Composition, or "Batched")
+
+JSON
+
+http://localhost:8080/cyclades/servicebroker?data-type=json&transaction-data=777&data={"requests":[{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhellochainable"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhellochainable"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhellochainable"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhellochainable"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhellochainable"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhellochainable"},{"name":"name","value":"Folks"},{"name":"transaction-data","value":"888"}]}}]}
+
+XML
+
+http://localhost:8080/cyclades/servicebroker?data-type=xml&transaction-data=777&data=<data><requests><request service="NYXLET_NAME"><parameters><paramter name="action" value="sayhellochainable"/><paramter name="name" value="Folks"/></parameters></request><request service="NYXLET_NAME"><parameters><paramter name="action" value="sayhellochainable"/><paramter name="name" value="Folks"/></parameters></request><request service="NYXLET_NAME"><parameters><paramter name="action" value="sayhellochainable"/><paramter name="name" value="Folks"/></parameters></request><request service="NYXLET_NAME"><parameters><paramter name="action" value="sayhellochainable"/><paramter name="name" value="Folks"/></parameters></request><request service="NYXLET_NAME"><parameters><paramter name="action" value="sayhellochainable"/><paramter name="name" value="Folks"/></parameters></request><request service="NYXLET_NAME"><parameters><paramter name="action" value="sayhellochainable"/><paramter name="name" value="Folks"/><paramter name="transaction-data" value="888"/></parameters></request></requests></data>
+
+JSON Request with XML Response
+
+http://localhost:8080/cyclades/servicebroker?data-type=json&data-out=xml&transaction-data=777&data={"requests":[{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhellochainable"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhellochainable"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhellochainable"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhellochainable"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhellochainable"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhellochainable"},{"name":"name","value":"Folks"},{"name":"transaction-data","value":"888"}]}}]}
+
+Orchestration (Chained, note the "chain=true" X-STROMA parameter entry)
+
+JSON
+
+http://localhost:8080/cyclades/servicebroker?chain=true&data-type=json&transaction-data=777&data={"requests":[{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhellochainable"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhellochainable"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhellochainable"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhellochainable"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhellochainable"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhellochainable"},{"name":"name","value":"Folks"},{"name":"transaction-data","value":"888"}]}}]}
+
+XML
+
+http://localhost:8080/cyclades/servicebroker?chain=true&data-type=xml&transaction-data=777&data=<data><requests><request service="NYXLET_NAME"><parameters><paramter name="action" value="sayhellochainable"/><paramter name="name" value="Folks"/></parameters></request><request service="NYXLET_NAME"><parameters><paramter name="action" value="sayhellochainable"/><paramter name="name" value="Folks"/></parameters></request><request service="NYXLET_NAME"><parameters><paramter name="action" value="sayhellochainable"/><paramter name="name" value="Folks"/></parameters></request><request service="NYXLET_NAME"><parameters><paramter name="action" value="sayhellochainable"/><paramter name="name" value="Folks"/></parameters></request><request service="NYXLET_NAME"><parameters><paramter name="action" value="sayhellochainable"/><paramter name="name" value="Folks"/></parameters></request><request service="NYXLET_NAME"><parameters><paramter name="action" value="sayhellochainable"/><paramter name="name" value="Folks"/><paramter name="transaction-data" value="888"/></parameters></request></requests></data>
+
+JSON Request with XML Response
+
+http://localhost:8080/cyclades/servicebroker?chain=true&data-type=json&data-out=xml&transaction-data=777&duration&data={"requests":[{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhellochainable"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhellochainable"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhellochainable"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhellochainable"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhellochainable"},{"name":"name","value":"Folks"}]}},{"service":"NYXLET_NAME","data":{"parameters":[{"name":"action","value":"sayhellochainable"},{"name":"name","value":"Folks"},{"name":"transaction-data","value":"888"}]}}]}
+

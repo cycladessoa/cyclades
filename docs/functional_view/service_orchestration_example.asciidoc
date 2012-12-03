@@ -1,0 +1,188 @@
+////////////////////////////////////////////////////////////////////////////////
+Copyright (c) 2012, THE BOARD OF TRUSTEES OF THE LELAND STANFORD JUNIOR UNIVERSITY
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+   Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+   Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+   Neither the name of the STANFORD UNIVERSITY nor the names of its contributors
+   may be used to endorse or promote products derived from this software without
+   specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.
+////////////////////////////////////////////////////////////////////////////////
+
+= Service Orchestration Examples with STROMA/X-STROMA
+:toc:
+
+== Version
+1.1
+
+== Overview
+
+Service Oriented Architecture focuses on creating reusable and composable services. Some typical usage of SOA is comprised of services interacting with other services, creating protocol agnostic aggregate functionality (service interoperability). The STROMA/X-STROMA protocols add another level to this capability enabling rich orchestration not only at the service level, but exposed in the protocol level itself. In addition to protocol level compositions, chained orchestration is supported. This facilitates potentially complex pipeline transformations, service interoperability  and service reuse directly in the service request. 
+
+[NOTE]
+Please see the Service Orchestration and STROMA/X-STROMA Specifications for more details on the subjects of these examples.
+
+== Examples
+
+Our example scenario will consist of two independent services that can be orchestrated as independent services or chained together. Although trivial, this example showcases the possibilities of complex logic accomplished by the authoring of more involved orchestrations.
+
+* *sayhello* capability of the *helloworld* Nyxlet
+	** Generates a simple "Hello World" response
+* *transform* capability of the *xsl* Nyxlet
+	** Transforms XML input based on a XSL style sheet URI parameter submitted.
+	** The style sheet utilized will simply change all of the text in the elements named "message" to upper case.
+
+_The general idea is that each service can be called independently, and many services will facilitate reuse by interacting with each other. This interaction can be exposed at the protocol/request-response layer as shown below._
+
+[NOTE]
+The data in the requests below would be best POSTed if this were an authentic client implementation. The Cyclades Service Engine supports multiple strategies for sending the data of a request. For the sake of simplifying these examples, the sample requests below have been included in their entirety as GET URLs that should be copied and pasted in a web browser to run.
+
+=== Composition Type Orchestration With X-STROMA
+
+*Please copy and paste the following URL in your browser to run*
+
+_http://services-dev-01.highwire.org:8080/cyclades/servicebroker?data-type=xml&chain=false&data=<data><requests><request service="helloworld"><parameters><parameter name="action" value="sayhello"/><parameter name="name" value="Thomas"/></parameters></request><request service="xsl"><parameters><parameter name="action" value="transform"/><parameter name="xsl" value="xsl/message_element_to_upper.xsl"/></parameters><message>Joseph</message></request></requests></data>_
+
+.Response
+----
+<response service="servicebroker" error-code="0">
+	<response service="helloworld" action="sayhello" error-code="0">
+		<message>Hello World: [Thomas]</message>
+	</response>
+	<response service="xsl" action="transform" error-code="0">
+		<message>JOSEPH</message>
+	</response>
+</response>
+----
+
+[NOTE]
+Notice each service is invoked as an independent unit of work. These services can also be called directly without utilizing the _servicebroker_. This can be compared to a multi statement UNIX command like "sayhello; transform"
+
+=== Chained Orchestration With X-STROMA
+
+*Please copy and paste the following URL in your browser to run*
+
+_http://services-dev-01.highwire.org:8080/cyclades/servicebroker?data-type=xml&chain=true&data=<data><requests><request service="helloworld"><parameters><parameter name="action" value="sayhello"/><parameter name="name" value="Thomas"/></parameters></request><request service="xsl"><parameters><parameter name="action" value="transform"/><parameter name="xsl" value="xsl/message_element_to_upper.xsl"/></parameters><message>Joseph</message></request></requests></data>_
+
+.Response
+----
+<response service="xsl" action="transform" error-code="0">
+	<message>HELLO WORLD: [THOMAS]</message>
+</response>
+----
+
+[NOTE]
+Notice the output is an aggregation of the functionality of both services: The output of the first services "Hello World: [Thomas]" was processed by the second service, transforming all of the characters to upper case, "HELLO WORLD: [THOMAS]". This can be compared to a piped UNIX command like "sayhello | transform". 
+
+_The only difference between the two requests above is the value of the "chain" parameter. Omitting this parameter, or setting the value to false processes this request as a composed orchestration, or batched request._
+
+== The XSL Style Sheet "message_element_to_upper.xsl" (FYI)
+
+----
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+<xsl:output method="xml"/>
+
+        <xsl:template match="message">
+                <message><xsl:value-of select="translate(.,'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ')"/></message>
+        </xsl:template>
+
+</xsl:stylesheet>
+----
+
+== Additional Examples
+
+Below are some additional examples. We will start from simple Web Service like requests to each individual service and end up with more advanced orchestrations.
+
+=== Stand Alone Requests
+
+.The *sayhello* Action (capability) of the *helloworld* Nyxlet (service)
+
+_http://services-conf-dev-01.highwire.org:8080/cyclades/helloworld?action=sayhello&data-type=xml&name=Tom_
+
+.The *transform* Action of the *xsl* Nyxlet
+
+_http://services-conf-dev-01.highwire.org:8080/cyclades/xsl?action=transform&data-type=xml&xsl=xsl/message_element_to_upper.xsl&data=<root><message>joe</message></root>_
+
+.The *GET, POST, and DELETE* Actions of the *restfs* Nyxlet
+
+. _http://services-conf-dev-01.highwire.org:8080/cyclades/restfs/dir-one/dir-two/sample.txt?action=DELETE&data-type=xml_
+. _http://services-conf-dev-01.highwire.org:8080/cyclades/restfs/dir-one/dir-two/sample.txt?action=GET&data-type=xml_
+. _http://services-conf-dev-01.highwire.org:8080/cyclades/restfs/dir-one/dir-two/sample.txt?action=POST&data-type=xml&payload=sample%20payload_
+. _http://services-conf-dev-01.highwire.org:8080/cyclades/restfs/dir-one/dir-two/sample.txt?action=GET&data-type=xml_
+. _http://services-conf-dev-01.highwire.org:8080/cyclades/restfs/dir-one/dir-two/sample.txt?action=DELETE&data-type=xml_
+. _http://services-conf-dev-01.highwire.org:8080/cyclades/restfs/dir-one/dir-two/sample.txt?action=GET&data-type=xml_
+
+
+=== Brokered Requests
+
+.*helloworld* & *xsl* (Composed Orchestration X 2)
+
+Two service requests will be batched into a single brokered client request
+
+_http://services-conf-dev-01.highwire.org:8080/cyclades/servicebroker?data-type=xml&chain=false&data=<data><requests><request service="helloworld"><parameters><parameter name="action" value="sayhello"/><parameter name="name" value="Tom"/></parameters></request><request service="xsl"><parameters><parameter name="action" value="transform"/><parameter name="xsl" value="xsl/message_element_to_upper.xsl"/></parameters><message>joe</message></request></requests></data>_
+
+
+.*helloworld* | *xsl* (Chained Orchestration X 2)
+
+Two service requests will be chained together, where the output of the first is consumed by the second...and so on. In this example, the response from the first service will be transformed to all UPPER CASE.
+
+_http://services-conf-dev-01.highwire.org:8080/cyclades/servicebroker?data-type=xml&chain=true&data=<data><requests><request service="helloworld"><parameters><parameter name="action" value="sayhello"/><parameter name="name" value="Tom"/></parameters></request><request service="xsl"><parameters><parameter name="action" value="transform"/><parameter name="xsl" value="xsl/message_element_to_upper.xsl"/></parameters><message>joe</message></request></requests></data>_
+
+
+.*helloworld* | *xsl* | *restfs (add)* | *restfs (get)* (Chained Orchestration X 4)
+
+Four service requests will be chained together, where the output of the first is consumed by the second...and so on. In this example, the response from the first service will be transformed to all UPPER CASE, persisted and then fetched and served to the client.
+
+_http://services-conf-dev-01.highwire.org:8080/cyclades/servicebroker?data-type=xml&chain=true&data=<data><requests><request service="helloworld"><parameters><parameter name="action" value="sayhello"/><parameter name="name" value="Tom"/></parameters></request><request service="xsl"><parameters><parameter name="action" value="transform"/><parameter name="xsl" value="xsl/message_element_to_upper.xsl"/><parameter name="serialize" value="true"/></parameters></request><request service="restfs"><parameters><parameter name="action" value="add"/><parameter name="uri" value="/sample-out/out.txt"/></parameters></request><request service="restfs"><parameters><parameter name="action" value="get"/><parameter name="uri" value="/sample-out/out.txt"/></parameters></request></requests></data>_
+
+.*helloworld* | *xsl* | *restfs (add)* | *restfs (get)* | *xsl* (Chained Orchestration X 5)
+
+Five service requests will be chained together, where the output of the first is consumed by the second...and so on. In this example, the response from the first service will be transformed to all UPPER CASE, persisted and then fetched to be served through an XSL transformation that will render it all lower case for client consumption.
+
+_http://services-conf-dev-01.highwire.org:8080/cyclades/servicebroker?data-type=xml&chain=true&data=<data><requests><request service="helloworld"><parameters><parameter name="action" value="sayhello"/><parameter name="name" value="Tom"/></parameters></request><request service="xsl"><parameters><parameter name="action" value="transform"/><parameter name="xsl" value="xsl/message_element_to_upper.xsl"/><parameter name="serialize" value="true"/></parameters></request><request service="restfs"><parameters><parameter name="action" value="add"/><parameter name="uri" value="/sample-out/out.txt"/></parameters></request><request service="restfs"><parameters><parameter name="action" value="get"/><parameter name="uri" value="/sample-out/out.txt"/></parameters></request><request service="xsl"><parameters><parameter name="action" value="transform"/><parameter name="xsl" value="xsl/message_element_to_lower.xsl"/></parameters></request></requests></data>_
+
+.*helloworld* | *xsl* | *restfs (add)* (Asynchronous Request Only Chained Orchestration X 3)
+
+Three service requests will be chained together, where the output of the first is consumed by the second...and so on. In this example, the response from the first service will be transformed to all UPPER CASE and then persisted. This will be an *asynchronous* request, meaning that it will return immediately after the request is submitted. If you desire a notification when the transaction completes, please enter a comma seperated email address list in the field _notify_ (You can enable the example entry below by changing the query parameter _notifyxxx_ to _notify_ and changing its value from _me@highwire.stanford.edu_ to your email address).
+
+_http://services-conf-dev-01.highwire.org:8080/cyclades/servicebroker?asynchronous=true&notifyxxx=me@highwire.stanford.edu&transaction-data=my_async_request_123&data-type=xml&chain=true&data=<data><requests><request service="helloworld"><parameters><parameter name="action" value="sayhello"/><parameter name="name" value="Tom"/></parameters></request><request service="xsl"><parameters><parameter name="action" value="transform"/><parameter name="xsl" value="xsl/message_element_to_upper.xsl"/><parameter name="serialize" value="true"/></parameters></request><request service="restfs"><parameters><parameter name="action" value="add"/><parameter name="uri" value="/sample-out/out.txt"/></parameters></request></requests></data>_
+
+.*helloworld* | *xsl* | *restfs (add)* | *restfs (get)* | *xsl* (Asynchronous Request And Response Chained Orchestration X 5 Via Message Queue)
+
+[red]#Experimental#: This functionality has been enabled on one machine (services-dev-01.highwire.org) to verify the architecture design. We are currently using an open source message queue (RabbitMQ) for our tests, hosted internally on its own server. The machine configuration has been setup to simulate the least optimal configuration as to add as much stress to the system as possible when we load test. Currently, this machine submits messages to the queue, and also services them via multithreaded channels/consumers, submitting the result in the specified replyto queue. If no replyto queue is specifed, the request will still be executed, however no response will be queued.
+
+Five service requests will be chained together, where the output of the first is consumed by the second...and so on. In this example, the response from the first service will be transformed to all UPPER CASE, persisted and then fetched to be served through an XSL transformation that will render it all lower case for client consumption. This will be an *asynchronous* request, meaning that it will return immediately after the request is submitted. Unlike the above example, the response to this request will be stored in the specified *replyto* queue to be fetched with a second request at a later time.
+
+.Submit Asynchronous Request
+
+_http://services-dev-01.highwire.org:8080/cyclades/servicebroker?transaction-data=async_request_1&data-type=xml&target=rabbitmq&replyto=samplequeue&chain=true&data=<data><requests><request service="helloworld"><parameters><parameter name="action" value="sayhello"/><parameter name="name" value="Tom"/></parameters></request><request service="xsl"><parameters><parameter name="action" value="transform"/><parameter name="xsl" value="xsl/message_element_to_upper.xsl"/><parameter name="serialize" value="true"/></parameters></request><request service="restfs"><parameters><parameter name="action" value="add"/><parameter name="uri" value="/sample-out/out.txt"/></parameters></request><request service="restfs"><parameters><parameter name="action" value="get"/><parameter name="uri" value="/sample-out/out.txt"/></parameters></request><request service="xsl"><parameters><parameter name="action" value="transform"/><parameter name="xsl" value="xsl/message_element_to_lower.xsl"/></parameters></request></requests></data>_
+
+.Fetch Response, if done
+
+_http://services-dev-01.highwire.org:8080/cyclades/servicebroker?data-type=xml&target=rabbitmqextractor&queue=samplequeue&data-type=xml&data=<data/>_
+
+== Modifications To This Document
+
+[options="header"]
+|=========================================================
+|Author         	|Date           |Version        |Details
+|Tom Angelopoulos	|3/26/2012	|1.0		|Document Creation
+|Tom Angelopoulos       |4/5/2012      	|1.1            |Added more complex orchestration examples
+|=========================================================

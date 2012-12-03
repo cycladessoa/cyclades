@@ -1,0 +1,649 @@
+////////////////////////////////////////////////////////////////////////////////
+Copyright (c) 2012, THE BOARD OF TRUSTEES OF THE LELAND STANFORD JUNIOR UNIVERSITY
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+   Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+   Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+   Neither the name of the STANFORD UNIVERSITY nor the names of its contributors
+   may be used to endorse or promote products derived from this software without
+   specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.
+////////////////////////////////////////////////////////////////////////////////
+
+= STROMA and X-STROMA (STROMA Compliant Broker) Specification
+:toc:
+
+== Version
+1.0
+
+== Abstract
+
+This document is a specification for a service transaction orchestration protocol that is intended to guide the 
+implementation of a service engine, one of the core component of a service oriented architecture. This specification 
+addresses the realization of an *agile and high performance* service oriented architecture.
+
+== Protocol Naming
+
+* *STROMA*: Service TRansaction Orchestration Messaging Architecture
+* *X-STROMA*: "Trans", or "across" STROMA
+* *"Stroma"*: _Wikipedia_ (animal tissue), the connective, functionally supportive framework of a biological cell, tissue, or organ
+
+== Introduction
+
+The service request is the common building block of every architecture in 
+some way or form. This can range from a tightly coupled method call within a 
+computer's shared memory, to a Unix like command line directive utilizing a pipes 
+and filters type of invocation, to a loosely coupled remote service request across the 
+network between two different computers. 
+SOA can frequently be associated with reliable long-running process execution. 
+Although this _can_ be an important aspect, more likely than not enterprises also demand flexible "real-time"
+service access and orchestration. This type of service use typically requires a more performance oriented SLA
+and agile service access/orchestration mechanisms, as flexible, consistent and responsive real time access is desired.
+This specification is intended to address 
+the implementation of a service-oriented architecture that encourages service 
+development best practices and ultimately flexible service functional composition 
+(orchestration). 
+
+== Protocol High Level Overview
+
+The STROMA protocol is a base application level protocol that is intended for 
+implementation and use as a guideline for service oriented architecture. The 
+STROMA protocol most closely resembles RPC, but can also be (and very often is) 
+RESTful. A STROMA compliant service supports at the very least the STROMA 
+protocol format and can be accessed directly as an independent service, for 
+example, over HTTP (based on container implementation), or over any transport 
+protocol via a X-STROMA broker implementation. Just to clarify the distinction 
+between the protocols discussed in this document, the "transport protocol" refers to 
+supporting protocol layers like HTTP, TCP, JMS, etc. The "service" (STROMA) and 
+"service brokering and orchestration" (X-STROMA) protocols live above the 
+transport protocol layers, and are abstracted away and independent of those layers.
+
+image::protocol_tiers.jpg[]
+      
+STROMA compliant services are agnostic to the transport layer.
+      
+. The transport protocol support capabilities for accessing services 
+within a service oriented architecture play a large part in determining 
+the flexibility, efficiency, performance and reuse of the architecture 
+and its hosted services. For example, an enterprise may initially 
+access services via HTTP, but then have the requirement that the 
+same services are requested in addition via an Enterprise Service Bus 
+or a Message Queue. It would be desirable in this situation not to have to rewrite 
+the service implementations, but to extend the brokering capabilities 
+to service requests over an these technology.
+. The service and service orchestration protocols (STROMA and X-
+STROMA discussed in this document, respectively) are responsible for 
+abstracting away the transport protocols from services and ultimately 
+enabling the realization of item 1 above.
+
+== Service Orchestration
+
+There are many variations of service implementations and invocations, 
+ranging from methods and procedures implemented within a code base and 
+executed within the shared memory of a computer, to a web service request and 
+response that spans the network and possibly many different machines in between. 
+As we move further away from one extreme, the shared memory method call, 
+towards the other end, a web service request that possibly spans multiple machines 
+and networks, orchestration is harder to achieve gracefully. 
+
+Writing a modular and reusable set of libraries, in say Java, should be fairly 
+straightforward to achieve. Functionality can be broken down into methods, classes, 
+packages and ultimately libraries that can be reused, mixed, matched, and 
+orchestrated fairly efficiently. A software developer can write code using the 
+language of choice that allows for the orchestration of the supplied functionality. An 
+example of this would be a method that in turn calls multiple other reusable 
+methods with defined and known APIs.
+
+Unix commands are a great example of orchestration. Utilizing pipes and 
+filters architecture, Unix commands are able to run as stand alone applications, or 
+orchestrated together to provide a chained aggregation of functionality. Each Unix 
+command can be considered a completely separate application, which is fully 
+decoupled from any other command. Despite this separation, Unix commands can 
+be orchestrated to deliver an aggregate and potentially complex functionality. All 
+this can be done without compromising the integrity of the architecture (adding 
+new functionality via command aggregation does not add entropy into the system).
+
+Web/Application services are the highest level of the three types of services 
+mentioned thus far, and are a fundamentally common concept for any enterprise
+providing services over the internet/intranet. Usually one or more codebases running in an application 
+container and being comprised of methods, classes, packages and libraries (as 
+mentioned above), these are coarser units of functionality. There are many 
+frameworks available for implementing these types of services. Application 
+Containers (i.e. Tomcat) are an example of mechanisms that are frequently used to 
+host services at this level. Containers frequently support some level of tightly 
+coupled (in shared memory) service orchestration, like web service chaining, or 
+web service forwarding where a web service can forward a request to another 
+service to continue processing, very much like a pipes and filters architecture. 
+Loosely coupled web service invocation (non-shared memory or trans node 
+invocation) is also frequently used as an enterprise integration pattern and scaling.  
+
+The target service level orchestration support focus of this document will be somewhere in 
+between a web service and a library. STROMA attempts to address a service 
+architecture that is transport protocol agnostic, supports local and remote service 
+invocation and a high level of orchestration support. STROMA and X-STROMA enable 
+flexible and consistent orchestration patterns that can be utilized at all levels of 
+a service transaction sequence. Since the X-STROMA protocol itself is an expression of orchestration, 
+any requests utilizing this protocol, local and remote services and clients, 
+are essentially orchestration controllers. *With X-STROMA, the orchestration capability is exposed in the protocol. 
+This means that any service request can be a potentially complex orchestration of reusable services that
+are STROMA compliant*
+
+== Service Development Best Practices
+
+A service is a unit of functionality. How the overall functionality of a given 
+architecture is determined and how it is broken down is based on the context of the 
+problem to be solved and the principles of the establishment and engineers 
+implementing them. This of course plays an important role in the design of any 
+architecture. This is beyond the scope of the document, and can be a quite extensive 
+topic on its own. It is assumed that the conceptual design of the desired functionality 
+of the system has been architected prior to any development efforts. Designing 
+service functionality with STROMA in mind will of course enable one to take 
+advantage of the features that the protocol has to offer, however this is not 
+necessary as the intended service utilization is completely up to the developing parties. That 
+being said, STROMA attempts to facilitate the realization of service design utilizing the
+following principles:
+
+* Service semantic cohesion
+* Separation of concerns
+* Reusability of service modules
+* Agile development
+* Developer productivity and flexibility
+* Scalability
+
+== The STROMA Protocol 
+
+The STROMA protocol is a base application protocol specification that 
+is intended for extension by services. For example, a service "HelloWorld" 
+may exist that requires a simple top level parameter "name". For the 
+"HelloWorld" service to be STROMA compliant it need only run in a 
+container environment that implements STROMA and request the top-level 
+parameter "name" as required. When requested, the service may simply print 
+out "HelloWorld Joe" with the top-level parameter "name" is set to "Joe". This 
+service is said to be STROMA compatible, extending the STROMA protocol 
+(transparent to developers) to implement its own. The "service-agent" HTTP 
+response header for this service may look like "HELLOWORLD/1.0 
+STROMA/1.0", indicating the response is in the form of the "HelloWorld" 
+protocol, version 1.0, which extends the STROMA protocol of version 1.0. 
+We'll dive further into these details later. Let's cover some high level items 
+first.
+
+How STROMA addresses the service development best practices mentioned 
+above:
+
+* Service semantic cohesion
+** The notion of service action handlers allows for a mechanism comprising a
+collection of service request actions (capabilities) per service. You can think of an 
+actual STROMA compliant service as a collection of capabilities. These are 
+intended to be part of the same code base, and a good way to organize the 
+granularity of a given service.
+* Separation of concerns
+** Services should be fully self-contained and exposed only via their 
+interface specification/contract. Internal modifications of one service should not 
+affect the functional behavior of another service (unless of course the 
+the contract/API is altered
+in a non "backwards compatible" manner, we'll get into that later).
+This can substantially reduce the need for regression testing 
+and allows the architecture to accommodate change gracefully. This 
+principal can also thought of as supporting abstraction and loose 
+coupling.
+* Reusability of service modules
+** Since a service can essentially be considered an atomic unit of work, it can be 
+reused in the following ways:
+*** A service can call another service, and so on, very much like a 
+method call.
+*** Services can be chained together and reused very much like 
+Unix commands.
+*** Any combination of the above.
+** STROMA and X-STROMA *expand orchestration capabilities to the protocol layer*, empowering
+a service request with much of the same orchestration capabilities as the service code itself. 
+This means services can be orchestrated together from any user agent, i.e. a browser, a client application, 
+a web service, a script, another service itself...etc.
+* Agile development
+** The modular structure facilitates rapid and concurrent development 
+and modification by large teams.
+** Since transport specific details are abstracted away from each service 
+by the service engine implementation, service deployment is 
+simplified and therefore should be less time consuming.
+* Developer productivity and flexibility
+** Using STROMA and the X-STROMA broker implementation, service 
+development is transport protocol agnostic, meaning a developer 
+needs only create a service and drop it in; the framework and 
+broker implementation will take care of the invocation and transport 
+details, leaving developers to concentrate on developing functionality.
+** STROMA is designed/intended to support both xml and json 
+** Standardized service request format enables intuitive local and remote service access.
+** Orchestration
+        *** Optimized service request/response batching (save on client round trips, transaction capabilities, other orchestration benefits)
+        *** Optimized service request chaining (multi stage pipeline type transformations)
+** Works with HTTP out of the box when hosted in a Servlet container,
+for example, but can easily be integrated with any other technologies
+and transport mechanisms via additions of broker adapter targets.
+This means every service can be accessed from a browser or
+command line tool like curl, in addition to other access mechanisms
+like a Message Queue, to make access, development, verification and testing less
+effort.
+* Scalability and Performance
+** The STROMA and X-STROMA protocols promote a service oriented approach for service development, realizing the
+full benefits of service reuse without sacrificing real time performance.
+	*** Service requests can be batched together
+	*** Service orchestration can be highly efficient. Brokered and inter service transactions can perform very much like local method calls depending on the engine implementation.
+	*** Services can be scaled independently. Remote access to services is supported via the broker "targets" of an X-STROMA request.
+
+=== The STROMA Service Request Format
+
+The format of a request from a user agent to a STROMA compliant service 
+may have multiple variations, based on the container implementation. HTTP is a 
+natural candidate for a core STROMA implementation due to its popularity as a 
+protocol, simplicity and extensive support. Additional support for more transport 
+protocols can easily be added using Service Broker plugins (targets) and the X-STROMA protocol, 
+which we will get into later. We'll start off with examples for HTTP, as all other 
+transport protocols can mirror how STROMA can be implemented for HTTP. 
+We will assume a Servlet based STROMA container implementation for the 
+following examples. A functional implementation of this spec as a Servlet currently 
+exists (referred to in the examples as the "Cyclades Service Engine"). More information on 
+how to set this up and run some sample service modules will be provided in the Cyclades Functional Spec. The 
+important part at this point is to understand the format of the requests. Also note 
+that although the framework supports json and xml formatted transactions, we will 
+use xml for the examples (indicated by the "data-type=xml" parameter setting).
+
+.Basic Point To Point HTTP Service Request Format
+----
+http://[engine host address]:8080/cyclades/[service name]?[parameters]
+----
+
+HTTP supports the notion of parameters within its transport protocol, so this 
+adds a bit of flexibility in the way we can specify parameters for a STROMA 
+HTTP request. We'll refer to parameters at this level simply as _parameters_.
+
+A request in STROMA can be expressed as a meta data structure (currently either xml or json). 
+A "parameter" can exist as a key/value pair located in the "parameters" location of a request's meta data or as an HTTP query parameter. 
+In the examples below you will see that some "reserved" and all "non-reserved"
+parameters can be declared in the "parameters" section (of the data section) or as query parameters 
+in the HTTP request, yielding the same results.
+
+[NOTE]
+Multiple values will be accepted for each parameter, whether defined as HTTP query parameters or within the "parameters" 
+section.
+
+The following are the set of parameters reserved for the service engine, some can
+only be declared as query prameters of a HTTP request to a service, others can appear in both locations:
+   
+* *action* (required)
+** Can be declared as a HTTP query parameter and/or in the meta data "parameters" section
+** This is the target "action" handler to invoke, remember a service is 
+comprised of one or more action handlers. An example of an 
+invocation may be a request to the "sayhello" action handler of the 
+"helloworld" service. An action is synonymous with a service capability.
+* *data* (optional based on service)
+** Can be declared as a HTTP query parameter *or* as the body of a POST request (meta only for the latter). _Data in the body will be ignored if the HTTP query parameter is present during a POST type request._
+** This is the meta data of the request in either xml or json, depending 
+on what the "data-type" parameter is set to. If the "data-type" 
+parameter is set to "json", this will be in json format and the outer 
+element will be in the form of a json object (enclosed in "{...}"). If the 
+"data-type" parameter is set to "xml", this will be in xml format and 
+the outer element will be in the form of an xml element (enclosed in 
+<anything>...</anything>). The _parameters_ section will be defined in the 
+second level of this structure (within the root level).
+*** JSON: {"parameters":[{"name":"mykey","value":"myvalue"}] ...service specific data...}
+*** XML: <data><parameters><parameter name="mykey" value="myvalue"/></parameters>...service specific data...</data>
+* *data-type* ("xml" or "json", defaults to "json" if not specified)
+** Can be declared as a HTTP query parameter only
+** This is the "language" that will be spoken back and forth to the 
+services. Any meta data in the request should match this selection, as 
+will the response coming back.
+* *data-out* ("xml" or "json", defaults to the value of *data-type* if not specified)
+** Can be declared as a HTTP query parameter only
+** This is the "language" that will be spoken back from the services, overriding whatever may be specified in *data-type*
+for the response.
+* *transaction-data* (optional)
+** Can be declared as a HTTP query parameter and/or in the meta data "parameters" section
+** This value, if supplied, will be echoed back in the response 
+corresponding to the request. This has been supplied for user agent 
+transaction housekeeping. 
+* *raw-response* (optional)
+** Can be declared as a HTTP query parameter only
+** This value, if supplied, will return the service raw response. This response
+will *not* be wrapped in the STROMA formatted request layer, i.e. only the payload
+will be returned.
+* *duration* (optional: true | false)
+** This value, if supplied, will return the duration of this service request.
+
+The following are examples of requests directly to an action handler "sayhello" 
+belonging to a service named "helloworld":
+
+----
+* http://localhost:8080/cyclades/helloworld?action=sayhello&name=myname&data-type=xml
+* http://localhost:8080/cyclades/helloworld?action=sayhello&data-type=xml&data=<data><parameters><parameter name="name" value="myname"/></parameters></data>
+* http://localhost:8080/cyclades/helloworld?action=sayhello&data-type=xml&name=yourname&data=<data><parameters><parameter name="name" value="myname"/></parameters></data>
+* http://localhost:8080/cyclades/helloworld?action=sayhello&data-type=xml&name=myname&data=<data/>
+----
+
+All of these requests are identical to the framework. The responses returned will be 
+identical. Let's go over some important concepts regarding the implementation.  As 
+you can see, there is some flexibility in the request format; we'll go over an 
+explanation for each one after an explanation of the service specifics. 
+
+The "helloworld" service is a very simple implementation of a service. It only 
+requires parameters (no nested meta data structures) and simply prints out a 
+string with the "name" parameter value appended to the end of it ("Hello World myname" 
+in this case). We'll go over more complex service implementations later.
+
+----
+http://localhost:8080/cyclades/helloworld?action=sayhello&name=myname&data-type=xml
+----
+
+This request is adequate as a direct invocation of the service since the service only 
+requires the parameter "name", and in the form as a parameter.
+
+----
+http://localhost:8080/cyclades/helloworld?action=sayhello&data-type=xml&data=<data><parameters><parameter name="name" value="myname"/></parameters></data>
+----
+
+The data parameter is used as a mechanism to submit a more sophisticated format 
+of request data. Base level parameters can be included in the "parameters" location of this 
+structure, as displayed in this request. 
+
+----
+http://localhost:8080/cyclades/helloworld?action=sayhello&data-type=xml&name=yourname&data=<data><parameters><parameter name="name" value="myname"/></parameters></data>
+----
+
+You can see that the "name" parameter is specified twice in the example above. 
+In this scenario, the instance located in "parameters" overrides the HTTP query 
+parameter. The HTTP query parameter "name" can be considered a default value in 
+this case, and will be ignored since "name" is specified in the "parameters" secion of the "data".
+
+----
+http://localhost:8080/cyclades/helloworld?action=sayhello&data-type=xml&name=myname&data=<data/>
+----
+
+In the final example above you can see that the query parameter "name" is used as 
+the definitive value in the service as "name" is not specified in "parameters".
+Simply put, the default value wins.
+
+We have gone over four different examples of how to invoke one 
+service, each resulting in the same response and essentially "looking" like the same 
+request to the "helloworld" service. Although added flexibility frequently adds more 
+complexity, the STROMA and X-STROMA protocols push complexity up and into the 
+STROMA container implementation and help streamline and simplify service 
+development, while allowing the developers to extend the protocol as needed.
+
+Let's look at an example service transaction that requires more sophisticated 
+request data. We'll add an additional action handler to the "helloworld" command, 
+"sayhellos", which will accept nested data structure of people to say hello to. 
+      
+----
+http://localhost:8080/cyclades/helloworld?action=sayhellos&data-type=xml&data=<data><person fname="John" lname="Doe"/><person fname="Jane" lname="Doe"/></data>
+----
+
+In this example, the service action handler "sayhellos" takes a bit more than  
+parameters. This service requires a data structure (xml in this example) that is 
+essentially a list of "person" elements with the attributes "fname" and "lname".  The 
+service handler implementation itself is responsible for the format specifics of the 
+meta data in the "data" query parameter. In this example, the framework will note 
+the datatype setting (xml) and make available to the service handler a Node object 
+of the root element ("data" in this example, but this could be any value). Again, 
+any parameters that this service handler's API requires would be specified as 
+attributes either as HTTP query parameters or as "parameters" entries in the "data" 
+element, this is entirely up to the service implementation and ultimately its exposed 
+API/contract.
+
+[NOTE]
+Developers will have access to a Map consisting of the parameters. Multiple values per key will be supported.
+
+=== The STROMA Service Response Format
+
+A STROMA service response currently comes in two flavors, json or xml, 
+based on the value of the "data-type" parameter. By default, json will be 
+used. Just think of this setting as the "language" the protocol will speak back and 
+forth. Here are a couple examples of responses in xml:
+      
+The following is the response from the "sayhello" action handler of the "helloworld" 
+service:
+
+----
+<response service="helloworld" error-code="0" action="sayhello">
+      <payload message="Hello World myname"/>
+<response>
+----
+
+* *response* element (root) : The root element of the service response
+** *service* attribute: The service that responded
+** *action* attribute: The action handler of the service that 
+responded
+** *error-code* attribute: The error code of the response. If this is a 
+non zero result, then this will be considered an error and there 
+will be an error message associated with this response.
+* *payload* element (child of "response" outer element): This element can be 
+named anything. This is the root node for the actual meta data generated by a 
+service for the response. The schema utilized is completely up to the service 
+implementation, as long as it is valid for the language chosen, i.e. in the xml 
+example above, and valid xml that can exist as an element child is valid. This can 
+techinically be one element, a list of elements or no element.
+
+The following is the response from the "sayhellos" action handler of the 
+"helloworld" service:
+
+----
+<response service="helloworld" error-code="0" action="sayhellos">
+	<hello message="Hello World John Doe"/>
+      	<hello message="Hello World Jane Doe"/>
+<response>
+----
+
+You can see from the examples above that a service response has a standard format 
+for the root data structure (the "response" element) that basically wraps 
+service implementation specific meta data. 
+
+A response may contain an optional _parameters_ section depending on the service contract. The following
+is an example of what this would look like if included in the previous example:
+
+----
+<response service="helloworld" error-code="0" action="sayhellos">
+	<parameters>
+		<parameter name="key1" value="val1"/>
+		<parameter name="key1" value="val2"/>
+		<parameter name="key2" value="val3"/>
+	</parameters>
+        <hello message="Hello World John Doe"/>
+        <hello message="Hello World Jane Doe"/>
+<response>
+----
+
+== The X-STROMA Protocol
+
+Since STROMA compliant service APIs (protocols) are implemented on top of 
+a predictable request meta data format, expressing an orchestration of these services is a 
+somewhat natural process. A STROMA compliant service broker implementation 
+can translate an X-STROMA service request into an orchestration of services, giving 
+the user agent the ability to dynamically request an orchestration via any supported 
+transport protocol (we will be using HTTP for our example, but this can be
+anything, Message Queue, sockets..etc). X-STROMA is the protocol that orchestrates STROMA 
+compliant services. A broker service can potentially also be STROMA compliant 
+itself, possibly allowing for nested broker requests, however for clarity we'll focus 
+on the simpler case where a broker is a service that orchestrates STROMA compliant 
+services, but is not itself necessarily a STROMA compatible service.
+
+=== The X-STROMA Service Request Format
+
+Below are the reserved parameters for a X-STROMA compliant 
+broker:
+
+* *data* (required)
+** Can be declared as a HTTP query parameter or as the body of a POST request (meta only for the latter). Data in the body will be ignored if the HTTP query parameter is present during a POST type request.
+** This is the meta data of the request in either xml or json, depending 
+on what the "data-type" parameter is set to. If the "data-type" 
+parameter is set to "json", this will be in json format and the outer 
+element will be in the form of a json object (enclosed in 
+"{"requests":[...]}"). If the "datatype" parameter is set to "xml", this 
+will be in xml format and the outer element will be in the form of an 
+xml element (enclosed in <data>...</data>). The format of 
+nested service requests will be STROMA as described above. All "parameters"
+specific to a service request should be declared in that service request's
+"parameters" section. "action" is required, all others may be derived
+from the parameters of the parent request (broker) as defaults.
+* *data-type* (xml | json, defaults to "json" if not specified)
+** This is the "language" that will be spoken back and forth to the 
+services. Any meta data in the request should match this selection, as 
+will the response coming back.
+* *data-out* ("xml" or "json", defaults to the value of *data-type* if not specified)
+** This is the "language" that will be spoken back from the services, overriding whatever may be specified in *data-type*
+for the response.
+* *transaction-data* (optional)
+** This value, if supplied, will be echoed back in the response 
+corresponding to the request of any service request that does not 
+specify the "transaction-data" parameter itself. Consider this a default 
+value. This has been supplied for user agent transaction 
+housekeeping. 
+* *enable-orchestration-fault*  (optional: true | false)
+** This value, if true, will halt processing any further service requests 
+once an error has been encountered. All responses will be retured up 
+to and including the last one, that is the one that failed. If this value is 
+false, or not specified (defaults to false) then all service requests will 
+be executed and their relative responses returned, whether they have 
+succeeded or not.
+* *asynchronous* (optional: true | false)
+** This value will submit the requests and return immediately.
+* *chain* (optional: true:false)
+** This value will set the broker to "chain" mode, where each request's 
+external facing response (and/or internal data forwarding) is submitted 
+to the next request specified to be utilized for further processing. Only 
+the external facing response of the final service in the chain will be 
+returned.
+* *notify* (optional: comma separated list of emails to send the notification, to be used only when "asynchronous" is specified)
+** If specified, the broker will attempt to send an email notification to 
+the comma separated distribution list (value of this parameter) when 
+the request is finished. This functionality is useful when in 
+asynchronous mode and notification is desired for human 
+consumption or a processes like "procmail".
+* *target* (optional)
+** If specified, the current request will be dispatched to the said target 
+implementation. This can be a remote instance of a broker, the local one, a 
+remote pool of brokers, a Message Queue, etc. Targets 
+are defined in the broker's configuration file. More information on 
+targets can be found in the Cyclades Techincal Specification (user's guide).
+* *connection-timout* (optional, to be used only when "target" is specified)
+** This is the connection timout in milliseconds desired for this transaction. 
+The availability of this option depends on the target's MessageProducer implementation that is being used. 
+For example, The default HTTP MessageProducer that Cyclades deploys with offers this capability, a custom
+one may not.
+* *read-timeout* (optional, to be used only when "target" is specified)
+** This is the read timout in milliseconds desired for this transaction.
+The availability of this option depends on the target's MessageProducer implementation that is being used.
+For example, The default HTTP MessageProducer that Cyclades deploys with offers this capability, a custom
+one may not.
+* *duration* (optional: true | false)
+** This value, if supplied, will return the duration of this X-STROMA request. Consider this a default
+value for any child services that do not have this value specifed. 
+
+The following is an example of a broker request that is simply comprised of two 
+requests to the HelloWorld service:
+
+----
+http://localhost:8080/cyclades/servicebroker?data-type=xml&transaction-data=777&data=<data><requests><request service="helloworld"><parameters><parameter name="action" value="sayhello"/><parameter name="name" value="Tom"/></parameters></request><request service="helloworld"><parameters><parameter name="action" value="sayhello"/><parameter name="name" value="Joe"/></parameters></request></requests></data>
+----
+
+[NOTE]
+There is an optional way to make a request to the service broker over HTTP (pure X-STROMA messaging formatted request), please see the section <<adapter-protocol,"X-STROMA Broker Adapter Message Format">> under "Advanced X-STROMA"
+
+=== The X-STROMA Service Response Format
+
+The following is an example of a broker response to the actual above request:
+
+----
+<response service="servicebroker" error-code="0">
+	<response service="helloworld" action="sayhello" transaction-data="777" error-code="0">
+		<payload message="Hello World: [Tom] "/>
+	</response>
+	<response service="helloworld" action="sayhello" transaction-data="777" error-code="0">
+		<payload message="Hello World: [Joe] "/>
+	</response>
+</response>
+----
+
+The response is comprised of the broker response, complete with an error-code 
+attribute, and the nested responses of all of the requests submitted. This is a trivial 
+example of how to batch multiple requests using a broker. We'll look at some more 
+sophisticated request formats for a X-STROMA compliant broker in the following 
+section.
+
+A response may contain an optional _parameters_ section. Any use of this section should be documented accordingly, i.e. a
+target making use of this section would document the anticipated parameters.
+The following is an example of what this would look like if included in the previous response example:
+
+----
+<response service="servicebroker" error-code="0">
+	<parameters>
+                <parameter name="key1" value="val1"/>
+                <parameter name="key1" value="val2"/>
+                <parameter name="key2" value="val3"/>
+        </parameters>	
+        <response service="helloworld" action="sayhello" transaction-data="777" error-code="0">
+                <payload message="Hello World: [Tom] "/>
+        </response>
+        <response service="helloworld" action="sayhello" transaction-data="777" error-code="0">
+                <payload message="Hello World: [Joe] "/>
+        </response>
+</response>
+----
+
+=== Advanced X-STROMA
+
+==== X-STROMA Broker Adapter Message Format
+anchor:adapter-protocol[]
+The X-STROMA service broker utilizes the following message formats during adapter dispatching. Regardless of the transport protocol, this message format will always be valid for a X-STROMA broker request. 
+
+[NOTE]
+Request formats dispatched over service broker adapters are slightly different than semanticaly similar HTTP dispatched requests because any dispatching done over adapters needs to be in a purely meta data format, where the HTTP protocol allows for data in other locations, like query parameters. Since service broker responses are always in pure meta data format, there is no difference of a response format between an adapter dispatched response verses a HTTP dispatched response. The service broker in the Cyclades distribution includes adapters for use of HTTP as a transport protocol (a HTTP Message Producer and built in HTTP message consumption, as you will see in the examples below).
+
+.XML Request
+----
+<x-stroma><parameters>...</parameters><data><requests>...</requests></data></x-stroma>
+
+Sample HTTP pure meta request (i.e. adapter format)
+
+http://localhost:8080/cyclades/servicebroker?data-type=xml&x-stroma-message=<x-stroma><parameters><paramter name="transaction-data" value="777"/></parameters><data><requests><request service="helloworld"><parameters><paramter name="action" value="sayhello"/><paramter name="name" value="sayhello"/><paramter name="name" value="sayhello2"/><paramter name="name" value="sayhello3"/></parameters></request><request service="helloworld"><parameters><paramter name="action" value="sayhello"/><paramter name="name" value="sayhello"/><paramter name="name" value="sayhello2"/><paramter name="name" value="sayhello3"/><paramter name="transaction-data" value="xxx"/></parameters></request></requests></data></x-stroma>
+----
+
+.JSON Request
+----
+{"parameters":[...parameters...],"data":{"requests":[...]}}
+
+Sample HTTP pure meta request (i.e. adapter format)
+
+http://localhost:8080/cyclades/servicebroker?x-stroma-message={"parameters":[{"name":"transaction-data","value":"777"}],"data":{"requests":[{"service":"helloworld","data":{"parameters":[{"name":"action","value":"sayhello"},{"name":"name","value":"Tommy"}]}},{"service":"helloworld","data":{"parameters":[{"name":"action","value":"sayhello"},{"name":"name","value":"Joey"},{"name":"name","value":"Joey2"},{"name":"transaction-data","value":"xxx"}]}}]}}
+----
+
+[NOTE]
+The x-stroma-message content can be transported in the body of a request by POSTing the data (the value of the _x-stroma-message_  parameter as shown above only) directly to "http://localhost:8080/cycladesengine/servicebroker?x-stroma-message&data-type=xxx" where xxx is either "XML" or "JSON". Make sure the "x-stroma-message" parameter is empty if this behavior is desired as any non-empty data specified in the query parameter will have precedence over any data in the body of the request. 
+
+.Enabling Target Declarations In x-stroma-messages
+
+A target can be declared as a parameter in the x-stroma-message. With the environment configured properly, this capablity allows a x-stroma-message to dispatch through a service engine federation until the desired target engine is reached. This is an advanced feature that can be utilized to alter service engine federation dispatch configurations for various reasons such as load balancing or managing service outages. 
+
+[IMPORTANT]
+This capability offers a mechanism for target request redirection and discovery that requires the proper configuration of participating engines. The _Cyclades Service Engine_ offeres a safety latch to disable this capability by default. Please see the Cyclades Service Engine functional specification for details of how to configure and use this advanced X-STROMA feature.
+
+==== X-STROMA Request Brokering Models
+
+There are two brokering models supported directly within the X-STROMA protocol 
+
+* Composition: General batching of requests
+* Chaining: Pipes and filters orchestration of a series of requests 
+
+IMPORTANT: To Be Continued!

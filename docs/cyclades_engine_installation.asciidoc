@@ -1,0 +1,59 @@
+////////////////////////////////////////////////////////////////////////////////
+Copyright (c) 2012, THE BOARD OF TRUSTEES OF THE LELAND STANFORD JUNIOR UNIVERSITY
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+   Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+   Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+   Neither the name of the STANFORD UNIVERSITY nor the names of its contributors
+   may be used to endorse or promote products derived from this software without
+   specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.
+////////////////////////////////////////////////////////////////////////////////
+
+= Cyclades Service Engine Installation
+
+== Overview
+
+This document describes the steps involved for the installation of the Cyclades Service Engine.
+
+== Instructions
+
+First, Tomcat should be installed (preferrably Tomcat 7 or above)
+
+=== From The Artifacts Of An Existing Nyxlet Workspace
+
+. A Nyxlet workspace must exist. If you are creating one from scratch, please follow the directions link:nyxlet_template_generation.html[here] first, then resume with the following step
+
+. Build the Nylxet workspace ("gradle clean build" from the base of the workspace)
+
+. You should now find a "cyclades*.war" file in the build/libs directory. The file name may include some sort of version information. Copy this file to your Tomcat installation's "webapps" directory under the name "cyclades.war". 
+
+. Restart Tomcat
+
+. Verify the installation with the following URL (for a local installation, for example): http://localhost:8080/cyclades
+
+=== From The Cyclades Service Engine Binary Distribution
+
+. Download the Cyclades Engine Binary Distribution (cyclades.war file)
+
+. The file name may include some sort of version information. Copy this file to your Tomcat installation's "webapps" directory under the name "cyclades.war".
+
+. Restart Tomcat
+
+. Verify the installation with the following URL (for a local installation, for example): http://localhost:8080/cyclades

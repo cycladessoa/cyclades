@@ -1,0 +1,80 @@
+<!--
+ ~ Copyright (c) 2012, THE BOARD OF TRUSTEES OF THE LELAND STANFORD JUNIOR UNIVERSITY
+ ~ All rights reserved.
+ ~
+ ~ Redistribution and use in source and binary forms, with or without modification,
+ ~ are permitted provided that the following conditions are met:
+ ~
+ ~    Redistributions of source code must retain the above copyright notice,
+ ~    this list of conditions and the following disclaimer.
+ ~    Redistributions in binary form must reproduce the above copyright notice,
+ ~    this list of conditions and the following disclaimer in the documentation
+ ~    and/or other materials provided with the distribution.
+ ~    Neither the name of the STANFORD UNIVERSITY nor the names of its contributors
+ ~    may be used to endorse or promote products derived from this software without
+ ~    specific prior written permission.
+ ~
+ ~ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ ~ ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ ~ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ ~ IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ ~ INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ ~ BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ ~ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ ~ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ ~ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ ~ OF THE POSSIBILITY OF SUCH DAMAGE.
+ -->
+<manifest>
+  <nyxlet name="" class="">
+    <!-- RESERVED VALUES -->
+    <attribute name='service-agent'>
+      <value><![CDATA[NYXLET_NAME/1.0 STROMA/1.0]]></value>
+    </attribute>
+    <!-- RESERVED VALUES -->
+    
+    <!-- ActionHandlers (I.E. property file entries in the form of "action name"="handler class") -->
+    <attribute name='actionHandlers'>
+      <value>
+	<!-- 
+	     All action handlers will naturally be derrived from annotations on corresponding classes at the 
+	     build time, but you can also explicitly add them here and they will not be overridden during the 
+	     build process.
+	-->
+      </value>
+    </attribute>
+    <!-- ActionHandlers -->
+    
+    <!-- LogWriters (List these as property file entries in the form of [NAME]=[LOG_DIRECTORY]|[LOG_FILE_NAME]|[DATE_FORMAT]) -->
+    <!-- Relative paths (not starting with "/" or containing ":") will be based in the "WEB-INF" directory of the Engine      -->
+    <!-- Example entry: name=logs|mylog.log|yyyyMMdd                                                                          -->
+    <attribute name='logWriters'>
+	   <value><![CDATA[
+		   general=logs|NYXLET_NAME.log|dd
+	   ]]></value>
+    </attribute>
+    <!-- LogWriters -->
+    
+    <!-- LoggingDelegates (List these as property file entries in the form of [NAME]=[LOG_WRITER]|[LOG_LEVEL]) -->
+    <!-- Example entry: logging_delegate_name=log_writer_name|ERROR                                            -->
+    <!--    - "LOG_WRITER" must be the name of an existing logWriter declared above                            -->
+    <!--    - "LOG_LEVEL" must be one of ERROR, WARN, INFO or DEBUG                                            -->
+    <!--    - "LOG_LEVEL" can be overridden in the external properties file as:                                -->
+    <!--        "LoggingDelegate.[loggingDelegateName].logLevel". An example entry that overrides the existing -->
+    <!--        one below would be "LoggingDelegate.general.logLevel=DEBUG"                                    --> 
+    <attribute name='loggingDelegates'>
+       <value><![CDATA[
+           general=general|WARN
+       ]]></value>
+    </attribute>
+    <!-- LoggingDelegates -->
+    
+    <!-- If this element is empty or missing, we will look in the specified nyxlet -->
+    <!-- directories for the file [name].properties, in the order that the         -->
+    <!-- specified directories were defined in the engine (web.xml init-param      -->
+    <!-- entry "nyxletDirectories"). Use this for an override mechanism.           -->
+    <attribute name='externalProperties'>
+      <value></value>
+    </attribute>
+  </nyxlet>
+</manifest>

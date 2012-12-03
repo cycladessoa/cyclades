@@ -1,0 +1,132 @@
+/*******************************************************************************
+ * Copyright (c) 2012, THE BOARD OF TRUSTEES OF THE LELAND STANFORD JUNIOR UNIVERSITY
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ *    Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *    Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *    Neither the name of the STANFORD UNIVERSITY nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software without
+ *    specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ *******************************************************************************/
+
+task startTomcat {
+    description = 'start Tomcat'
+
+    doLast() {
+        ClassLoader antClassLoader = org.apache.tools.ant.Project.class.classLoader
+        configurations.sshAntTask.each { File f ->
+            antClassLoader.addURL(f.toURI().toURL())
+        }
+        ant.taskdef(name: 'sshexec', classname: 'org.apache.tools.ant.taskdefs.optional.ssh.SSHExec', classpath: configurations.sshAntTask)
+
+        tmpList = tomcat_list
+        parsedList = tmpList.split(",")
+        parsedList.each { parsedItem ->
+            println "Starting Tomcat on ${parsedItem}..."
+            ant.sshexec(host: "${parsedItem}", username: services_login, password: services_password, command: tomcat_startcmd, trust: 'true', failonerror: 'false')
+        }
+    }
+}
+
+task stopTomcat {
+    description = 'stop Tomcat'
+    
+    doLast() {
+        ClassLoader antClassLoader = org.apache.tools.ant.Project.class.classLoader
+        configurations.sshAntTask.each { File f ->
+            antClassLoader.addURL(f.toURI().toURL())
+        }
+        ant.taskdef(name: 'sshexec', classname: 'org.apache.tools.ant.taskdefs.optional.ssh.SSHExec', classpath: configurations.sshAntTask)
+        tmpList = tomcat_list
+        parsedList = tmpList.split(",")
+        parsedList.each { parsedItem ->
+            println "Stopping Tomcat on ${parsedItem}..."
+            ant.sshexec(host: "${parsedItem}", username: services_login, password: services_password, command: tomcat_stopcmd, trust: 'true', failonerror: 'false')
+        }
+    }
+}
+
+task deployApp {
+    description = 'deploy Cyclades to Tomcat'
+
+    doLast() {
+        ClassLoader antClassLoader = org.apache.tools.ant.Project.class.classLoader
+        configurations.tomcatLibs.each { File f ->
+            antClassLoader.addURL(f.toURI().toURL())
+        }
+        ant.taskdef(name: 'deploytask', classname: 'org.apache.catalina.ant.DeployTask', classpath: configurations.tomcatLibs)
+        tmpList = tomcat_list
+        parsedList = tmpList.split(",")
+        parsedList.each { parsedItem ->
+            ant.deploytask(url: "http://${parsedItem}:"+tomcat_port+"/manager/text", username: tomcat_manager_username, password: tomcat_manager_password, path: "/"+tomcat_context_name, war: war.archivePath)
+        }
+    }
+}
+
+task undeployApp {
+    description = 'undeploy Cyclades from Tomcat'
+
+    doLast() {
+        ClassLoader antClassLoader = org.apache.tools.ant.Project.class.classLoader
+        configurations.tomcatLibs.each { File f ->
+            antClassLoader.addURL(f.toURI().toURL())
+        }
+        ant.taskdef(name: 'undeploytask', classname: 'org.apache.catalina.ant.UndeployTask', classpath: configurations.tomcatLibs)
+        tmpList = tomcat_list
+        parsedList = tmpList.split(",")
+        parsedList.each { parsedItem ->
+            ant.undeploytask(url: "http://${parsedItem}:"+tomcat_port+"/manager/text", username: tomcat_manager_username, password: tomcat_manager_password, path: "/"+tomcat_context_name, failonerror: "no")
+        }
+    }
+}
+
+task startApp {
+    description = 'start Cyclades on Tomcat; assume deployApp has been called'
+    
+    doLast() {
+        ClassLoader antClassLoader = org.apache.tools.ant.Project.class.classLoader
+        configurations.tomcatLibs.each { File f ->
+            antClassLoader.addURL(f.toURI().toURL())
+        }
+        ant.taskdef(name: 'starttask', classname: 'org.apache.catalina.ant.StartTask', classpath: configurations.tomcatLibs)
+        tmpList = tomcat_list
+        parsedList = tmpList.split(",")
+        parsedList.each { parsedItem ->
+            ant.starttask(url: "http://${parsedItem}:"+tomcat_port+"/manager/text", username: tomcat_manager_username, password: tomcat_manager_password, path: "/"+tomcat_context_name )
+        }
+    }
+}
+
+task stopApp {
+    description = 'stop Cyclades on Tomcat; assume deployApp was initially called'
+    
+    doLast() {
+        ClassLoader antClassLoader = org.apache.tools.ant.Project.class.classLoader
+        configurations.tomcatLibs.each { File f ->
+            antClassLoader.addURL(f.toURI().toURL())
+        }
+        ant.taskdef(name: 'stoptask', classname: 'org.apache.catalina.ant.StopTask', classpath: configurations.tomcatLibs)
+        tmpList = tomcat_list
+        parsedList = tmpList.split(",")
+        parsedList.each { parsedItem ->
+            ant.stoptask(url: "http://${parsedItem}:"+tomcat_port+"/manager/text", username: tomcat_manager_username, password: tomcat_manager_password, path: "/"+tomcat_context_name )
+        }
+    }
+}

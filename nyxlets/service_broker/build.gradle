@@ -1,0 +1,185 @@
+/*******************************************************************************
+ * Copyright (c) 2012, THE BOARD OF TRUSTEES OF THE LELAND STANFORD JUNIOR UNIVERSITY
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ *    Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *    Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *    Neither the name of the STANFORD UNIVERSITY nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software without
+ *    specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ *******************************************************************************/
+
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+version = nyxlet_service_broker_version + '.' + build_number
+ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
+group = 'com.github.cycladessoa.nyxlets'
+archivesBaseName = 'servicebroker'
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: sonatypeUsername, password: sonatypePassword)
+            }
+            pom.project {
+               name 'Cyclades'
+               packaging 'jar'
+               description 'Cyclades is a Services Engine'
+               url 'http://github.com/cycladessoa'
+               scm {
+                   url 'scm:git@github.com:cycladessoa/cyclades.git'
+                   connection 'scm:git@github.com:cycladessoa/cyclades.git'
+                   developerConnection 'scm:git@github.com:cycladessoa/cyclades.git'
+               }
+               licenses {
+                   license {
+                       name 'BSD License, Version 3.0'
+                       url 'http://www.w3.org/Consortium/Legal/2008/03-bsd-license.html'
+                       distribution 'repo'
+                   }
+               }
+               developers {
+                   developer {
+                       id 'cycladessoa'
+                       name 'Cyclades SOA'
+                   }
+                   developer {
+                       id 'cyclades-tangel'
+                       name 'Tom Angelopous'
+                   }
+                   developer {
+                       id 'cycladessoa-cthai'
+                       name 'Charleston Thai'
+                   }
+               }
+           }
+        }
+    }
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from 'build/docs/javadoc'
+}
+ 
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allSource
+    classifier = 'sources'
+}
+jar.enabled = true
+artifacts { 
+    archives jar 
+
+    archives javadocJar
+    archives sourcesJar
+}
+
+signing {
+    sign configurations.archives
+}
+signArchives.onlyIf { ext.isReleaseVersion }
+
+List<String> listKey = new ArrayList<String>()
+List<String> listValue = new ArrayList<String>()
+
+jar {
+  // save the extension as *.nyxlet
+  extension = 'nyxlet'
+
+  dependsOn classes
+  from { configurations.newConf.collect { it.isDirectory() ? it : zipTree(it) }}
+
+  dependsOn configurations.runtime
+  from { configurations.runtime }
+
+  manifest {
+    attributes 'Main-Class': 'org.cyclades.nyxlet.servicebrokernyxlet'
+    attributes 'Provider': "Cyclades SOA"
+    attributes 'Extension-Name': archivesBaseName
+    attributes 'Implementation-Title': 'Gradle'
+    attributes 'Implementation-Vendor-Id': "CycladesSOA"
+    attributes 'Implementation-Version': version
+    attributes 'Built-With': 'gradle-' + GradleVersion.current()
+    attributes 'Built-By': System.getProperty("user.name") 
+  }
+  exclude '*.jar'
+  exclude '*.properties'
+}
+jar.doFirst() {
+    configurations.runtime.each { f->
+        project.ext.dArray = "$f"
+        project.ext.dResult = project.ext.dArray.split("/")
+        project.ext.dSize = project.ext.dResult.size()
+        listKey.add(project.ext.dResult[project.ext.dSize-5])
+        listValue.add(project.ext.dResult[project.ext.dSize-1])
+    }
+    configurations.newConf.each { f->
+        project.ext.dArray = "$f"
+        project.ext.dResult = project.ext.dArray.split("/")
+        project.ext.dSize = project.ext.dResult.size()
+        listKey.add(project.ext.dResult[project.ext.dSize-5])
+        listValue.add(project.ext.dResult[project.ext.dSize-1])
+    }
+}
+jar.doLast() {
+    println "jar.doLast() ... updating manifest.mf"
+    for (i in 0..listKey.size()-1) {
+        project.ext.tmpKey = listKey.get(i)
+        if (project.ext.tmpKey.contains('.'))  {
+            project.ext.tmpKey = project.ext.tmpKey.replaceAll('\\.', '-')
+        }
+        ant.jar(destfile: jar.archivePath, update: true) {
+            delegate.manifest {
+                attribute(name: project.ext.tmpKey, value: listValue.get(i))
+            }
+        }
+    }
+    println("jar.doLast() ... start")
+    javaexec {
+        main = 'org.cyclades.engine.nyxlet.BuildNyxletManifest'
+        classpath = sourceSets.main.runtimeClasspath
+        args = ['-q', jar.archivePath]
+    }
+    println("jar.doLast() ... end")
+}
+
+sourceSets.main.resources.srcDir 'conf'
+
+configurations {
+   newConf
+}
+
+dependencies {
+    compile project(':engine')
+
+    compile group: 'com.rabbitmq', name: 'amqp-client', version: '2.8.6'
+
+    newConf group: 'com.rabbitmq', name: 'amqp-client', version: '2.8.6'
+}
+
+task copyToLib(type: Copy) {
+    into "$buildDir/libs"
+    from configurations.runtime
+}
+build.dependsOn(copyToLib)
+

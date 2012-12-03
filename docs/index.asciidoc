@@ -39,6 +39,6 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 * link:nyxlet_logging_mechanisms.html[Nyxlet Logging Mechanisms]
 * link:nyxlet_input_validation.html[Nyxlet Input Validation Mechanisms]
 * link:cyclades-engine-javadoc/index.html[Cyclades Engine API Documentation]
-* link:cyclades_service_engine.html[Cyclades Technical Specification]
+* link:cyclades_service_engine.html[Cyclades Technical Specification/User's Guide]
 * link:STROMA_X-STROMA.html[STROMA/X-STROMA Specification]
-* link:functional_view/functional_spec.html[User's Guide/Cyclades Functional Specification]
+* link:functional_view/functional_spec.html[Cyclades Functional Specification]

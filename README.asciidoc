@@ -42,7 +42,7 @@ A specification and corresponding reference implementation for a service engine 
 
 == Overview
 
-* This product is provided under the terms of the BSD license, please see "LICENSE.txt" for more information
+* This product is provided under the terms of the BSD license, please see "LICENSE" for more information
 
 * Although this product is used in production enviroments, it is currently being transitioned to an Open Source Software project. That being said, there will be aspects of this project that will need refinement as its maturing process as an Open Source Software project progresses (documentation, APIs, bugs etc...). We are looking forward to the feedback and contributions that will improve this product for the OSS community.
 

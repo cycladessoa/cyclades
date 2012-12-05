@@ -30,7 +30,7 @@ A specification and corresponding reference implementation for a service engine 
 
 == Basic Features
 
-* Service Orchestration Engine running in Tomcat
+* Service Orchestration Engine running as a Servlet (i.e. in Tomcat)
 * Flexible service orchestration from within services (Java APIs) and at the protocol level (i.e. browser request)
 	** Composition
 	** Chaining (i.e. Unix pipes and filters paradigm)

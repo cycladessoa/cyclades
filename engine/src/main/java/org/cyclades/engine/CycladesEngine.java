@@ -412,10 +412,9 @@ public class CycladesEngine {
                 return;
             }
 
-            final String serviceAgent = nyxlet.getAttribute(SERVICE_AGENT);
-            if (serviceAgent != null) {
-                response.setHeader(SERVICE_AGENT, serviceAgent);
-            }
+            final String serviceAgent = nyxlet.getServiceAgentAttribute();
+            if (serviceAgent != null && !serviceAgent.isEmpty()) response.setHeader(Nyxlet.SERVICE_AGENT, serviceAgent);
+
             commandCollectiveResponse = nyxlet.process(sessionDelegate);
             // NOTE: Check to see if the commandCollectiveResponse has been returned as null. This is actually a valid
             // condition as it will flag that the targeted command will not want to proceed with the following
@@ -514,7 +513,6 @@ public class CycladesEngine {
     private List<InitializationDelegate> initializationDelegates = new ArrayList<InitializationDelegate>();
     private static EngineContext engineContext;
     private long nyxletLoadStamp;
-    private static final String SERVICE_AGENT               = "service-agent";
     private static final String STROMA_ENABLED              = "STROMA";
     private static final String FORM_ENCODED                = "application/x-www-form-urlencoded";
     private static final String CONTENT_TYPE                = "CONTENT-TYPE";

@@ -45,6 +45,7 @@ import org.cyclades.engine.logging.LogWriterInterface;
 import org.cyclades.engine.logging.LoggingEnum;
 import org.cyclades.engine.logging.LoggingDelegate;
 import org.cyclades.engine.nyxlet.templates.stroma.actionhandler.ActionHandler;
+import org.cyclades.engine.nyxlet.templates.stroma.actionhandler.GetServiceMetaHandler;
 import org.cyclades.engine.nyxlet.templates.stroma.actionhandler.ListActionsHandler;
 import org.cyclades.engine.stroma.STROMARequestParameterAggregate;
 import org.cyclades.engine.stroma.STROMAResponseWriter;
@@ -208,6 +209,7 @@ public abstract class STROMANyxlet extends Nyxlet {
             Properties props = new Properties();
             props.load(bis);
             actionHandlers.put("listactions", new ListActionsHandler(this));
+            actionHandlers.put("getservicemeta", new GetServiceMetaHandler(this));
             this.loadActionHandlers(props.entrySet());
         } finally {
             try { bis.close(); } catch (Exception ignore) {}

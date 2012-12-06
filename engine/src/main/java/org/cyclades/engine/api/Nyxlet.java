@@ -338,6 +338,10 @@ public abstract class Nyxlet {
         return buildProperties;
     }
 
+    public String getServiceAgentAttribute () {
+        return (attributes.containsKey(SERVICE_AGENT)) ? attributes.get(SERVICE_AGENT).toString() : "";
+    }
+
     private ConcurrentHashMap<Object, Object> attributes = new ConcurrentHashMap<Object, Object>();
     private String name = null;
     private String rrdString = null;
@@ -345,4 +349,6 @@ public abstract class Nyxlet {
     private volatile boolean active = true;
     private volatile boolean healthy = true;
     private Properties buildProperties;
+    public static final String SERVICE_AGENT = "service-agent";
+
 }

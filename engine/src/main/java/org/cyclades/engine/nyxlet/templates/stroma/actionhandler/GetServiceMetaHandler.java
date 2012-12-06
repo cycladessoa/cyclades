@@ -29,6 +29,7 @@ package org.cyclades.engine.nyxlet.templates.stroma.actionhandler;
 
 import java.util.List;
 import java.util.Map;
+import javax.xml.stream.XMLStreamWriter;
 import org.cyclades.engine.NyxletSession;
 import org.cyclades.engine.api.Nyxlet;
 import org.cyclades.engine.nyxlet.templates.stroma.STROMANyxlet;
@@ -41,22 +42,30 @@ public class GetServiceMetaHandler extends ActionHandler {
     }
 
     @Override
-    public void handle (NyxletSession sessionDelegate, Map<String, List<String>> baseParameters, STROMAResponseWriter stromaResponseWriter) throws Exception {
+    public void handle (NyxletSession nyxletSession, Map<String, List<String>> baseParameters, STROMAResponseWriter stromaResponseWriter) throws Exception {
         final String eLabel = "GetServiceMetaHandler.handle: ";
         try {
             stromaResponseWriter.addResponseParameter(Nyxlet.SERVICE_AGENT, getParentNyxlet().getServiceAgentAttribute());
             Map<Object, Object> buildProperties = getParentNyxlet().getBuildProperties();
-            if (buildProperties != null) {
+            if (buildProperties != null && (!baseParameters.containsKey(BUILD_INFO) || parameterAsBoolean(BUILD_INFO, baseParameters, false))) {
+                XMLStreamWriter streamWriter = stromaResponseWriter.getXMLStreamWriter();
+                streamWriter.writeStartElement(BUILD_INFO);
                 for (Map.Entry<Object, Object> mapEntry : buildProperties.entrySet()) {
-                    stromaResponseWriter.addResponseParameter(mapEntry.getKey().toString(), mapEntry.getValue().toString());
+                    streamWriter.writeStartElement("parameter");
+                    streamWriter.writeAttribute("name", mapEntry.getKey().toString());
+                    streamWriter.writeAttribute("value", mapEntry.getValue().toString());
+                    streamWriter.writeEndElement();
                 }
+                streamWriter.writeEndElement();
             }
         } catch (Exception e) {
             getParentNyxlet().logStackTrace(e);
-            handleException(sessionDelegate, stromaResponseWriter, eLabel, e);
+            handleException(nyxletSession, stromaResponseWriter, eLabel, e);
         } finally {
             stromaResponseWriter.done();
         }
     }
+
+    private static final String BUILD_INFO = "buildinfo";
 
 }

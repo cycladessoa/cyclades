@@ -1,0 +1,11 @@
+{
+    "target": "extractor",
+    "authentication_data": "authenticate",
+    "auth_data_forwarding": "false",
+    "class": "org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.Extractor",
+    "target_init_data": {
+        "pool": "true",
+        "maxActive": "5",
+        "connection_string": "amqp://guest:guest@localhost:5672"
+    }
+}

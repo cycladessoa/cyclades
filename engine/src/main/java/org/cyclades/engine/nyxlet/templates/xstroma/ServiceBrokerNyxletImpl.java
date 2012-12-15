@@ -28,6 +28,8 @@
 package org.cyclades.engine.nyxlet.templates.xstroma;
 
 import java.io.OutputStream;
+
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.w3c.dom.Node;
 import org.cyclades.engine.ResponseCodeEnum;
@@ -52,7 +54,10 @@ import java.util.List;
 import java.util.ArrayList;
 import org.cyclades.engine.util.GenericXMLObject;
 import org.cyclades.engine.NyxletSession;
+import org.cyclades.io.ResourceRequestUtils;
+
 import com.google.common.io.ByteStreams;
+import org.json.JSONArray;
 
 public class ServiceBrokerNyxletImpl extends XSTROMANyxlet {
 
@@ -361,20 +366,32 @@ public class ServiceBrokerNyxletImpl extends XSTROMANyxlet {
         try {
             super.init();
             // Initialize service producers
-            String propertyVal = getExternalProperties().getProperty(PRODUCER_TARGETS);
-            if (propertyVal != null) producerTargetMap = ProducerTarget.loadTargets(propertyVal, getExternalProperties().getProperty(PRODUCER_TARGET_ALIASES), this);
+            producerTargetMap = ProducerTarget.loadTargets(resolveLinkedJSONObjects(getExternalProperties().getProperty(PRODUCER_TARGETS, "[]")), 
+                    resolveLinkedJSONObjects(getExternalProperties().getProperty(PRODUCER_TARGET_ALIASES, "[]")), this);
             for (Map.Entry<String, ProducerTarget> entry : producerTargetMap.entrySet()) logInfo("Service Producer Target Loaded: " + entry.getKey().toString() + " " + entry.getValue());
             // Initialize service consumers
-            propertyVal = getExternalProperties().getProperty(CONSUMER_TARGETS);
-            if (propertyVal != null) consumerTargetList = ConsumerTarget.loadTargets(propertyVal, this);
+            consumerTargetList = ConsumerTarget.loadTargets(resolveLinkedJSONObjects(getExternalProperties().getProperty(CONSUMER_TARGETS, "[]")), this);
             for (ConsumerTarget consumerTarget : consumerTargetList) logInfo("Service Consumer Target Loaded: " + consumerTarget.toString());
             // Are we going to allow targets embedded in X-STROMA messages
-            propertyVal = getExternalProperties().getProperty("allowXSTROMAMessageTargets");
+            String propertyVal = getExternalProperties().getProperty("allowXSTROMAMessageTargets");
             if (propertyVal != null) allowXSTROMAMessageTargets = propertyVal.equalsIgnoreCase("true");
         } catch (Exception e) {
             logStackTrace(e);
             throw new CycladesException(eLabel + e);
         }
+    }
+    
+    private List<JSONObject> resolveLinkedJSONObjects (String jsonString) throws Exception {
+        List<JSONObject> jsonObjectList = new ArrayList<JSONObject>();
+        JSONArray jsonArray = new JSONArray(jsonString);
+        for (int i = 0; i < jsonArray.length(); i++) jsonObjectList.add(resolveLinkedJSONObject(jsonArray.getJSONObject(i)));
+        return jsonObjectList;
+    }
+    
+    private JSONObject resolveLinkedJSONObject (JSONObject jsonObject) throws JSONException, Exception {
+        if (!jsonObject.has("link")) return jsonObject;
+        return new JSONObject(new String(ResourceRequestUtils.getData(getEngineContext().getCanonicalEngineDirectoryPath(jsonObject.getString("link")), null)));
+        
     }
 
     @Override

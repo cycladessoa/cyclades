@@ -1,0 +1,14 @@
+{
+    "class": "org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.Consumer",
+    "target_init_data": {
+        "target_queue": "work_queue",
+        "connection_string": "amqp://guest:guest@localhost:5672",
+        "consumer_tag": "work_queue-consumer",
+        "num_consumers": "5",
+        "cancel_recovery": "false",
+        "prefetch_count": "1",
+        "replyto_message_delivery_mode": "2",
+        "ha_policy": "all",
+        "durable": "true"
+    }
+}

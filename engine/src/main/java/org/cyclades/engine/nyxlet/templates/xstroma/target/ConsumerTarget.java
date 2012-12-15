@@ -27,7 +27,6 @@
  *******************************************************************************/
 package org.cyclades.engine.nyxlet.templates.xstroma.target;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 import java.util.List;
 import java.util.ArrayList;
@@ -52,23 +51,22 @@ public class ConsumerTarget {
     }
 
     /**
-     * This method will load the server targets from a JSON string of the format:
+     * Load the service consumer targets from list of JSONObjects (each JSONObject is a service consumer target)
+     * 
+     * Each JSONObject entry will look like the following in JSON:
      *
-     * serviceServerMap=[{"class":"com.foo.blah","target_init_data":{"context_file":"/tmp/mycontext.xml"}}]
+     * {"class":"com.foo.blah","target_init_data":{...},"raw_message_processor":{...},"response_processor":{...}}
      *
-     * @param jsonString
-     * @param service
+     * @param consumerJSONObjectTargets JSONObject list of targets
+     * @param service The service that will be consuming
      * @return the List of ConsumerTargets created
      * @throws Exception
      */
-    public static List<ConsumerTarget> loadTargets (String jsonString, ServiceBrokerNyxletImpl service) throws Exception {
+    public static List<ConsumerTarget> loadTargets (List<JSONObject> consumerJSONObjectTargets, ServiceBrokerNyxletImpl service) throws Exception {
         final String eLabel = "ConsumerTarget.loadTargets: ";
         try {
             List<ConsumerTarget> targetList= new ArrayList<ConsumerTarget>();
-            JSONArray targets = new JSONArray(jsonString);
-            JSONObject target;
-            for (int i = 0; i < targets.length(); i++) {
-                target = targets.getJSONObject(i);
+            for (JSONObject target : consumerJSONObjectTargets) {
                 targetList.add(new ConsumerTarget(target.getString(CLASS), target.getJSONObject(TARGET_INITIALIZATION_DATA),
                         (target.has(RAW_MESSAGE_PROCESSOR_DATA)) ? target.getJSONObject(RAW_MESSAGE_PROCESSOR_DATA) : null,
                         (target.has(RESPONSE_PROCESSOR_DATA)) ? target.getJSONObject(RESPONSE_PROCESSOR_DATA) : null, service));

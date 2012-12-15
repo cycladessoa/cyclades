@@ -188,8 +188,21 @@ _http://localhost:8080/cyclades/servicebroker?asynchronous=true&notifyxxx=me@sta
 
 .*helloworld* | *xsl* | *restfs (add)* | *restfs (get)* | *xsl* (Asynchronous Request And Response Chained Orchestration X 5 Via Message Queue)
 
-Cyclades comes with targets implemented for RabbitMQ. You must have a RabbitMQ server up and your Service Broker configured properly for these to work. Here are the configurations you will need to add to your servicebroker.properties file for these examples (adjusting the RabbitMQ connection_string accordingly for your setup):
+Cyclades comes with target implementations for RabbitMQ. You must have a RabbitMQ server up and your Service Broker configured properly for these to work. Here are the configurations you will need to add to your servicebroker.properties (../webapps/cyclades/WEB-INF/nyxlets/servicebroker.properties) file for these examples (adjusting the RabbitMQ connection_string accordingly for your setup):
 
+[NOTE]
+There are two approaches for adding targets to the servicebroker.properties configuration file, one is "inlining" your target definitions within the property in the actual property file itself, the other is to add a "link" in the property that points to an external JSON file. Both approaches can be mixed and matched, however links are preferred for clarity and maintenence. In addition the following "link" examples already exist in your installation, defaulting to a RabbitMQ installation to localhost.
+
+.Link Example (recommended for clarity)
+----
+serviceProducerTargets=[{"link":"targets/producers/basic_rabbitmq_producer.json"},{"link":"targets/producers/basic_rabbitmq_extractor.json"}]
+
+serviceConsumerTargets=[{"link":"targets/consumers/basic_rabbitmq_consumer.json"}]
+----
+
+_link values can be a relative directory (as shown above), an absolute directory or a http URL to a resource. Relative directories are resolved from the "../webapps/cyclades/WEB-INF" directory in your Tomcat installation_
+
+.Inlining Example (possible, but not recommended as this can get non trivial to maintain)
 ----
 serviceProducerTargets=[{"target":"producer","authentication_data":"authenticate","auth_data_forwarding":"false","class":"org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.Producer","target_init_data":{"pool":"true","maxActive":"5","target_queue":"work_queue","connection_string":"amqp://guest:guest@mq.mycompany.org:5672","message_delivery_mode":"2","replyto_ha_policy":"all","replyto_durable":"true"}},{"target":"extractor","authentication_data":"authenticate","auth_data_forwarding":"false","class":"org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.Extractor","target_init_data":{"pool":"true","maxActive":"5","connection_string":"amqp://guest:guest@mq.mycompany.org:5672"}}]
 

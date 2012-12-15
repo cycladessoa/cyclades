@@ -218,15 +218,30 @@ image::service_broker_cluster_access.jpg[]
 The Service Broker can implement targets that facilitate service communication over any type of technology. One of the most useful implementations that come with the default Service Broker is the asynchronous Message Producer and Message Consumer based targets. The current targets supported implement drivers for RabbitMQ. Once the Service Broker is configured correctly, any services loaded in the Cyclades Engine can be accessed asynchronously. Configurations ranging from basic asynchronous functionality to highly scaled and sophisticated queuing can be accomplished out of the box by configuring _serviceProducerTargets_ and _serviceConsumerTargets_. We'll cover some known and used patterns below. 
 
 [NOTE]
-This assumes you have a RabbitMQ server installed and running somewhere accessible by your Cycaldes Engine. You will have to modify the connection_string fields below to reflect your server name. RabbitMQ 2.8.2 has been run successfully using these examples.
+This assumes you have a RabbitMQ server installed and running somewhere accessible by your Cycaldes Engine. You will have to modify the connection_string fields below to reflect your server name. RabbitMQ 2.8.2 and above have been run successfully using these examples.
 
 ==== One Node/Cluster Service Broker Configuration
 
-In addtion to direct access to the Cyclades Engine, the following targets will enable asynchronous capabilty to your server setup once added to your servicebroker.properies file:
+In addtion to direct access to the Cyclades Engine, the following targets will enable asynchronous capabilty to your server setup once added to your servicebroker.properies file...
 
+Cyclades comes with target implementations for RabbitMQ. You must have a RabbitMQ server up and your Service Broker configured properly for these to work. Here are the configurations you will need to add to your servicebroker.properties (../webapps/cyclades/WEB-INF/nyxlets/servicebroker.properties) file for these examples (adjusting the RabbitMQ connection_string accordingly for your setup):
+
+[NOTE]
+There are two approaches for adding targets to the servicebroker.properties configuration file, one is "inlining" your target definitions within the property in the actual property file itself, the other is to add a "link" in the property that points to an external JSON file. Both approaches can be mixed and matched, however links are prefe
+rred for clarity and maintenence. In addition the following "link" examples already exist in your installation, defaulting to a RabbitMQ installation to localhost.
+
+.Link Example (recommended for clarity)
+----
+serviceProducerTargets=[{"link":"targets/producers/basic_rabbitmq_producer.json"},{"link":"targets/producers/basic_rabbitmq_extractor.json"}]
+
+serviceConsumerTargets=[{"link":"targets/consumers/basic_rabbitmq_consumer.json"}]
+----
+
+_link values can be a relative directory (as shown above), an absolute directory or a http URL to a resource. Relative directories are resolved from the "../webapps/cyclades/WEB-INF" directory in your Tomcat installation_
+
+.Inlining Example (possible, but not recommended as this can get non trivial to maintain)
 ----
 serviceProducerTargets=[{"target":"producer","authentication_data":"authenticate","auth_data_forwarding":"false","class":"org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.Producer","target_init_data":{"pool":"true","maxActive":"5","target_queue":"work_queue","connection_string":"amqp://guest:guest@mq.mycompany.org:5672","message_delivery_mode":"2","replyto_ha_policy":"all","replyto_durable":"true"}},{"target":"extractor","authentication_data":"authenticate","auth_data_forwarding":"false","class":"org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.Extractor","target_init_data":{"pool":"true","maxActive":"5","connection_string":"amqp://guest:guest@mq.mycompany.org:5672"}}]
-
 serviceConsumerTargets=[{"class":"org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.Consumer","target_init_data":{"target_queue":"work_queue","connection_string":"amqp://guest:guest@mq.mycompany.org:5672","consumer_tag":"work_queue-consumer","num_consumers":"5","cancel_recovery":"false","prefetch_count":"1","replyto_message_delivery_mode":"2","ha_policy":"all","durable":"true"}}]
 ----
 

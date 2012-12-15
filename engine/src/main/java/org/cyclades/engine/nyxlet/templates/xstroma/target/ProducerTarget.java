@@ -125,29 +125,36 @@ public class ProducerTarget {
     }
 
     /**
-     * Load the client targets from a JSON string of the format:
+     * Load the service producer targets from list of JSONObjects (each JSONObject is a service producer target)
+     * 
+     * Each JSONObject entry will look like the following in JSON:
      *
-     * serviceClientTargets=[{"target":"localhost","local":"true"},{"target":"sample_http","authentication_data":"authenticate","auth_data_forwarding":"false","class":"org.cyclades.nyxlet.servicebrokernyxlet.message.producer.HTTPMessageProducer","target_init_data":{"uri":"http://localhost:8080/cycladesengine/servicebroker"}}]
-     * serviceClientTargetAliases=[{"target":"localhost","aliases":["sample_alias_1","sample_alias_2"]}]
+     * {"target":"localhost","local":"true"}
+     * 
+     * or
+     * 
+     * {"target":"sample_http","authentication_data":"authenticate","auth_data_forwarding":"false","class":"org.cyclades.nyxlet.servicebrokernyxlet.message.producer.HTTPMessageProducer","target_init_data":{"uri":"http://localhost:8080/cycladesengine/servicebroker"}}
+     * 
+     * Aliases:
+     * 
+     * {"target":"localhost","aliases":["sample_alias_1","sample_alias_2"]}
      *
-     * @param clientTargetsJSONString
+     * @param producerJSONObjectTargets JSONObject list of targets
+     * @param producerJSONObjectTargetAliases JSONObject list of target aliases
      * @return map of ProducerTargets
      * @throws Exception
      */
-    public static Map loadTargets (String clientTargetsJSONString, String clientTargetAliasesJSONString, ServiceBrokerNyxletImpl service) throws Exception {
+    public static Map loadTargets (List<JSONObject> producerJSONObjectTargets, List<JSONObject> producerJSONObjectTargetAliases, ServiceBrokerNyxletImpl service) throws Exception {
         final String eLabel = "ProducerTarget.loadTargets: ";
         try {
             Map<String, ProducerTarget> targetsMap = new HashMap<String, ProducerTarget>();
-            JSONArray targets = new JSONArray(clientTargetsJSONString);
-            JSONObject target;
-            JSONArray targetAliasesArray = (clientTargetAliasesJSONString == null) ? null : new JSONArray(clientTargetAliasesJSONString);
             String targetauthenticationData;
             boolean isLocal;
             String className;
             JSONObject targetInitJSONObject;
             boolean forwardUserData;
-            for (int i = 0; i < targets.length(); i++) {
-                target = targets.getJSONObject(i);
+            // Load producer targets
+            for (JSONObject target : producerJSONObjectTargets) {
                 targetauthenticationData = (target.has(AUTHENTICATION_DATA)) ?  target.getString(AUTHENTICATION_DATA) : null;
                 if (target.has(LOCAL) && target.getString(LOCAL).equalsIgnoreCase("true")) {
                     isLocal = true;
@@ -162,18 +169,15 @@ public class ProducerTarget {
                 }
                 targetsMap.put(target.getString("target"), new ProducerTarget(targetauthenticationData, forwardUserData, className, targetInitJSONObject, isLocal, service));
             }
-            if (targetAliasesArray != null) {
-                JSONObject targetAliasObject;
-                String targetName;
-                JSONArray targetAliasArray;
-                for (int i = 0; i < targetAliasesArray.length(); i++) {
-                    targetAliasObject = targetAliasesArray.getJSONObject(i);
-                    targetName = targetAliasObject.getString("target");
-                    targetAliasArray = targetAliasObject.getJSONArray("aliases");
-                    if (!targetsMap.containsKey(targetName)) throw new Exception("Target does not exist: " + targetName);
-                    for (int j = 0; j < targetAliasArray.length(); j++) {
-                        targetsMap.put(targetAliasArray.getString(j), targetsMap.get(targetName));
-                    }
+            // Load producer target aliases
+            String targetName;
+            JSONArray targetAliasArray;
+            for (JSONObject targetAlias : producerJSONObjectTargetAliases) {
+                targetName = targetAlias.getString("target");
+                targetAliasArray = targetAlias.getJSONArray("aliases");
+                if (!targetsMap.containsKey(targetName)) throw new Exception("Target does not exist: " + targetName);
+                for (int j = 0; j < targetAliasArray.length(); j++) {
+                    targetsMap.put(targetAliasArray.getString(j), targetsMap.get(targetName));
                 }
             }
             return targetsMap;
@@ -205,4 +209,5 @@ public class ProducerTarget {
     private static final String CLASS                       = "class";
     private static final String TARGET_INITIALIZATION_DATA  = "target_init_data";
     private static final String LOCAL                       = "local";
+    
 }

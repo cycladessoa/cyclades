@@ -1,11 +1,15 @@
 {
     "class": "org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.Consumer",
     "target_init_data": {
-        "target_queue": "work_queue",
+        "consumer_type": "merging",
+        "timer_period_mills": "10000",
+        "accumulation_wait_mills": "60000",
+        "min_messages": "1000",
+        "target_queue": "merging_work_queue",
         "connection_string": "amqp://guest:guest@localhost:5672",
         "connection_heartbeat_seconds": "60",
-        "consumer_tag": "work_queue-consumer",
-        "num_consumers": "5",
+        "consumer_tag": "merging_work_queue-consumer",
+        "num_consumers": "1",
         "cancel_recovery": "false",
         "prefetch_count": "1",
         "replyto_message_delivery_mode": "2",

@@ -1,0 +1,29 @@
+{
+        "class": "org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.Consumer",
+        "raw_message_processor": {
+            "service_name": "log",
+            "response_input_parameter": "entry",
+            "parameters": [
+                {
+                    "name": "action",
+                    "value": "appendlog"
+                },
+                {
+                    "name": "alias",
+                    "value": "default"
+                }
+            ]
+        },
+        "target_init_data": {
+            "target_queue": "my_output_queue",
+            "connection_string": "amqp://guest:guest@localhost:5672",
+            "connection_heartbeat_seconds": "60",
+            "consumer_tag": "my_output_queue_logger-consumer",
+            "num_consumers": "1",
+            "cancel_recovery": "false",
+            "prefetch_count": "1",
+            "replyto_message_delivery_mode": "2",
+            "ha_policy": "all",
+            "durable": "true"
+        }
+}

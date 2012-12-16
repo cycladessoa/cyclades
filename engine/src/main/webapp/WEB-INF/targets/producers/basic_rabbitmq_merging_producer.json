@@ -1,12 +1,12 @@
 {
-    "target": "producer",
+    "target": "merging-producer",
     "authentication_data": "authenticate",
     "auth_data_forwarding": "false",
     "class": "org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.Producer",
     "target_init_data": {
         "pool": "true",
         "maxActive": "5",
-        "target_queue": "work_queue",
+        "target_queue": "merging_work_queue",
         "connection_string": "amqp://guest:guest@localhost:5672",
         "connection_heartbeat_seconds": "60",
         "message_delivery_mode": "2",

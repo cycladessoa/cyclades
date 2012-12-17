@@ -1,0 +1,20 @@
+This target definition creates a producer that submits a X-STROMA message to the queue specified by this target.
+
+Field definitions in lined with the JSON below:
+
+{
+    "target": "merging-producer",                                                      // The target name/handle
+    "authentication_data": "authenticate",                                             // Placeholder for authentication data
+    "auth_data_forwarding": "false",                                                   // Placeholder for authentication data
+    "class": "org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.Producer", // The class that will be instantiated
+    "target_init_data": {
+        "pool": "true",                                                                // Pool connections to RabbitMQ?
+        "maxActive": "5",                                                              // The maximum number of active connections in the pool
+        "target_queue": "merging_work_queue",                                          // The queue to which we will produce messages
+        "connection_string": "amqp://guest:guest@localhost:5672",                      // The RabbitMQ connection string
+        "connection_heartbeat_seconds": "60",                                          // The connection heartbeat in seconds
+        "message_delivery_mode": "2",                                                  // The message delivery mode, 2 is persisted
+        "replyto_ha_policy": "all",                                                    // The replyto RabbitMQ HA policy
+        "replyto_durable": "true"                                                      // Should the replyto queue be durable (persisted)
+    }
+}

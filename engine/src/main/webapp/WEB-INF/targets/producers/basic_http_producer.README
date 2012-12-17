@@ -1,0 +1,17 @@
+This target definition creates a basic HTTP producer. This producer essentially forwards the X-STROMA
+request to the specified Service Broker. This producer is synchronous and returns the response in 
+it's entirety, just as though it has been processed on the local host. This target can be used for 
+mulitple scenarios...and is used frequently for remote service discovery and invocation. There will be 
+more information on how this can be setup in the documentation.
+
+Field definitions in lined with the JSON below:
+
+{
+    "target": "basic_http",                                                                   // The target name/handle
+    "authentication_data": "authenticate",                                                    // Placeholder for authentication data
+    "auth_data_forwarding": "false",                                                          // Placeholder for authentication data
+    "class": "org.cyclades.engine.nyxlet.templates.xstroma.message.impl.HTTPMessageProducer", // The producer class
+    "target_init_data": {
+        "uri": "http://localhost:8080/cyclades/servicebroker"                                 // The URI of the target Service Broker
+    }
+}

@@ -1,0 +1,16 @@
+This target definition creates a producer that fetches the next available message from a specified queue.
+
+Field definitions in lined with the JSON below:
+
+{
+    "target": "extractor",                                                              // The target name/handle
+    "authentication_data": "authenticate",                                              // Placeholder for authentication data
+    "auth_data_forwarding": "false",                                                    // Placeholder for authentication data
+    "class": "org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.Extractor", // The class that will be instantiated
+    "target_init_data": {
+        "pool": "true",                                                                 // Pool connections to RabbitMQ?
+        "maxActive": "5",                                                               // The maximum number of active connections in the pool
+        "connection_string": "amqp://guest:guest@localhost:5672",                       // The RabbitMQ connection string
+        "connection_heartbeat_seconds": "60"                                            // The connection heartbeat in seconds
+    }
+}

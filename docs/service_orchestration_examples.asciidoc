@@ -191,7 +191,7 @@ _http://localhost:8080/cyclades/servicebroker?asynchronous=true&notifyxxx=me@sta
 Cyclades comes with target implementations for RabbitMQ. You must have a RabbitMQ server up and your Service Broker configured properly for these to work. Here are the configurations you will need to add to your servicebroker.properties (../webapps/cyclades/WEB-INF/nyxlets/servicebroker.properties) file for these examples (adjusting the RabbitMQ connection_string accordingly for your setup):
 
 [NOTE]
-There are two approaches for adding targets to the servicebroker.properties configuration file, one is "inlining" your target definitions within the property in the actual property file itself, the other is to add a "link" in the property that points to an external JSON file. Both approaches can be mixed and matched, however links are recommended for clarity and maintenence. In addition the following "link" examples already exist in your installation, defaulting to a RabbitMQ installation to localhost.
+There are two approaches for adding targets to the servicebroker.properties configuration file, one is "inlining" your target definitions within the property in the actual property file itself, the other is to add a "link" in the property that points to an external JSON file. Both approaches can be mixed and matched, however links are recommended for clarity and maintenence. In addition the following "link" examples already exist in your installation, defaulting to a RabbitMQ installation to localhost. Please see more examples and their corresponding README files in the "../webapps/cyclades/WEB-INF/targets" directory.
 
 .Link Example (recommended for clarity)
 ----

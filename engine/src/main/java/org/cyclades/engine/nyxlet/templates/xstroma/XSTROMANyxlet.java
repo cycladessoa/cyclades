@@ -80,7 +80,7 @@ public class XSTROMANyxlet extends STROMANyxlet {
         sessionDelegate.setRawResponseRequested(false);
         OutputStream liveOutputStream = sessionDelegate.getOutputStream();
         OutputStream workingOutputStream = null;
-        XSTROMAResponseWriter xstromaResponseWriter = new XSTROMAResponseWriter(getName(), sessionDelegate);
+        XSTROMAResponseWriter xstromaResponseWriter = new XSTROMAResponseWriter(getName(), sessionDelegate, this);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         boolean async = false;
         String notificationList = null;
@@ -212,7 +212,7 @@ public class XSTROMANyxlet extends STROMANyxlet {
             sessionDelegate.setTransactionDataObject(null);
             sessionDelegate.setUserLoggingLevel(null);
             sessionDelegate.raiseOrchestrationFault(eLabel + e);
-            new STROMAResponseWriter(this.getName(), sessionDelegate).writeErrorResponse((e instanceof CycladesException) ? ((CycladesException)e).getCode() : ResponseCodeEnum.GENERAL_ERROR.getCode(),
+            new STROMAResponseWriter(this.getName(), sessionDelegate, this).writeErrorResponse((e instanceof CycladesException) ? ((CycladesException)e).getCode() : ResponseCodeEnum.GENERAL_ERROR.getCode(),
                     eLabel + e);
         } finally {
             try {
@@ -237,13 +237,14 @@ public class XSTROMANyxlet extends STROMANyxlet {
     private boolean dispatchNyxletRequest(String requestName, Object requestMeta, NyxletSession nyxletSession) throws Exception {
         final String eLabel = "XSTROMANyxlet.dispatchNxletRequest: ";
         try {
-            // Clear action, transaction-data, log-level, orchestration fault and duration items here, let "process" populate them
+            // Clear items that we don't want to carry over from a previous Nyxlet's session, then let "process" populate them
             nyxletSession.setActionObject(null);
             nyxletSession.setTransactionDataObject(null);
             nyxletSession.setUserLoggingLevel(null);
             nyxletSession.clearOrchestrationFault();
             nyxletSession.setDurationRequested(null);
             nyxletSession.resetDuration();
+            nyxletSession.setServiceAgentRequested(null);
             nyxletSession.setDataObject(requestMeta);
             Nyxlet mod = NyxletRepository.getStaticInstance().getNyxlet(requestName);
             if (mod == null) {
@@ -256,7 +257,7 @@ public class XSTROMANyxlet extends STROMANyxlet {
         } catch (Exception e) {
             logError(eLabel + e);
             nyxletSession.raiseOrchestrationFault(eLabel + e);
-            new STROMAResponseWriter(this.getName(), nyxletSession).writeErrorResponse((e instanceof CycladesException) ? ((CycladesException)e).getCode() : ResponseCodeEnum.GENERAL_ERROR.getCode(),
+            new STROMAResponseWriter(this.getName(), nyxletSession, this).writeErrorResponse((e instanceof CycladesException) ? ((CycladesException)e).getCode() : ResponseCodeEnum.GENERAL_ERROR.getCode(),
                     eLabel + e);
         }
         return nyxletSession.orchestrationFaultRaised();

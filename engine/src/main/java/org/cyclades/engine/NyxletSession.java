@@ -312,6 +312,27 @@ public class NyxletSession {
     public void setDurationRequested (Boolean durationRequested) {
         this.durationRequested = durationRequested;
     }
+    
+    public boolean serviceAgentRequested () throws Exception {
+        final String eLabel = "NyxletSession.serviceAgentRequested: ";
+        try {
+            if (this.serviceAgentRequested == null) {
+                String rawResponseString = this.request.getParameter(SERVICE_AGENT_PARAMETER);
+                if (rawResponseString != null && (rawResponseString.isEmpty() || rawResponseString.equalsIgnoreCase("true")) ) {
+                    this.serviceAgentRequested = true;
+                } else {
+                    this.serviceAgentRequested = false;
+                }
+            }
+            return this.serviceAgentRequested;
+        } catch (Exception e) {
+            throw new Exception(eLabel + e);
+        }
+    }
+
+    public void setServiceAgentRequested (Boolean serviceAgentRequested) {
+        this.serviceAgentRequested = serviceAgentRequested;
+    }
 
     @SuppressWarnings("unchecked")
     public void putMapChannelObject (Object key, Object value) throws Exception {
@@ -489,6 +510,7 @@ public class NyxletSession {
     private OrchestrationTypeEnum orchestrationTypeEnum = OrchestrationTypeEnum.NONE;
     private long durationStart = System.currentTimeMillis();
     private Boolean durationRequested = null;
+    private Boolean serviceAgentRequested = null;
 
     // Defines
     public static final String DATA_PARAMETER               = "data";
@@ -499,4 +521,6 @@ public class NyxletSession {
     public static final String LOG_LEVEL_PARAMETER          = "log-level";
     public static final String RAW_RESPONSE_PARAMETER       = "raw-response";
     public static final String DURATION_PARAMETER           = "duration";
+    public static final String SERVICE_AGENT_PARAMETER      = "service-agent";
+    
 }

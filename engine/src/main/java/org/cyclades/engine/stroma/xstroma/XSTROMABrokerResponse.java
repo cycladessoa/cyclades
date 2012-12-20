@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 import org.cyclades.engine.MetaTypeEnum;
+import org.cyclades.engine.NyxletSession;
 import org.cyclades.engine.stroma.STROMAResponse;
 import org.cyclades.engine.util.GenericXMLObject;
 import org.cyclades.engine.util.MapHelper;
@@ -61,7 +62,8 @@ public class XSTROMABrokerResponse {
             // get error code of root node
             errorCode = Integer.parseInt(XMLComparitor.getAttribute(node, ERROR_CODE));
             errorMessage = XMLComparitor.getAttribute(node, ERROR_MESSAGE);
-            transactionData = XMLComparitor.getAttribute(node, TRANSACTION_DATA);
+            transactionData = XMLComparitor.getAttribute(node, NyxletSession.TRANSACTION_DATA_PARAMETER);
+            serviceAgent = XMLComparitor.getAttribute(node, NyxletSession.SERVICE_AGENT_PARAMETER);
             orchestrationFault = (XMLComparitor.getMatchingChildNodes(node, ORCHESTRATION_FAULT).size() > 0);
             Vector<Node> nodesVector = XMLComparitor.getMatchingChildNodes(node, "response");
             for (int i = 0; i < nodesVector.size(); i++) {
@@ -81,7 +83,8 @@ public class XSTROMABrokerResponse {
         try {
             errorCode = Integer.parseInt(jsonObject.getString(ERROR_CODE));
             errorMessage = (jsonObject.has(ERROR_MESSAGE)) ? jsonObject.getString(ERROR_MESSAGE) : null;
-            transactionData = (jsonObject.has(TRANSACTION_DATA)) ? jsonObject.getString(TRANSACTION_DATA) : null;
+            transactionData = (jsonObject.has(NyxletSession.TRANSACTION_DATA_PARAMETER)) ? jsonObject.getString(NyxletSession.TRANSACTION_DATA_PARAMETER) : null;
+            serviceAgent = (jsonObject.has(NyxletSession.SERVICE_AGENT_PARAMETER)) ? jsonObject.getString(NyxletSession.SERVICE_AGENT_PARAMETER) : null;
             if (jsonObject.has(ORCHESTRATION_FAULT)) orchestrationFault = jsonObject.getString(ORCHESTRATION_FAULT).equalsIgnoreCase("true");
             this.parameters = jsonObject.has(PARAMETERS) ? MapHelper.parameterMapFromMetaObject(jsonObject.getJSONArray(PARAMETERS)) : null;
             JSONObject data = (jsonObject.has("data")) ? jsonObject.getJSONObject("data") : null;
@@ -112,6 +115,10 @@ public class XSTROMABrokerResponse {
     public String getTransactionData () {
         return transactionData;
     }
+    
+    public String getServiceAgent () {
+        return serviceAgent;
+    }
 
     public List<STROMAResponse> getResponses() {
         return responses;
@@ -134,8 +141,9 @@ public class XSTROMABrokerResponse {
     private String errorMessage;
     private boolean orchestrationFault = false;
     private String transactionData = null;
+    private String serviceAgent = null;
     private Map<String, List<String>> parameters = null;
     public final static String PARAMETERS           = "parameters";
     public final static String ORCHESTRATION_FAULT  = "orchestration-fault";
-    public final static String TRANSACTION_DATA     = "transaction-data";
+    
 }

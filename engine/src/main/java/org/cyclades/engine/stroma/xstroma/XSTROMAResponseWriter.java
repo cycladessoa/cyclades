@@ -34,14 +34,22 @@ import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.cyclades.engine.NyxletSession;
+import org.cyclades.engine.api.Nyxlet;
 import org.cyclades.engine.util.MapHelper;
 import org.json.JSONObject;
 
 public class XSTROMAResponseWriter {
 
     public XSTROMAResponseWriter (String serviceName, NyxletSession nyxletSession)  throws Exception {
+        this(serviceName, nyxletSession, null);
+    }
+    
+    public XSTROMAResponseWriter (String serviceName, NyxletSession nyxletSession, Nyxlet nyxlet)  throws Exception {
         final String eLabel = "XSTROMAResponseWriter.XSTROMAResponseWriter: ";
         try {
+            if (nyxlet != null) {
+                if (nyxletSession.serviceAgentRequested()) serviceAgent = nyxlet.getServiceAgentAttribute();   
+            }
             this.outputStream = nyxletSession.getOutputStream();
             this.serviceName = serviceName;
             this.transactionData = nyxletSession.getTransactionDataString();
@@ -159,6 +167,12 @@ public class XSTROMAResponseWriter {
             write("\":\"");
             write(serviceName);
             write("\",\"");
+            if (serviceAgent != null) {
+                write(NyxletSession.SERVICE_AGENT_PARAMETER);
+                write("\":");
+                write(JSONObject.quote(serviceAgent));
+                write(",\"");
+            }
             if (transactionData != null) {
                 write(TRANSACTION_DATA_ATTRIBUTE);
                 write("\":");
@@ -211,6 +225,9 @@ public class XSTROMAResponseWriter {
             write(RESPONSE_ATTRIBUTE);
             write(" ");
             writeXMLAttribute(SERVICE_ATTRIBUTE, serviceName, true);
+            if (serviceAgent != null) {
+                writeXMLAttribute(NyxletSession.SERVICE_AGENT_PARAMETER, StringEscapeUtils.escapeXml(serviceAgent), true);
+            }
             if (transactionData != null) {
                 writeXMLAttribute(TRANSACTION_DATA_ATTRIBUTE, StringEscapeUtils.escapeXml(transactionData), true);
             }
@@ -286,6 +303,7 @@ public class XSTROMAResponseWriter {
     private boolean omitSuffix = false;
     private String serviceName;
     private String transactionData;
+    private String serviceAgent;
     private OutputStream outputStream;
     private boolean isXML = false;
     private boolean responseInFlight = false;
@@ -303,4 +321,5 @@ public class XSTROMAResponseWriter {
     private final static String PARAMETERS_ATTRIBUTE                        = "parameters";
     private final static String DURATION_ATTRIBUTE                          = "duration";
     private final static String TRANSACTION_DATA_ATTRIBUTE                  = "transaction-data";
+    
 }

@@ -323,6 +323,8 @@ will *not* be wrapped in the STROMA formatted request layer, i.e. only the paylo
 will be returned.
 * *duration* (optional: true | false)
 ** This value, if supplied, will return the duration of this service request.
+* *service-agent* (optional: true | false)
+** This value, if supplied, will return the service-agent data of this service
 
 The following are examples of requests directly to an action handler "sayhello" 
 belonging to a service named "helloworld":
@@ -550,6 +552,9 @@ one may not.
 * *duration* (optional: true | false)
 ** This value, if supplied, will return the duration of this X-STROMA request. Consider this a default
 value for any child services that do not have this value specifed. 
+* *service-agent* (optional: true | false)
+** This value, if supplied, will return the service-agent data of this X-STROMA service request. Consider this a default
+value for any child services that do not have this value specifed.
 
 The following is an example of a broker request that is simply comprised of two 
 requests to the HelloWorld service:

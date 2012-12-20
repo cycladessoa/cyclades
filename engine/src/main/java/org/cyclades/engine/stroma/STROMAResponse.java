@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 import org.cyclades.engine.MetaTypeEnum;
+import org.cyclades.engine.NyxletSession;
 import org.cyclades.engine.util.MapHelper;
 import org.cyclades.xml.comparitor.XMLComparitor;
 import org.json.JSONObject;
@@ -50,6 +51,8 @@ public class STROMAResponse {
         final String eLabel = "STROMAResponse.STROMAResponse(Node): ";
         try {
             this.serviceName = XMLComparitor.getAttribute(node, "service");
+            this.transactionData = XMLComparitor.getAttribute(node, NyxletSession.TRANSACTION_DATA_PARAMETER);
+            this.serviceAgent = XMLComparitor.getAttribute(node, NyxletSession.SERVICE_AGENT_PARAMETER);
             this.action = XMLComparitor.getAttribute(node, "action");
             this.errorCode = Integer.parseInt(XMLComparitor.getAttribute(node, ERROR_CODE));
             this.errorMessage = XMLComparitor.getAttribute(node, ERROR_MESSAGE);
@@ -65,6 +68,8 @@ public class STROMAResponse {
         final String eLabel = "STROMAResponse.STROMAResponse(JSONObject): ";
         try {
             this.serviceName = jsonObject.getString("service");
+            this.transactionData = (jsonObject.has(NyxletSession.TRANSACTION_DATA_PARAMETER)) ? jsonObject.getString(NyxletSession.TRANSACTION_DATA_PARAMETER) : null;
+            this.serviceAgent = (jsonObject.has(NyxletSession.SERVICE_AGENT_PARAMETER)) ? jsonObject.getString(NyxletSession.SERVICE_AGENT_PARAMETER) : null;
             this.action = (jsonObject.has("action")) ? jsonObject.getString("action") : null;
             this.errorCode = Integer.parseInt(jsonObject.getString(ERROR_CODE));
             this.errorMessage = jsonObject.has(ERROR_MESSAGE) ? jsonObject.getString(ERROR_MESSAGE) : null;
@@ -109,6 +114,14 @@ public class STROMAResponse {
     public String getServiceName() {
         return serviceName;
     }
+    
+    public String getTransactionData () {
+        return transactionData;
+    }
+    
+    public String getServiceAgent () {
+        return serviceAgent;
+    }
 
     /**
      * Get the parameters of this STROMAResponse. This could be null if there were no parameters
@@ -126,7 +139,10 @@ public class STROMAResponse {
     private String errorMessage;
     private Map<String, List<String>> parameters = null;
     private Object data;
+    private String transactionData;
+    private String serviceAgent;
     public final static String ERROR_CODE       = "error-code";
     public final static String ERROR_MESSAGE    = "error-message";
     public final static String PARAMETERS       = "parameters";
+    
 }

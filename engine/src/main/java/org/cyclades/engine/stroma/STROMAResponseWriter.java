@@ -37,6 +37,7 @@ import javax.xml.stream.XMLOutputFactory;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.codehaus.jettison.badgerfish.BadgerFishXMLStreamWriter;
 import org.cyclades.engine.NyxletSession;
+import org.cyclades.engine.api.Nyxlet;
 import org.cyclades.engine.util.MapHelper;
 import org.cyclades.xml.XXMLStreamWriter;
 import org.json.JSONObject;
@@ -44,8 +45,15 @@ import org.json.JSONObject;
 public class STROMAResponseWriter {
 
     public STROMAResponseWriter (String serviceName, NyxletSession nyxletSession)  throws Exception {
+        this(serviceName, nyxletSession, null);
+    }
+    
+    public STROMAResponseWriter (String serviceName, NyxletSession nyxletSession, Nyxlet nyxlet)  throws Exception {
         final String eLabel = "STROMAResponseWriter.STROMAResponseWriter: ";
         try {
+            if (nyxlet != null) {
+                if (nyxletSession.serviceAgentRequested()) serviceAgent = nyxlet.getServiceAgentAttribute();   
+            }
             this.outputStream = nyxletSession.getOutputStream();
             this.action = nyxletSession.getActionString();
             this.transactionData = nyxletSession.getTransactionDataString();
@@ -314,7 +322,14 @@ public class STROMAResponseWriter {
             write(SERVICE_ATTRIBUTE);
             write("\":\"");
             write(serviceName);
-            write("\"");
+            write("\""); 
+            // Do not print out this field if null
+            if (serviceAgent != null) {
+                write(",\"");
+                write(NyxletSession.SERVICE_AGENT_PARAMETER);
+                write("\":");
+                write(JSONObject.quote(serviceAgent));
+            }
             // Do not print out this field if null
             if (action != null) {
                 write(",\"");
@@ -372,6 +387,9 @@ public class STROMAResponseWriter {
             write(RESPONSE_ATTRIBUTE);
             write(" ");
             writeXMLAttribute(SERVICE_ATTRIBUTE, serviceName, true);
+            if (serviceAgent != null) {
+                writeXMLAttribute(NyxletSession.SERVICE_AGENT_PARAMETER, StringEscapeUtils.escapeXml(serviceAgent), true);
+            }
             if (action != null) {
                 writeXMLAttribute(ACTION_ATTRIBUTE, action, true);
             }
@@ -437,6 +455,7 @@ public class STROMAResponseWriter {
     private String serviceName;
     private String action;
     private String transactionData;
+    private String serviceAgent;
     private OutputStream outputStream;
     private boolean isXML = false;
     private boolean responseInFlight = false;
@@ -456,4 +475,5 @@ public class STROMAResponseWriter {
     private final static String TRANSACTION_DATA_ATTRIBUTE  = "transaction-data";
     private final static String PARAMETERS_ATTRIBUTE        = "parameters";
     private final static String DURATION_ATTRIBUTE          = "duration";
+    
 }

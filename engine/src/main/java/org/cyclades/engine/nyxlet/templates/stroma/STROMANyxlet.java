@@ -103,13 +103,13 @@ public abstract class STROMANyxlet extends Nyxlet {
             handler = getActionHandler(action);
             if (handler == null) throw new Exception("Unknown action specified: " + action);
             if (handler.getFieldValidators().size() > 0) processFieldValidators(handler.getFieldValidators().validate(nyxletSession, mergedBaseParameters));
-            handler.handle(nyxletSession, mergedBaseParameters, new STROMAResponseWriter(getName(), nyxletSession));
+            handler.handle(nyxletSession, mergedBaseParameters, new STROMAResponseWriter(getName(), nyxletSession, this));
         } catch (Exception e) {
             logError(eLabel + e);
             try {
                 // Try and handle the error gracefully
                 nyxletSession.raiseOrchestrationFault(eLabel + e);
-                new STROMAResponseWriter(this.getName(), nyxletSession).writeErrorResponse((e instanceof CycladesException) ? ((CycladesException)e).getCode() : ResponseCodeEnum.GENERAL_ERROR.getCode(),
+                new STROMAResponseWriter(this.getName(), nyxletSession, this).writeErrorResponse((e instanceof CycladesException) ? ((CycladesException)e).getCode() : ResponseCodeEnum.GENERAL_ERROR.getCode(),
                         eLabel + e);
             } catch (Exception ex) {
                 // Last resort....
@@ -172,6 +172,9 @@ public abstract class STROMANyxlet extends Nyxlet {
             if (mergedParameters.containsKey(NyxletSession.LOG_LEVEL_PARAMETER)) nyxletSession.setUserLoggingLevel(Enum.valueOf(LoggingEnum.class, mergedParameters.get(NyxletSession.LOG_LEVEL_PARAMETER).get(0).toUpperCase()));
             if (mergedParameters.containsKey(NyxletSession.DURATION_PARAMETER)) {
                 nyxletSession.setDurationRequested((mergedParameters.get(NyxletSession.DURATION_PARAMETER).get(0).isEmpty()) ? true : mergedParameters.get(NyxletSession.DURATION_PARAMETER).get(0).equalsIgnoreCase("true"));
+            }
+            if (mergedParameters.containsKey(NyxletSession.SERVICE_AGENT_PARAMETER)) {
+                nyxletSession.setServiceAgentRequested((mergedParameters.get(NyxletSession.SERVICE_AGENT_PARAMETER).get(0).isEmpty()) ? true : mergedParameters.get(NyxletSession.SERVICE_AGENT_PARAMETER).get(0).equalsIgnoreCase("true"));
             }
         } catch (Exception e) {
             throw new Exception(eLabel + e);

@@ -111,7 +111,7 @@ public class ServiceBrokerNyxletImpl extends XSTROMANyxlet {
             logStackTrace(e);
             try {
                 nyxletSession.raiseOrchestrationFault(eLabel + e);
-                new STROMAResponseWriter(this.getName(), nyxletSession).writeErrorResponse((e instanceof CycladesException) ? ((CycladesException)e).getCode() : ResponseCodeEnum.GENERAL_ERROR.getCode(),
+                new STROMAResponseWriter(this.getName(), nyxletSession, this).writeErrorResponse((e instanceof CycladesException) ? ((CycladesException)e).getCode() : ResponseCodeEnum.GENERAL_ERROR.getCode(),
                         eLabel + e);
                 return null;
             } catch (Exception ex) {
@@ -143,7 +143,7 @@ public class ServiceBrokerNyxletImpl extends XSTROMANyxlet {
             nyxletSession.setActionObject(null);
             nyxletSession.setTransactionDataObject(null);
             nyxletSession.raiseOrchestrationFault(eLabel + e);
-            new STROMAResponseWriter(this.getName(), nyxletSession).writeErrorResponse((e instanceof CycladesException) ? ((CycladesException)e).getCode() : ResponseCodeEnum.GENERAL_ERROR.getCode(),
+            new STROMAResponseWriter(this.getName(), nyxletSession, this).writeErrorResponse((e instanceof CycladesException) ? ((CycladesException)e).getCode() : ResponseCodeEnum.GENERAL_ERROR.getCode(),
                     eLabel + e);
         }
     }
@@ -153,7 +153,7 @@ public class ServiceBrokerNyxletImpl extends XSTROMANyxlet {
         try {
             byte[] messageResponse = ((RawMessageProducer)producerTarget.getMessageProducer()).sendMessage(messagePayload, requestParameters);
             if (messageResponse == null) {
-                new XSTROMAResponseWriter(this.getName(), nyxletSession).writeResponse("");
+                new XSTROMAResponseWriter(this.getName(), nyxletSession, this).writeResponse("");
             } else {
                 nyxletSession.setResponseContentType("application/octet-stream");
                 nyxletSession.getOutputStream().write(messageResponse);
@@ -205,7 +205,7 @@ public class ServiceBrokerNyxletImpl extends XSTROMANyxlet {
             nyxletSession.setActionObject(null);
             nyxletSession.setTransactionDataObject(null);
             nyxletSession.raiseOrchestrationFault(eLabel + e);
-            new STROMAResponseWriter(this.getName(), nyxletSession).writeErrorResponse((e instanceof CycladesException) ? ((CycladesException)e).getCode() : ResponseCodeEnum.GENERAL_ERROR.getCode(),
+            new STROMAResponseWriter(this.getName(), nyxletSession, this).writeErrorResponse((e instanceof CycladesException) ? ((CycladesException)e).getCode() : ResponseCodeEnum.GENERAL_ERROR.getCode(),
                     eLabel + e);
         }
     }
@@ -228,7 +228,7 @@ public class ServiceBrokerNyxletImpl extends XSTROMANyxlet {
             } else {
                 String messageResponse = producerTarget.getMessageProducer().sendMessage(messagePayload, requestParameters);
                 if (messageResponse == null) {
-                    new XSTROMAResponseWriter(this.getName(), nyxletSession).writeResponse("");
+                    new XSTROMAResponseWriter(this.getName(), nyxletSession, this).writeResponse("");
                 } else {
                     nyxletSession.getOutputStream().write(messageResponse.getBytes());
                 }
@@ -291,7 +291,7 @@ public class ServiceBrokerNyxletImpl extends XSTROMANyxlet {
                         new HttpServletResponseAdapter(out), null, out);
             }
             nyxletSession.raiseOrchestrationFault(eLabel + e);
-            new STROMAResponseWriter(this.getName(), nyxletSession).writeErrorResponse((e instanceof CycladesException) ? ((CycladesException)e).getCode() : ResponseCodeEnum.GENERAL_ERROR.getCode(),
+            new STROMAResponseWriter(this.getName(), nyxletSession, this).writeErrorResponse((e instanceof CycladesException) ? ((CycladesException)e).getCode() : ResponseCodeEnum.GENERAL_ERROR.getCode(),
                     eLabel + e);
         }
         return nyxletSession;
@@ -349,7 +349,7 @@ public class ServiceBrokerNyxletImpl extends XSTROMANyxlet {
                         new HttpServletResponseAdapter(out), null, out);
             }
             nyxletSession.raiseOrchestrationFault(eLabel + e);
-            new STROMAResponseWriter(this.getName(), nyxletSession).writeErrorResponse((e instanceof CycladesException) ? ((CycladesException)e).getCode() : ResponseCodeEnum.GENERAL_ERROR.getCode(),
+            new STROMAResponseWriter(this.getName(), nyxletSession, this).writeErrorResponse((e instanceof CycladesException) ? ((CycladesException)e).getCode() : ResponseCodeEnum.GENERAL_ERROR.getCode(),
                     eLabel + e);
         }
         return nyxletSession;

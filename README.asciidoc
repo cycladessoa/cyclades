@@ -116,8 +116,8 @@ Please keep in mind this is an initial version of the documentation and we will 
 
 === Terms
 
-* *STROMA*: Service TRansaction Orchestration Messaging Architecture
-* *X-STROMA*: "Trans", or "across" STROMA
+* *STROMA*: (protocol) Service TRansaction Orchestration Messaging Architecture
+* *X-STROMA*: (protocol) "Trans", or "across" STROMA
 * *Nyxlet*: A service module that is pluggable into the Cyclades Service Engine
 
 === Etymons

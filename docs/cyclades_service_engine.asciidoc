@@ -134,7 +134,9 @@ Each STROMA Nyxlet by default will contain a _listactions_ action handler that s
 
 == The Nyxlet
 
-A Nyxlet is a service that can be hosted by the Cyclades Engine.
+A Nyxlet is a service that can be hosted by the Cyclades Service Engine.
+
+*"Nyx"*: _Wikipedia_ (Νύξ, "night") – Nox in Latin translation – is the Greek goddess (or personification) of the night. A shadowy figure, Nyx stood at or near the beginning of creation, and was the mother of other personified gods such as Hypnos (Sleep) and Thánatos (Death).
 
 === Nyxlet Development
 

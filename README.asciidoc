@@ -112,4 +112,17 @@ Copy and paste the entries in the file "/cycladessoa/nyxlets/nyxlet-my_first_nyx
 [NOTE]
 Please keep in mind this is an initial version of the documentation and we will be working on improvements throughout this project.
 
+== Naming
+
+=== Terms
+
+* *STROMA*: Service TRansaction Orchestration Messaging Architecture
+* *X-STROMA*: "Trans", or "across" STROMA
+* *Nyxlet*: A service module that is pluggable into the Cyclades Service Engine
+
+=== Etymons
+
+* *"Stroma"*: _Wikipedia_ (animal tissue), the connective, functionally supportive framework of a biological cell, tissue, or organ
+* *"Nyx"*: _Wikipedia_ (Νύξ, "night") – Nox in Latin translation – is the Greek goddess (or personification) of the night. A shadowy figure, Nyx stood at or near the beginning of creation, and was the mother of other personified gods such as Hypnos (Sleep) and Thánatos (Death)
+
 

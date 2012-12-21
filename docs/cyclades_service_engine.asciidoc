@@ -26,12 +26,12 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 OF THE POSSIBILITY OF SUCH DAMAGE.
 ////////////////////////////////////////////////////////////////////////////////
 
-= Cyclades Service Engine Specification
+= Cyclades Service Engine Technical Specification (User's Guide)
 :toc:
 
 == Abstract
 
-This document is the specification for the Cyclades Service Engine.
+This document is the technical specification for the Cyclades Service Engine.
 
 == Introduction
 
@@ -272,14 +272,61 @@ http://localhost:8080/cyclades/servicebroker?target=producer&replyto=my_output_q
 http://localhost:8080/cyclades/servicebroker?data-type=xml&target=extractor&queue=my_output_queue&data-type=xml&data=<data/>
 ----
 
-==== Merging Consumers
-To be documented
+==== Producer Targets Included With The Cyclades Service Engine (can be found in the ../webapps/cyclades/WEB-INF/targets/producers directory of your Cyclades installation)
 
-==== Raw message producers
-To be documented
+* *basic_http_producer.json* 
+This target definition creates a basic HTTP producer. This producer essentially forwards the X-STROMA
+request to the specified Service Broker. This producer is synchronous and returns the response in
+it's entirety, just as though it has been processed on the local host. This target can be used for
+mulitple scenarios...and is used frequently for remote service discovery and invocation. There will be
+more information on how this can be setup in the documentation.
 
-==== Raw message consumers
-To be documented
+* *basic_rabbitmq_producer.json*
+This target definition creates a producer that submits a X-STROMA message to the queue specified by this target.
 
-==== Attaching response handlers to your serviceConsumerTargets
-To be documented
+* *basic_rabbitmq_raw_producer.json*
+This target definition creates a producer that submits a RAW (Not necessarily a X-STROMA formatted) message to the queue specified by this target.
+Use for logging statements, X-STROMA responses, general Strings etc...
+
+* *basic_rabbitmq_extractor.json*
+This target definition creates a producer that fetches the next available message from a specified queue.
+
+==== Consumer Targets Included With The Cyclades Service Engine (can be found in the ../webapps/cyclades/WEB-INF/targets/consumers directory of your Cyclades installation)
+
+* *basic_rabbitmq_consumer.json*
+This target definition creates a basic consumer that listens for X-STROMA requests on the specified queue.
+The response to the X-STROMA request is submited to the queue named in the X-STROMA parameter "replyto".
+If no "replyto" parameter is specified, the response is disregarded/dropped.
+
+* *basic_rabbitmq_consumer_with_logging.json*
+This target definition creates a basic consumer that listens for X-STROMA requests on the specified queue.
+The response to the X-STROMA request is submited to the queue named in the X-STROMA parameter "replyto".
+If no "replyto" parameter is specified, the response is disregarded/dropped.
+In addition to the base processing logic, a "response_processor" is defined, which dispatches the response
+to a specified service for a chance to interprest and act on the X-STROMA response. This can be utilized for
+many algorithms, i.e. anything from simply logging the response to more complicated logic for interpreting and
+resubmitting failed work requests back to the queue. The following example simply requests the "log" Nyxlet
+to log the response in its entirety.
+
+* *basic_rabbitmq_logging_consumer.json*
+This target definition creates a raw message consumer that listens to the specified queue.
+A "raw_message_processor" is defined, which dispatches the queued message
+to a specified service for processing. This can be utilized for many tasks.
+The following example simply requests the "log" Nyxlet to log the message in its entirety. This
+target example is essentially a log aggregator...logging statements can be submitted to a queue from
+multiple machines. The queue is then processed by this target into a log file for further use.
+This is just one example implementation for reference.
+
+* *basic_rabbitmq_merging_consumer.json*
+This target definition creates a merging consumer that listens for X-STROMA requests on the specified queue.
+The response to the X-STROMA request is submited to the queue named in the X-STROMA parameter "replyto".
+If no "replyto" parameter is specified, the response is disregarded/dropped.
+This consumer waits until it has either accumulated min_messages or accumlation_wait_mills has been reached.
+When processed, all messages accumulated are handled as though they are all part of one orchestration. This
+target is specifically useful when a batch of messages/events is more efficient to process than many independent
+ones. Coupling this target with chained X-STROMA requests can be helpful in collecting similar service requests and
+merging them together prior to executing a potentially expensive operation. Somewhat comparable to a map reduce.
+There will be an example of how to use this in the main documentaion.
+
+[NOTE]
+All target examples will have a corresponding ".README" file located in the same directory for reference 

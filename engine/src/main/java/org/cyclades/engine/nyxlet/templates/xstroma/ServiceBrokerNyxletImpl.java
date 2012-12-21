@@ -282,8 +282,8 @@ public class ServiceBrokerNyxletImpl extends XSTROMANyxlet {
                 engageProducerTarget(nyxletSession, producerTarget, messageString, requestParameters);
             }
         } catch (Exception e) {
-            // Log debug to avoid excessive log noise, as this can be a frequent user error
-            logDebug(eLabel + e);
+            // Log warn to avoid excessive log noise, as this can be a frequent user error
+            logWarn(eLabel + e + " Possibly a malformed X-STROMA request:[" + messageString + "]");
             // If the NyxletSession is null, populate it just enough to do its thing. We want to avoid anyone calling
             // this method to process exceptions unless there is no other way.
             if (nyxletSession == null) {

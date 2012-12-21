@@ -83,6 +83,11 @@ public class Producer implements MessageProducer {
 
     @Override
     public String sendMessage(String message, Map<String, List<String>> attributeMap) throws Exception {
+       sendMessage(message.getBytes(), attributeMap);
+       return null;
+    }
+    
+    public byte[] sendMessage(byte[] message, Map<String, List<String>> attributeMap) throws Exception {
         boolean pooled = false;
         ConnectionObject connObj = null;
         try {
@@ -120,7 +125,7 @@ public class Producer implements MessageProducer {
                 Should we make this synchronous? Probably not, abuse is imminent! Use HTTP adapter instead for now
                 unless you plan on making this Message Queue an Enterprise Integration pattern...good luck.
             }*/
-            channel.basicPublish("", targetQueue, propsBuilder.build(), message.getBytes());
+            channel.basicPublish("", targetQueue, propsBuilder.build(), message);
             // Make sure to return null, there is no message to return.
             return null;
         } finally {

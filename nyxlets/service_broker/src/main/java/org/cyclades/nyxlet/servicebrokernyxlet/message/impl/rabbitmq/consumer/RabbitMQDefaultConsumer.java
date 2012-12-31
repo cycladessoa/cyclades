@@ -59,10 +59,10 @@ public class RabbitMQDefaultConsumer extends DefaultConsumer implements RabbitMQ
             //System.out.println("CONSUMER: " + consumerTag);
             byte[] response;
             if (connectionResource.hasRawMessageProcessor()) {
-                response = connectionResource.fireRawMessageProcessor(new String(body)).getBytes();
+                response = connectionResource.fireRawMessageProcessor(body);
             } else {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                connectionResource.getCallBackServiceInstance().processXSTROMAMessagePayload(baos, new String(body));
+                connectionResource.getCallBackServiceInstance().processXSTROMAMessagePayload(baos, new String(body, "UTF-8"));
                 response = baos.toByteArray();
             }
             String replyToQueue = properties.getReplyTo();
@@ -74,7 +74,7 @@ public class RabbitMQDefaultConsumer extends DefaultConsumer implements RabbitMQ
                 // XXX - Verify this is what we want to do if there is no replyto set...DONT'T REPLY!
                 //System.out.println(baos.toString());
             }
-            if (connectionResource.hasResponseProcessor()) connectionResource.fireResponseProcessor(new String(response, "UTF-8"));
+            if (connectionResource.hasResponseProcessor()) connectionResource.fireResponseProcessor(response);
         } catch (Exception e) {
             connectionResource.getCallBackServiceInstance().logError(eLabel + e);
         } finally {

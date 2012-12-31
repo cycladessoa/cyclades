@@ -64,8 +64,9 @@ public class ConsumerTarget {
      */
     public static List<ConsumerTarget> loadTargets (List<JSONObject> consumerJSONObjectTargets, ServiceBrokerNyxletImpl service) throws Exception {
         final String eLabel = "ConsumerTarget.loadTargets: ";
+        List<ConsumerTarget> targetList = null;
         try {
-            List<ConsumerTarget> targetList= new ArrayList<ConsumerTarget>();
+            targetList = new ArrayList<ConsumerTarget>();
             for (JSONObject target : consumerJSONObjectTargets) {
                 targetList.add(new ConsumerTarget(target.getString(CLASS), target.getJSONObject(TARGET_INITIALIZATION_DATA),
                         (target.has(RAW_MESSAGE_PROCESSOR_DATA)) ? target.getJSONObject(RAW_MESSAGE_PROCESSOR_DATA) : null,
@@ -73,6 +74,11 @@ public class ConsumerTarget {
             }
             return targetList;
         } catch (Exception e) {
+            if (targetList != null) {
+                for (ConsumerTarget consumerTarget : targetList) {
+                    try { consumerTarget.destroy(); } catch (Exception ex) {}
+                }
+            }
             throw new Exception(eLabel + e);
         }
     }

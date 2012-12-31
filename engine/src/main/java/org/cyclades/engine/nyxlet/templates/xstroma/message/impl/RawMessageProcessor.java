@@ -27,12 +27,14 @@
  *******************************************************************************/
 package org.cyclades.engine.nyxlet.templates.xstroma.message.impl;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.cyclades.engine.MetaTypeEnum;
+import org.cyclades.engine.NyxletSession;
 import org.cyclades.engine.stroma.STROMARequestHelper;
 import org.cyclades.engine.util.MapHelper;
 import org.json.JSONObject;
@@ -41,43 +43,160 @@ public class RawMessageProcessor {
 
     public RawMessageProcessor (JSONObject jsonObject) throws Exception {
         serviceName = jsonObject.getString(SERVICE_NAME);
-        responseInputParameter = jsonObject.getString(RESPONSE_INPUT_PARAMETER);
-        metaTypeEnum = (jsonObject.has(META_TYPE)) ? MetaTypeEnum.valueOf(jsonObject.getString(META_TYPE)) : MetaTypeEnum.JSON;
+        // Preserve both, response_input_parameter and input_parameter for backwards compatibility
+        inputParameterName = (jsonObject.has(RESPONSE_INPUT_PARAMETER)) ? jsonObject.getString(RESPONSE_INPUT_PARAMETER) : jsonObject.getString(INPUT_PARAMETER);
+        metaTypeEnum = (jsonObject.has(DATA_TYPE)) ? MetaTypeEnum.valueOf(jsonObject.getString(DATA_TYPE).toUpperCase()) : MetaTypeEnum.JSON;
+        useMapChannel = (jsonObject.has(USE_MAP_CHANNEL)) ? jsonObject.getString(USE_MAP_CHANNEL).equalsIgnoreCase("true") : false;
+        stringEncoding = (jsonObject.has(BINARY_TO_STRING_ENCODING)) ? jsonObject.getString(BINARY_TO_STRING_ENCODING) : "UTF-8";
         if (jsonObject.has(PARMAMETERS)) fixedParameters = MapHelper.parameterMapFromMetaObject(jsonObject.getJSONArray(PARMAMETERS));
     }
-
+    
+    /**
+     * Process a String message
+     * 
+     * @param message The String message to process
+     * 
+     * Parameter submission algorithm:
+     * - If "useMapChannel" is false, this message value will be submitted as 
+     *  a String as a conventional request parameter
+     * - If "useMapChannel" is true, this message value will be submitted as 
+     *  a byte array (byte[]) in the Map Channel
+     *  
+     * In both scenarios, the key will be equal to the value of the input parameter
+     * specified
+     * 
+     * @throws Exception
+     */
     public void process (String message) throws Exception {
-        final String eLabel = "RawMessageProcessor.process: ";
-        try {
-            STROMARequestHelper.request(requestParameters(message), metaTypeEnum, serviceName, null);
-        } catch (Exception e) {
-            throw new Exception(eLabel + e + " [" + message + "]");
+        if (useMapChannel) {
+            processMapChannel(message.getBytes());
+        } else {
+            processString(message);
         }
     }
 
+    /**
+     * Process a String message and get a String response
+     * 
+     * @param message The String message to process
+     * 
+     * Parameter submission algorithm:
+     * - If "useMapChannel" is false, this message value will be submitted as 
+     *  a String as a conventional request parameter
+     * - If "useMapChannel" is true, this message value will be submitted as 
+     *  a byte array (byte[]) in the Map Channel
+     *  
+     * In both scenarios, the key will be equal to the value of the input parameter
+     * specified
+     * 
+     * @return The String value of the response of the service
+     * @throws Exception
+     */
     public String processAndGetResponse (String message) throws Exception {
-        final String eLabel = "RawMessageProcessor.processAndGetResponse: ";
-        try {
-            return STROMARequestHelper.requestStreamedResponse(requestParameters(message), metaTypeEnum, serviceName, null);
-        } catch (Exception e) {
-            throw new Exception(eLabel + e + " [" + message + "]");
+        if (useMapChannel) {
+            return new String(processAndGetResponseMapChannel(message.getBytes()), stringEncoding);
+        } else {
+            return new String(processAndGetResponseString(message), stringEncoding);
         }
+    }
+    
+    /**
+     * Process a String message
+     * 
+     * @param message The byte[] message to process
+     * 
+     * Parameter submission algorithm:
+     * - If "useMapChannel" is false, this message value will be submitted as 
+     *  a String as a conventional request parameter
+     * - If "useMapChannel" is true, this message value will be submitted as 
+     *  a byte array (byte[]) in the Map Channel
+     *  
+     * In both scenarios, the key will be equal to the value of the input parameter
+     * specified
+     * 
+     * @throws Exception
+     */
+    public void process (byte[] message) throws Exception {
+        if (useMapChannel) {
+            processMapChannel(message);
+        } else {
+            processString(new String(message, stringEncoding));
+        }
+    }
+
+    /**
+     * Process a String message and get a byte[] response
+     * 
+     * @param message The String message to process
+     * 
+     * Parameter submission algorithm:
+     * - If "useMapChannel" is false, this message value will be submitted as 
+     *  a String as a conventional request parameter
+     * - If "useMapChannel" is true, this message value will be submitted as 
+     *  a byte array (byte[]) in the Map Channel
+     *  
+     * In both scenarios, the key will be equal to the value of the input parameter
+     * specified
+     * 
+     * @return The byte[] value of the response of the service
+     * @throws Exception
+     */
+    public byte[] processAndGetResponse (byte[] message) throws Exception {
+        if (useMapChannel) {
+            return processAndGetResponseMapChannel(message);
+        } else {
+            return processAndGetResponseString(new String(message, stringEncoding));
+        }
+        
+    }
+    
+    private void processString (String message) throws Exception {
+        STROMARequestHelper.request(requestParameters(message), metaTypeEnum, serviceName, null);
+    }
+    
+    private byte[] processAndGetResponseString (String message) throws Exception {            
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        STROMARequestHelper.requestStreamedResponse(requestParameters(message), metaTypeEnum, serviceName, null, baos);
+        return baos.toByteArray();
+    }
+    
+    private void processMapChannel (byte[] message) throws Exception {           
+        Map<String, List<String>> requestParameters = requestParameters();
+        requestParameters.put(NyxletSession.DATA_TYPE_PARAMETER, new ArrayList<String>(Arrays.asList(metaTypeEnum.name())));
+        STROMARequestHelper.requestSetAndGetMapChannel(requestParameters, serviceName, inputParameterName, message, "discard");
+    }
+    
+    private byte[] processAndGetResponseMapChannel (byte[] message) throws Exception {            
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        Map<String, List<String>> requestParameters = requestParameters();
+        requestParameters.put(NyxletSession.DATA_TYPE_PARAMETER, new ArrayList<String>(Arrays.asList(metaTypeEnum.name())));
+        STROMARequestHelper.requestSetMapChannel(requestParameters, serviceName, inputParameterName, message, baos);
+        return baos.toByteArray();
+    }
+    
+    private Map<String, List<String>> requestParameters () {
+        return requestParameters(null);
     }
 
     private Map<String, List<String>> requestParameters (String message) {
         Map<String, List<String>> requestParameters = new HashMap<String, List<String>>();
         requestParameters.putAll(fixedParameters);
-        requestParameters.put(responseInputParameter, new ArrayList<String>(Arrays.asList(message)));
+        if (message != null) requestParameters.put(inputParameterName, new ArrayList<String>(Arrays.asList(message)));
         return requestParameters;
     }
 
     private final String serviceName;
-    private final String responseInputParameter;
+    private final String inputParameterName;
     private final MetaTypeEnum metaTypeEnum;
+    private final boolean useMapChannel;
+    private final String stringEncoding;
     private Map<String, List<String>> fixedParameters = new HashMap<String, List<String>>();
     private final static String SERVICE_NAME                = "service_name";
     private final static String RESPONSE_INPUT_PARAMETER    = "response_input_parameter";
-    private final static String META_TYPE                   = "meta_type";
+    private final static String INPUT_PARAMETER             = "input_parameter";
+    private final static String DATA_TYPE                   = "data_type";
     private final static String PARMAMETERS                 = "parameters";
-
+    private final static String USE_MAP_CHANNEL             = "use_map_channel";
+    private final static String BINARY_TO_STRING_ENCODING   = "encoding";
+    
 }

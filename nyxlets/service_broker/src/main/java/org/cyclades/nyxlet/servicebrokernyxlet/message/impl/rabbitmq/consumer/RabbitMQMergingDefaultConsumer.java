@@ -98,7 +98,7 @@ public class RabbitMQMergingDefaultConsumer extends TimerTask implements RabbitM
                 // Let's come back and revisit this as we test it.
                 byte[] accumulated = processMessages();
                 ackMessages();
-                if (connectionResource.hasResponseProcessor()) connectionResource.fireResponseProcessor(new String(accumulated, "UTF-8"));
+                if (connectionResource.hasResponseProcessor()) connectionResource.fireResponseProcessor(accumulated);
             }
         } catch (Exception e) {
             throw new Exception(eLabel + e);

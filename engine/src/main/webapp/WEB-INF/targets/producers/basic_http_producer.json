@@ -1,5 +1,5 @@
 {
-    "target": "basic_http",
+    "target": "basic-http",
     "authentication_data": "authenticate",
     "auth_data_forwarding": "false",
     "class": "org.cyclades.engine.nyxlet.templates.xstroma.message.impl.HTTPMessageProducer",

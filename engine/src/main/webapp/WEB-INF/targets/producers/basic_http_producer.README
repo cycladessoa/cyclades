@@ -7,7 +7,7 @@ more information on how this can be setup in the documentation.
 Field definitions in lined with the JSON below:
 
 {
-    "target": "basic_http",                                                                   // The target name/handle
+    "target": "basic-http",                                                                   // The target name/handle
     "authentication_data": "authenticate",                                                    // Placeholder for authentication data
     "auth_data_forwarding": "false",                                                          // Placeholder for authentication data
     "class": "org.cyclades.engine.nyxlet.templates.xstroma.message.impl.HTTPMessageProducer", // The producer class

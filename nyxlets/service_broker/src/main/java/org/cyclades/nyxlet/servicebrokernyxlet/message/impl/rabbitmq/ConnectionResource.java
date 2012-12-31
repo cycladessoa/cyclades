@@ -114,7 +114,7 @@ public class ConnectionResource {
         return callBackServiceInstance;
     }
 
-    public void fireResponseProcessor (String response) throws Exception {
+    public void fireResponseProcessor (byte[] response) throws Exception {
         if (responseProcessor != null) responseProcessor.process(response);
     }
 
@@ -122,7 +122,7 @@ public class ConnectionResource {
         return (responseProcessor != null);
     }
 
-    public String fireRawMessageProcessor (String message) throws Exception {
+    public byte[] fireRawMessageProcessor (byte[] message) throws Exception {
         return (rawMessageProcessor != null) ? rawMessageProcessor.processAndGetResponse(message) : null;
     }
 

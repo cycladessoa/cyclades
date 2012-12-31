@@ -61,10 +61,11 @@ public abstract class Nyxlet {
 
     public static Nyxlet valueOf(final Node xmlNode, final ClassLoader classLoader, final Properties buildProperties) throws XMLParserException {
         XMLGeneratedObject xmlo = null;
+        Nyxlet nyxlet = null;
         try {
             String name = XMLComparitor.getAttributeOrError(xmlNode, "name");
             final String nyxletClassName = XMLComparitor.getAttributeOrError(xmlNode, "class");
-            Nyxlet nyxlet = (Nyxlet)classLoader.loadClass(nyxletClassName).newInstance();
+            nyxlet = (Nyxlet)classLoader.loadClass(nyxletClassName).newInstance();
             String rrdString = XMLComparitor.getAttributeOrNull(xmlNode, "rrd");
             nyxlet.setName(name);
             nyxlet.setBuildProperties(buildProperties);
@@ -89,12 +90,10 @@ public abstract class Nyxlet {
             nyxlet.init();
             if (rrdString != null) nyxlet.setRRDString(rrdString);
             return nyxlet;
-        } catch (XMLParserException ex) {
-            throw ex;
-
         } catch (Exception ex) {
+            // Try and destroy any resources created here, fail silently
+            try { if (nyxlet != null) nyxlet.destroy(); } catch (Exception e) {}
             throw new XMLParserException(ex.getMessage(), ex);
-
         } finally {
             if( xmlo != null ) { xmlo.cleanUp(); }
         }

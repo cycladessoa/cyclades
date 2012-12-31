@@ -146,8 +146,9 @@ public class ProducerTarget {
      */
     public static Map loadTargets (List<JSONObject> producerJSONObjectTargets, List<JSONObject> producerJSONObjectTargetAliases, ServiceBrokerNyxletImpl service) throws Exception {
         final String eLabel = "ProducerTarget.loadTargets: ";
+        Map<String, ProducerTarget> targetsMap = null;
         try {
-            Map<String, ProducerTarget> targetsMap = new HashMap<String, ProducerTarget>();
+            targetsMap = new HashMap<String, ProducerTarget>();
             String targetauthenticationData;
             boolean isLocal;
             String className;
@@ -182,6 +183,11 @@ public class ProducerTarget {
             }
             return targetsMap;
         } catch (Exception e) {
+            if (targetsMap != null) {
+                for (Map.Entry<String, ProducerTarget> entry : targetsMap.entrySet()) {
+                    try {entry.getValue().destroy();} catch (Exception ex) {}
+                }
+            }
             throw new Exception(eLabel + e);
         }
     }

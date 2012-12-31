@@ -291,6 +291,8 @@ public class NyxletRepository {
             }
             return loadedLibraryCount;
         } catch (Exception ex) {
+            // Destroy any resources already created, fail silently
+            try { destroy(); } catch (Exception e) {}
             // Clear out the repository so nothing is "partly" working
             this.nyxletRepositoryMap.clear();
             // Do the same with the RRDStore
@@ -322,4 +324,5 @@ public class NyxletRepository {
     private static final String NYXLET_MANIFEST = "nyxlet_manifest.xml";
     private static final String JAR_MANIFEST    = "META-INF/MANIFEST.MF";
     private static final String NYXLET_SUFFIX   = ".nyxlet";
+    
 }

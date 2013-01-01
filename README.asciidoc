@@ -63,7 +63,7 @@ This document describes the steps involved for Service (Nyxlet) developers to ge
 . Install Tomcat (if you do not already have it): http://tomcat.apache.org (We're running on Tomcat 7) This could be a standard installation on any host, local or remote
 
 . Download and install (extract) a stable version of this repository (the Cyclades Source Distribution) within a directory of choice (example: "/cycladessoa")
-	.. https://github.com/cycladessoa/cyclades/archive/v1.0.0.10.zip (We'll assume the extracted directory is "/cycladessoa/cyclades" for our purposes)
+	.. https://github.com/cycladessoa/cyclades/archive/v1.0.0.11.zip (We'll assume the extracted directory is "/cycladessoa/cyclades" for our purposes)
 
 . From within the directory where you would like to generate your Nyxlet Template ("/cycladessoa/nyxlets"),  run the command _/cycladessoa/cyclades/bin/nyxlet_gen.sh my_first_nyxlet_
 
@@ -105,7 +105,7 @@ Copy and paste the entries in the file "/cycladessoa/nyxlets/nyxlet-my_first_nyx
 
 . From within the base directory of your Cyclades Source Distribution, run the command _./doc_gen.sh . generated_docs_ If you have not previously downloaded and installed the Cyclades Source Distribution, please do the following before generating the documentation:
 	.. Download and install (extract) a stable version of this repository (the Cyclades Source Distribution) within a directory of choice (example: "/cycladessoa")
-        	... https://github.com/cycladessoa/cyclades/archive/v1.0.0.10.zip (We'll assume the extracted directory is "/cycladessoa/cyclades" for our purposes)
+        	... https://github.com/cycladessoa/cyclades/archive/v1.0.0.11.zip (We'll assume the extracted directory is "/cycladessoa/cyclades" for our purposes)
 
 . Open the file "/cycladessoa/cyclades/generated_docs/index.html" in a browser window
 

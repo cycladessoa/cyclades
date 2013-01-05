@@ -46,11 +46,11 @@ A specification and corresponding reference implementation for a service engine 
 
 * Although this product is used in production enviroments, it is currently being transitioned to an Open Source Software project. That being said, there will be aspects of this project that will need refinement as its maturing process as an Open Source Software project progresses (documentation, APIs, bugs etc...). We are looking forward to the feedback and contributions that will improve this product for the OSS community.
 
-* More documentation will be viewable online shortly. In the meantime, you will need to generate the current documentation from this source distribution. Instructions on how to do this will be included below as part of the _Cyclades Quick Start Instructions (*nix platforms)_ section
+* More documentation will be viewable online shortly. In the meantime, you will need to generate the current documentation from this source distribution. Instructions on how to do this will be included below as part of the _Cyclades Quick Start Instructions (*nix and Mac OS X platforms)_ section
 
 * The terms "Service" and "Nyxlet" are synonymous with respect to Cyclades SOA. A Nyxlet is simply a service module that is pluggable into the Cyclades Service Engine. We will offer a set of utility Nyxlets to build and//or deploy shortly. Each will exist as an independent repository. Developers will also be encouraged to offer their Nyxlets to the community. 
 
-= Cyclades Quick Start Instructions (*nix platforms)
+= Cyclades Quick Start Instructions (*nix and Mac OS X platforms)
 
 == Overview
 

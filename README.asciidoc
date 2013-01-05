@@ -50,6 +50,8 @@ A specification and corresponding reference implementation for a service engine 
 
 * The terms "Service" and "Nyxlet" are synonymous with respect to Cyclades SOA. A Nyxlet is simply a service module that is pluggable into the Cyclades Service Engine. We will offer a set of utility Nyxlets to build and//or deploy shortly. Each will exist as an independent repository. Developers will also be encouraged to offer their Nyxlets to the community. 
 
+* This product has not been tested on, though should also work for Windows installations. The provided supplemental shell scripts are an exception and will not run on a typical Windows installation (the shell scripts to generate Nyxlet templates, generate documentation etc...). Windows support for these items is on the to do list.
+
 = Cyclades Quick Start Instructions (*nix and Mac OS X platforms)
 
 == Overview

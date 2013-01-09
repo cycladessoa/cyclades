@@ -132,18 +132,16 @@ jar {
 }
 jar.doFirst() {
     configurations.runtime.each { f->
-        project.ext.dArray = "$f"
-        project.ext.dResult = project.ext.dArray.split("/")
-        project.ext.dSize = project.ext.dResult.size()
-        listKey.add(project.ext.dResult[project.ext.dSize-5])
-        listValue.add(project.ext.dResult[project.ext.dSize-1])
+        RelativePath rp = RelativePath.parse(true, "$f")
+        String[] pathParts = rp.getSegments()
+        listKey.add(pathParts[pathParts.size() - 5])
+        listValue.add(pathParts[pathParts.size() - 1])
     }
     configurations.newConf.each { f->
-        project.ext.dArray = "$f"
-        project.ext.dResult = project.ext.dArray.split("/")
-        project.ext.dSize = project.ext.dResult.size()
-        listKey.add(project.ext.dResult[project.ext.dSize-5])
-        listValue.add(project.ext.dResult[project.ext.dSize-1])
+        RelativePath rp = RelativePath.parse(true, "$f")
+        String[] pathParts = rp.getSegments()
+        listKey.add(pathParts[pathParts.size() - 5])
+        listValue.add(pathParts[pathParts.size() - 1])
     }
 }
 jar.doLast() {

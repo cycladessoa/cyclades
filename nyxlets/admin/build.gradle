@@ -68,7 +68,7 @@ uploadArchives {
                    }
                    developer {
                        id 'cyclades-tangel'
-                       name 'Tom Angelopous'
+                       name 'Tom Angelopoulos'
                    }
                    developer {
                        id 'cycladessoa-cthai'

@@ -223,7 +223,7 @@ public class XSTROMANyxlet extends STROMANyxlet {
                 // XXX - redundant close: liveOutputStream.close();
             } catch (Exception e) {}
             try {
-                if (async && notificationList != null) {
+                if (!emailDisabled && notificationList != null) {
                     StringBuilder sb = new StringBuilder(NyxletSession.TRANSACTION_DATA_PARAMETER);
                     sb.append(":[").append(transData).append("] statuscode:[").append(statusCode).append("]");
                     SendMail.sendMessage(notificationList, emailFrom, emailSMTPHost, emailSubject, sb.toString());
@@ -268,10 +268,11 @@ public class XSTROMANyxlet extends STROMANyxlet {
         final String eLabel = "XSTROMANyxlet.init: ";
         try {
             super.init();
+            emailDisabled = (getExternalProperties().containsKey(EMAIL_DISABLED)) ? getExternalProperties().getProperty(EMAIL_DISABLED).equalsIgnoreCase("true") : false;
             emailSMTPHost = (getExternalProperties().containsKey(EMAIL_SMTP_HOST)) ? getExternalProperties().getProperty(EMAIL_SMTP_HOST) : "localhost";
-            emailFrom = (getExternalProperties().containsKey(EMAIL_FROM)) ? getExternalProperties().getProperty(EMAIL_FROM) : "async@" + java.net.InetAddress.getLocalHost().getHostName();
+            emailFrom = (getExternalProperties().containsKey(EMAIL_FROM)) ? getExternalProperties().getProperty(EMAIL_FROM) : "cyclades@" + java.net.InetAddress.getLocalHost().getHostName();
             emailSubject = (getExternalProperties().containsKey(EMAIL_SUBJECT)) ?
-                    getExternalProperties().getProperty(EMAIL_SUBJECT) : "Asynchronous X-STROMA Response: " + java.net.InetAddress.getLocalHost().getHostName();
+                    getExternalProperties().getProperty(EMAIL_SUBJECT) : "Cyclades X-STROMA Response Status: " + java.net.InetAddress.getLocalHost().getHostName();
         } catch (Exception e) {
             throw new CycladesException(eLabel + e);
         }
@@ -282,9 +283,11 @@ public class XSTROMANyxlet extends STROMANyxlet {
         super.destroy();
     }
 
+    private boolean emailDisabled;
     private String emailSMTPHost;
     private String emailFrom;
     private String emailSubject;
+    private final static String EMAIL_DISABLED                              = "emailDisabled";
     private final static String EMAIL_SMTP_HOST                             = "emailSMTPHost";
     private final static String EMAIL_FROM                                  = "emailFrom";
     private final static String EMAIL_SUBJECT                               = "emailSubject";
@@ -297,7 +300,7 @@ public class XSTROMANyxlet extends STROMANyxlet {
     private final static String CHAINING_MODE                               = "chain";
     private final static String ASYNC                                       = "asynchronous";
     private final static String NOTIFICATION_LIST                           = "notify";
-    public final static String MERGE_COUNT                                 = "merge-count";
-    public final static String MERGE_TOTAL                                 = "merge-total";
+    public final static String MERGE_COUNT                                  = "merge-count";
+    public final static String MERGE_TOTAL                                  = "merge-total";
 
 }

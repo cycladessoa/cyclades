@@ -38,6 +38,7 @@ import java.util.Map;
 import org.cyclades.engine.MetaTypeEnum;
 import org.cyclades.engine.api.Nyxlet;
 import org.cyclades.engine.nyxlet.NyxletRepository;
+import org.cyclades.engine.util.MapHelper;
 
 public class XSTROMABrokerRequest {
 
@@ -148,6 +149,10 @@ public class XSTROMABrokerRequest {
             throw new Exception(eLabel + e);
         }
     }
+    
+    public void setSTROMARequests (List<STROMARequest> serviceRequests) {
+        this.serviceRequests = serviceRequests;
+    }
 
     public String generateData () throws Exception {
         return (metaTypeEnum.equals(MetaTypeEnum.XML)) ? generateXMLData() : generateJSONData();
@@ -183,9 +188,51 @@ public class XSTROMABrokerRequest {
             throw new Exception(eLabel + e);
         }
     }
+    
+    public String toXSTROMAMessage () throws Exception {
+        return (metaTypeEnum.equals(MetaTypeEnum.XML)) ? toXMLXSTROMAMessage() : toJSONXSTROMAMessage();
+    }
+
+    public String toJSONXSTROMAMessage () throws Exception {
+        StringBuilder builder = new StringBuilder("{\"");
+        builder.append(BASE_PARAMETERS).append("\":");
+        builder.append(MapHelper.parameterMapToJSON(parameters));    
+        builder.append(",\"data\":{\"requests\":[");
+        int i = 0;
+        for (STROMARequest request : serviceRequests) {
+            if (i++ > 0) builder.append(",");
+            builder.append(request.toJSONString());
+        }
+        builder.append("]}}");
+        return builder.toString();
+    }
+
+    public String toXMLXSTROMAMessage () throws Exception {
+        final String eLabel = "XSTROMABrokerRequest.generateXMLData: ";
+        try {
+            StringBuilder builder = new StringBuilder("<x-stroma>");
+            builder.append("<").append(BASE_PARAMETERS).append(">");
+            builder.append(MapHelper.parameterMapToXML(parameters, "parameter"));
+            builder.append("</").append(BASE_PARAMETERS).append(">");
+            builder.append("<data><requests>");
+            for (STROMARequest request : serviceRequests) {
+                builder.append(request.toXMLString());
+            }
+            builder.append("</requests></data></x-stroma>");
+            return builder.toString();
+        } catch (Exception e) {
+            throw new Exception(eLabel + e);
+        }
+    }
+    
+    public Map<String, List<String>> getParameters () {
+        return parameters;
+    }
 
     private Map<String, List<String>> parameters = new HashMap<String, List<String>>();
     private MetaTypeEnum metaTypeEnum;
     private String brokerName;
     private List<STROMARequest> serviceRequests = new ArrayList<STROMARequest>();
+    private static final String BASE_PARAMETERS = "parameters";
+    
 }

@@ -27,10 +27,9 @@
  *******************************************************************************/
 package org.cyclades.io;
 
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-
-import com.google.common.io.ByteStreams;
 
 /**
  * This class will encapsulate some general methods for IO that have been
@@ -38,6 +37,7 @@ import com.google.common.io.ByteStreams;
  *
  */
 public class StreamUtils {
+    
     /**
      * Write from a URI to an OutpusStream
      * Note: It is the callers responsibility to close the OutputStream
@@ -49,7 +49,7 @@ public class StreamUtils {
 
     /**
      * Write from a URI to an OutpusStream
-     * Note: It is the callers repsponsibility to close the OutputStream
+     * Note: It is the callers responsibility to close the OutputStream
      *
      * @param URI
      * @param out
@@ -61,7 +61,7 @@ public class StreamUtils {
         try {
             if (bufferSize < 1) throw new Exception("Invalid buffer size: " + bufferSize);
             is = ResourceRequestUtils.getInputStream(URI, null);
-            ByteStreams.copy(is, out);
+            write(is, out);
         } catch (Exception ex) {
             throw new Exception(ex);
 
@@ -70,7 +70,57 @@ public class StreamUtils {
                 is.close();
             } catch (Exception ignore) {}
         }
-    } // end of write(...)
-
+    }
+    
+    /**
+     * Write from an InputStream to an OutputStream
+     * NOTE: It is the callers responsibility to close both streams
+     * 
+     * @param is
+     * @param out
+     * @throws Exception
+     */
+    public static void write (InputStream is, OutputStream out) throws Exception {
+        write(is, out, DEFAULT_BUFFER_SIZE);
+    }
+    
+    /**
+     * Write from an InputStream to an OutputStream
+     * NOTE: It is the callers responsibility to close both streams
+     * 
+     * @param is
+     * @param out
+     * @param bufferSize
+     * @throws Exception
+     */
+    public static void write (InputStream is, OutputStream out, int bufferSize) throws Exception {
+        final String eLabel = "StreamUtils.write(InputStream, OutputStream): ";
+        try {
+            if (bufferSize < 1) throw new Exception("Invalid buffer size: " + bufferSize);
+            int bytesRead;
+            byte[] buffer = new byte[bufferSize];
+            while ((bytesRead = is.read(buffer)) != -1) {
+                out.write(buffer, 0, bytesRead);
+            }
+        } catch (Exception e) {
+            throw new Exception(eLabel + e);
+        }
+    }
+    
+    /**
+     * Create and return a byte array from an InputStream
+     * NOTE: It is the callers responsibility to close the InputStream
+     * 
+     * @param is
+     * @return The byte array representation of the InputStream
+     * @throws Exception
+     */
+    public static byte[] toByteArray (InputStream is) throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        write(is, baos);
+        return baos.toByteArray();
+    }
+    
     public static final int DEFAULT_BUFFER_SIZE = 1024;
+    
 }

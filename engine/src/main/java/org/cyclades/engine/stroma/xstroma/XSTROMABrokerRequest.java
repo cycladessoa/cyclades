@@ -228,6 +228,10 @@ public class XSTROMABrokerRequest {
     public Map<String, List<String>> getParameters () {
         return parameters;
     }
+    
+    public MetaTypeEnum getMetaTypeEnum () {
+        return metaTypeEnum;
+    }
 
     private Map<String, List<String>> parameters = new HashMap<String, List<String>>();
     private MetaTypeEnum metaTypeEnum;

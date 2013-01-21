@@ -35,7 +35,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-import com.google.common.io.ByteStreams;
 
 /**
  * This class will encapsulate some general methods for IO that have been
@@ -44,7 +43,7 @@ import com.google.common.io.ByteStreams;
  */
 public class ResourceRequestUtils {
     /**
-     * Get the inputstream of the response. This will either be an HTTP
+     * Get the InputStream of the response. This will either be an HTTP
      * transaction or simply read from a file.
      *
      * @param URLString URL to connect to
@@ -62,7 +61,7 @@ public class ResourceRequestUtils {
     }
 
     /**
-     * Get the inputstream of the response. This will either be an HTTP
+     * Get the InputStream of the response. This will either be an HTTP
      * transaction or simply read from a file.
      *
      * @param URLString                         URL to connecto to
@@ -99,7 +98,7 @@ public class ResourceRequestUtils {
     }
 
     /**
-     * Get the inputstream from a HTTP response
+     * Get the InputStream from a HTTP response
      *
      * @param URLString                 The URL to connect to
      * @param data                              The data to send if this is a POST, set as null otherwise
@@ -116,7 +115,7 @@ public class ResourceRequestUtils {
     }
 
     /**
-     * Get the inputstream from a HTTP response
+     * Get the InputStream from a HTTP response
      *
      * @param URLString                         The URL to connect to
      * @param data                              The data to send if this is a POST, set as null otherwise
@@ -193,7 +192,7 @@ public class ResourceRequestUtils {
             conn.setRequestMethod((method == null) ? "POST" : method);
             if (is != null) {
                 os = conn.getOutputStream();
-                ByteStreams.copy(is, os);
+                StreamUtils.write(is, os);
                 os.flush();
             }
             if (conn.getResponseCode() != 200) throw new Exception("Invalid response code returned: " + conn.getResponseCode());
@@ -238,7 +237,7 @@ public class ResourceRequestUtils {
             conn.setRequestMethod((method == null) ? "POST" : method);
             if (is != null) {
                 os = conn.getOutputStream();
-                ByteStreams.copy(is, os);
+                StreamUtils.write(is, os);
                 os.flush();
             }
             return conn;
@@ -252,7 +251,7 @@ public class ResourceRequestUtils {
     }
 
     /**
-     * Get the inputstream from a File
+     * Get the InputStream from a File
      *
      * @param URLString The URI to the file resource
      * @return                  The InputStream to read the file resource. Close this in calling code.
@@ -312,7 +311,7 @@ public class ResourceRequestUtils {
         InputStream is = null;
         try {
             is = getInputStream(URLString, data, headerProperties, connectionTimeoutInMS, readTimeoutInMS);
-            return ByteStreams.toByteArray(is);
+            return StreamUtils.toByteArray(is);
         } catch (Exception e) {
             throw new Exception(e + " " + URLString);
 
@@ -354,4 +353,5 @@ public class ResourceRequestUtils {
             System.out.println("Main: " + e);
         }
     }
+    
 }

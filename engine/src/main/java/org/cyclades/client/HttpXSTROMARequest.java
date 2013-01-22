@@ -38,6 +38,11 @@ public class HttpXSTROMARequest {
         }
     }
     
+    public static String toString (XSTROMABrokerRequest xstromaRequest, boolean xstromaMessage) throws Exception {
+        if (xstromaMessage) return xstromaRequest.toXSTROMAMessage();
+        return xstromaRequest.generateData();
+    }
+    
     private static StringBuilder createParameterizedXSTOMAUrl (StringBuilder urlBuilder, XSTROMABrokerRequest xstromaRequest) {
         urlBuilder.append("?data-type=").append(xstromaRequest.getMetaTypeEnum().name());
         Map<String, List<String>> parameters = xstromaRequest.getParameters();
@@ -53,8 +58,32 @@ public class HttpXSTROMARequest {
     
     public static void main (String[] args) {
         try {
+            if (System.getProperty("run_demo_request", "false").equalsIgnoreCase("true")) {
+                HttpXSTROMARequest.execute(
+                    "http://localhost:8080/cyclades/servicebroker", 
+                    System.out,
+                    XSTROMARequestBuilder.newBuilder(null).parameter("transaction-data", "123A").add(STROMARequestBuilder.newBuilder("helloworld").parameter("action", "sayhello").parameter("name", "foo").build()).xml().build(),
+                    true
+                );
+                return;
+            }
             if (args.length < 4) {
-                System.out.println("usage: cmd service_broker_url xml|json use_xstroma_message service_name [parameter_key parameter_value] ...");
+                System.out.println("Simple command line tool to create and execute one XSTROMA request via HTTP for one service\n");
+                System.out.println("usage: cmd [-Drun_demo_request=true]");
+                System.out.println("Runs the following sample java code:\n");
+                System.out.println("HttpXSTROMARequest.execute(");
+                System.out.println("\t\"http://localhost:8080/cyclades/servicebroker\",");
+                System.out.println("\tSystem.out,");
+                System.out.println("\tXSTROMARequestBuilder.newBuilder(null).parameter(\"transaction-data\", \"123A\").add(STROMARequestBuilder.newBuilder(\"helloworld\").parameter(\"action\", \"sayhello\").parameter(\"name\", \"foo\").build()).xml().build(),");
+                System.out.println("\ttrue");
+                System.out.println(");\n");
+                System.out.println("usage: cmd [-Dprint_payload_only=true] service_broker_url data_type use_xstroma_message service_name [parameter_key parameter_value] ...");
+                System.out.println("service_broker_url: i.e. \"http://localhost:8080/cyclades/servicebroker\"");
+                System.out.println("data_type: \"json\" or \"xml\"");
+                System.out.println("use_xstroma_message: \"true\" or \"false\", use conventional HTTP payload request or use the XSTROMA message format");
+                System.out.println("service_name: The name of the STROMA service to request, i.e. \"helloworld\"");
+                System.out.println("[parameter_key parameter_value]: Any number of key/value pairs for the request, will be added to the XSTROMA level");
+                System.exit(1);
             }
             int i = 0;
             String url = args[i++];
@@ -65,9 +94,14 @@ public class HttpXSTROMARequest {
             if (xml) xstromaBuilder.xml();
             STROMARequestBuilder stromaBuilder = STROMARequestBuilder.newBuilder(serviceName);
             for (;i < args.length;) {
-                stromaBuilder.parameter(args[i++], args[i++]);
+                xstromaBuilder.parameter(args[i++], args[i++]);
             }
-            HttpXSTROMARequest.execute(url, System.out, xstromaBuilder.add(stromaBuilder.build()).build(), useXSTROMAMessage);
+            XSTROMABrokerRequest xstromaRequest = xstromaBuilder.add(stromaBuilder.build()).build();
+            if (System.getProperty("print_payload_only", "false").equalsIgnoreCase("true")) {
+                System.out.println(toString(xstromaRequest, useXSTROMAMessage));
+                return;
+            }
+            HttpXSTROMARequest.execute(url, System.out, xstromaRequest, useXSTROMAMessage);
         } catch (Exception e) {
             System.out.println(e);
             System.exit(1);

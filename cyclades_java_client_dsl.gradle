@@ -1,0 +1,122 @@
+/*******************************************************************************
+ * Copyright (c) 2012, THE BOARD OF TRUSTEES OF THE LELAND STANFORD JUNIOR UNIVERSITY
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ *    Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *    Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *    Neither the name of the STANFORD UNIVERSITY nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software without
+ *    specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ *******************************************************************************/
+buildscript {
+        repositories {
+                mavenCentral()
+        }
+
+
+        dependencies {
+                classpath group:'com.github.cycladessoa', name:'engine', version:'latest.integration'
+        }
+}
+
+import org.cyclades.engine.stroma.xstroma.XSTROMARequestBuilder
+import org.cyclades.engine.stroma.xstroma.STROMARequestBuilder
+import org.cyclades.client.Http;
+
+task java_client_dsl () {
+    description = 'Execute sample X-STROMA requests with the Cyclades Java DSL'
+
+    /*********************************************************************
+    * The following are some simple examples of how to create and       
+    * execute X-STROMA/STROMA requests using the Cyclades Java DSL.    
+    * This code should be directly portable to Java classes if desired.             
+    * To use the Cyclades Java DSL with an external client make sure    
+    * to declare the "engine" dependency in your client build if using 
+    * Maven of Gradle...or utilize the following libraries from the     
+    * build/libs directory                                              
+    *  - engine-*.jar                                                  
+    *  - json-*.jar                                                     
+    *  - commons-lang-*.jar                                            
+    **********************************************************************/
+
+    doLast () {
+        println '1 service request via X-STROMA and HTTP defaulting to JSON format'
+        println ''
+        println new String(Http.execute("http://localhost:8080/cyclades/servicebroker",
+            XSTROMARequestBuilder.newInstance(null).parameter("transaction-data", "sample-1").add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "foo")).build()))
+        println ''
+
+        println '3 batched (composed) service requests via X-STROMA and HTTP in XML format'
+        println ''
+        XSTROMARequestBuilder xstromaBuilder = XSTROMARequestBuilder.newInstance(null) 
+        xstromaBuilder.parameter("transaction-data", "sample-2").parameter("duration", "true")
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "foo").parameter("name", "foo2"))
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "bar").parameter("name", "bar2"))
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "baz").parameter("name", "baz2"))
+        println new String(Http.execute("http://localhost:8080/cyclades/servicebroker", xstromaBuilder.xml().build()))
+        println ''
+
+        println '3 chained service requests via X-STROMA and HTTP in JSON format'
+        println ''
+        xstromaBuilder = XSTROMARequestBuilder.newInstance(null)
+        xstromaBuilder.parameter("transaction-data", "sample-3").parameter("duration", "true").parameter("chain", "true")
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhellochainable").parameter("name", "foo").parameter("name", "foo2"))
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhellochainable").parameter("name", "bar").parameter("name", "bar2"))
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhellochainable").parameter("name", "baz").parameter("name", "baz2"))
+        println new String(Http.execute("http://localhost:8080/cyclades/servicebroker", xstromaBuilder.json().build()))
+        println ''
+
+        println '3 batched (composed) service requests via X-STROMA and HTTP in JSON format, using OutputStream for response'
+        println ''
+        xstromaBuilder = XSTROMARequestBuilder.newInstance(null)
+        xstromaBuilder.parameter("transaction-data", "sample-4").parameter("duration", "true")
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "foo").parameter("name", "foo2"))
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "bar").parameter("name", "bar2"))
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "baz").parameter("name", "baz2"))
+        Http.execute("http://localhost:8080/cyclades/servicebroker", xstromaBuilder.json().build(), System.out)
+        println ''
+        println ''
+
+        println 'Display the format of 3 batched (composed) service requests via X-STROMA in XML "X-STROMA Message" format'
+        println ''
+        xstromaBuilder = XSTROMARequestBuilder.newInstance(null)
+        xstromaBuilder.parameter("transaction-data", "sample-5").parameter("duration", "true")
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "foo").parameter("name", "foo2"))
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "bar").parameter("name", "bar2"))
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "baz").parameter("name", "baz2"))
+        println xstromaBuilder.xml().build().toXSTROMAMessage()
+        println ''
+
+        println 'Display the format of 3 batched (composed) service requests via X-STROMA in XML "X-STROMA data" format, to be used with HTTP requests'
+        println 'that will include the XSTROMA level parameters as HTTP query paramters (notice you do not see those in this output). The '
+        println 'following output would be the value of the "data" query parameter'
+        println ''
+        xstromaBuilder = XSTROMARequestBuilder.newInstance(null)
+        xstromaBuilder.parameter("transaction-data", "sample-6").parameter("duration", "true")
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "foo").parameter("name", "foo2"))
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "bar").parameter("name", "bar2"))
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "baz").parameter("name", "baz2"))
+        println xstromaBuilder.xml().build().generateData()
+        println ''
+
+        println 'Please see STROMA/X-STROMA specification and the Java Docs for more details.'
+    }
+
+}

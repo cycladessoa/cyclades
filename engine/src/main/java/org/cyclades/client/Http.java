@@ -1,6 +1,7 @@
 package org.cyclades.client;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
@@ -13,13 +14,35 @@ import org.cyclades.engine.stroma.xstroma.XSTROMARequestBuilder;
 import org.cyclades.io.ResourceRequestUtils;
 import org.cyclades.io.StreamUtils;
 
-public class HttpXSTROMARequest {
+public class Http {
     
-    public static void execute (String url, OutputStream out, XSTROMABrokerRequest xstromaRequest, boolean xstromaMessage) throws Exception {
-        execute (url, out, 0, 0, xstromaRequest, xstromaMessage);
+    public static byte[] execute (String url, XSTROMABrokerRequest xstromaRequest) throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        execute(url, xstromaRequest, baos);
+        return baos.toByteArray();
     }
     
-    public static void execute (String url, OutputStream out, int connectionTimeout, int readTimeout, XSTROMABrokerRequest xstromaRequest, boolean xstromaMessage) throws Exception {
+    public static void execute (String url, XSTROMABrokerRequest xstromaRequest, OutputStream out) throws Exception {
+        execute (url, xstromaRequest, false, out, 0, 0);
+    }
+    
+    public static byte[] execute (String url, XSTROMABrokerRequest xstromaRequest, boolean xstromaMessage) throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        execute(url, xstromaRequest, xstromaMessage, baos);
+        return baos.toByteArray();
+    }
+    
+    public static void execute (String url, XSTROMABrokerRequest xstromaRequest, boolean xstromaMessage, OutputStream out) throws Exception {
+        execute (url, xstromaRequest, xstromaMessage, out, 0, 0);
+    }
+    
+    public static byte[] execute (String url, XSTROMABrokerRequest xstromaRequest, boolean xstromaMessage, int connectionTimeout, int readTimeout) throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        execute(url, xstromaRequest, xstromaMessage, baos, connectionTimeout, readTimeout);
+        return baos.toByteArray();
+    }
+    
+    public static void execute (String url, XSTROMABrokerRequest xstromaRequest, boolean xstromaMessage, OutputStream out, int connectionTimeout, int readTimeout) throws Exception {
         StringBuilder requestURL = new StringBuilder(url);
         String xstromaString;
         if (xstromaMessage) {
@@ -59,11 +82,11 @@ public class HttpXSTROMARequest {
     public static void main (String[] args) {
         try {
             if (System.getProperty("run_demo_request", "false").equalsIgnoreCase("true")) {
-                HttpXSTROMARequest.execute(
+                Http.execute(
                     "http://localhost:8080/cyclades/servicebroker", 
-                    System.out,
-                    XSTROMARequestBuilder.newBuilder(null).parameter("transaction-data", "123A").add(STROMARequestBuilder.newBuilder("helloworld").parameter("action", "sayhello").parameter("name", "foo").build()).xml().build(),
-                    true
+                    XSTROMARequestBuilder.newInstance(null).parameter("transaction-data", "123A").add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "foo")).xml().build(),
+                    true,
+                    System.out
                 );
                 return;
             }
@@ -90,18 +113,18 @@ public class HttpXSTROMARequest {
             boolean xml = args[i++].equalsIgnoreCase("xml");
             boolean useXSTROMAMessage = args[i++].equalsIgnoreCase("true");
             String serviceName = args[i++];
-            XSTROMARequestBuilder xstromaBuilder = XSTROMARequestBuilder.newBuilder(null);
+            XSTROMARequestBuilder xstromaBuilder = XSTROMARequestBuilder.newInstance(null);
             if (xml) xstromaBuilder.xml();
-            STROMARequestBuilder stromaBuilder = STROMARequestBuilder.newBuilder(serviceName);
+            STROMARequestBuilder stromaBuilder = STROMARequestBuilder.newInstance(serviceName);
             for (;i < args.length;) {
                 xstromaBuilder.parameter(args[i++], args[i++]);
             }
-            XSTROMABrokerRequest xstromaRequest = xstromaBuilder.add(stromaBuilder.build()).build();
+            XSTROMABrokerRequest xstromaRequest = xstromaBuilder.add(stromaBuilder).build();
             if (System.getProperty("print_payload_only", "false").equalsIgnoreCase("true")) {
                 System.out.println(toString(xstromaRequest, useXSTROMAMessage));
                 return;
             }
-            HttpXSTROMARequest.execute(url, System.out, xstromaRequest, useXSTROMAMessage);
+            Http.execute(url, xstromaRequest, useXSTROMAMessage, System.out);
         } catch (Exception e) {
             System.out.println(e);
             System.exit(1);

@@ -57,10 +57,10 @@ public class XSTROMARequestBuilderTest {
 
     @Test
     public void generateJSONString_test () throws Exception {
-        XSTROMARequestBuilder xstromaBuilder = XSTROMARequestBuilder.newBuilder(null);
-        xstromaBuilder.add(STROMARequestBuilder.newBuilder("helloworld").parameter("action", "sayhello").parameter("name", "tom").parameter("name", "nick").data("\"raw_json\":{\"l\":\"k\"}").build());
-        xstromaBuilder.add(STROMARequestBuilder.newBuilder("helloworld").parameter("action", "sayhello").parameter("name", "tom2").parameter("name", "nick2").build());
-        xstromaBuilder.add(STROMARequestBuilder.newBuilder("helloworld").parameter("action", "sayhello").parameter("name", "tom3").parameter("name", "nick3").build());
+        XSTROMARequestBuilder xstromaBuilder = XSTROMARequestBuilder.newInstance(null);
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "tom").parameter("name", "nick").data("\"raw_json\":{\"l\":\"k\"}"));
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "tom2").parameter("name", "nick2"));
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "tom3").parameter("name", "nick3"));
         xstromaBuilder.parameter("target", "localhost");
         xstromaBuilder.parameter("connection-timeout", "2000");
         String xstromaOutput = xstromaBuilder.build().toXSTROMAMessage();
@@ -74,10 +74,10 @@ public class XSTROMARequestBuilderTest {
     
     @Test
     public void generateXMLString_test () throws Exception {
-        XSTROMARequestBuilder xstromaBuilder = XSTROMARequestBuilder.newBuilder(null).xml();
-        xstromaBuilder.add(STROMARequestBuilder.newBuilder("helloworld").parameter("action", "sayhello").parameter("name", "tom").parameter("name", "nick").data("<raw_xml>hi</raw_xml>").build());
-        xstromaBuilder.add(STROMARequestBuilder.newBuilder("helloworld").parameter("action", "sayhello").parameter("name", "tom2").parameter("name", "nick2").build());
-        xstromaBuilder.add(STROMARequestBuilder.newBuilder("helloworld").parameter("action", "sayhello").parameter("name", "tom3").parameter("name", "nick3").build());
+        XSTROMARequestBuilder xstromaBuilder = XSTROMARequestBuilder.newInstance(null).xml();
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "tom").parameter("name", "nick").data("<raw_xml>hi</raw_xml>"));
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "tom2").parameter("name", "nick2"));
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "tom3").parameter("name", "nick3"));
         xstromaBuilder.parameter("target", "localhost");
         xstromaBuilder.parameter("connection-timeout", "2000");
         String xstromaOutput = xstromaBuilder.build().toXSTROMAMessage();

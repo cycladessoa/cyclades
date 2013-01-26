@@ -7,7 +7,7 @@ import java.util.Map;
 
 public class STROMARequestBuilder {
     
-    public static STROMARequestBuilder newBuilder (String serviceName) {
+    public static STROMARequestBuilder newInstance (String serviceName) {
         return new STROMARequestBuilder(serviceName);
     }
     

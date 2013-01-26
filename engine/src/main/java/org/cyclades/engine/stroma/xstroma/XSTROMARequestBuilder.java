@@ -8,7 +8,7 @@ import org.cyclades.engine.MetaTypeEnum;
 
 public class XSTROMARequestBuilder {
     
-    public static XSTROMARequestBuilder newBuilder (String serviceBrokerName) {
+    public static XSTROMARequestBuilder newInstance (String serviceBrokerName) {
         return new XSTROMARequestBuilder(serviceBrokerName);
     }
     
@@ -41,20 +41,20 @@ public class XSTROMARequestBuilder {
         return this;
     }
     
-    public XSTROMARequestBuilder add (STROMARequest serviceRequest) {
-        this.serviceRequests.add(serviceRequest);
+    public XSTROMARequestBuilder add (STROMARequestBuilder serviceRequestBuilder) {
+        this.serviceRequestBuilders.add(serviceRequestBuilder);
         return this;
     }
     
     public XSTROMABrokerRequest build () throws Exception {
         XSTROMABrokerRequest brokerRequest = new XSTROMABrokerRequest(serviceBrokerName, metaTypeEnum, parameters);
-        brokerRequest.setSTROMARequests(serviceRequests);
+        for (STROMARequestBuilder stromaBuilder : serviceRequestBuilders) brokerRequest.addSTROMARequest(stromaBuilder.build()); 
         return brokerRequest;
     }
     
     private final String serviceBrokerName;
     private Map<String, List<String>> parameters = new HashMap<String, List<String>>();
     private MetaTypeEnum metaTypeEnum = MetaTypeEnum.JSON;
-    private List<STROMARequest> serviceRequests = new ArrayList<STROMARequest>();
+    private List<STROMARequestBuilder> serviceRequestBuilders = new ArrayList<STROMARequestBuilder>();
 
 }

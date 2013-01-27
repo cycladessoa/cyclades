@@ -189,6 +189,17 @@ public class XSTROMABrokerRequest {
         }
     }
     
+    /**
+     * Returns null on error
+     */
+    public String toString () {
+        try { 
+            return toXSTROMAMessage();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+    
     public String toXSTROMAMessage () throws Exception {
         return (metaTypeEnum.equals(MetaTypeEnum.XML)) ? toXMLXSTROMAMessage() : toJSONXSTROMAMessage();
     }

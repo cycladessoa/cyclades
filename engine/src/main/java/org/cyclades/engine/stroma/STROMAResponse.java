@@ -56,9 +56,11 @@ public class STROMAResponse {
             this.action = XMLComparitor.getAttribute(node, "action");
             this.errorCode = Integer.parseInt(XMLComparitor.getAttribute(node, ERROR_CODE));
             this.errorMessage = XMLComparitor.getAttribute(node, ERROR_MESSAGE);
-            Vector<Node> parameterNodes = XMLComparitor.getMatchingChildNodes(node, PARAMETERS);
-            if (parameterNodes.size() > 0) this.parameters = MapHelper.parameterMapFromMetaObject(parameterNodes.firstElement().getChildNodes());
+            Vector<Node> nodesVector = XMLComparitor.getMatchingChildNodes(node, PARAMETERS);
+            if (nodesVector.size() > 0) this.parameters = MapHelper.parameterMapFromMetaObject(nodesVector.firstElement().getChildNodes());
             this.data = node;
+            nodesVector = XMLComparitor.getMatchingChildNodes(node, "duration");
+            if (nodesVector.size() > 0) this.duration = Long.parseLong(XMLComparitor.getAttribute(nodesVector.firstElement(), "val"));
         } catch (Exception e) {
             throw new Exception(eLabel + e);
         }
@@ -75,6 +77,7 @@ public class STROMAResponse {
             this.errorMessage = jsonObject.has(ERROR_MESSAGE) ? jsonObject.getString(ERROR_MESSAGE) : null;
             this.parameters = jsonObject.has(PARAMETERS) ? MapHelper.parameterMapFromMetaObject(jsonObject.getJSONArray(PARAMETERS)) : null;
             this.data = jsonObject.has("data") ? jsonObject.getJSONObject("data") : new JSONObject();
+            if (jsonObject.has("duration")) duration = Long.parseLong(jsonObject.getString("duration"));
         } catch (Exception e) {
             throw new Exception(eLabel + e);
         }
@@ -122,6 +125,10 @@ public class STROMAResponse {
     public String getServiceAgent () {
         return serviceAgent;
     }
+    
+    public long getDuration () {
+        return duration;
+    }
 
     /**
      * Get the parameters of this STROMAResponse. This could be null if there were no parameters
@@ -141,6 +148,7 @@ public class STROMAResponse {
     private Object data;
     private String transactionData;
     private String serviceAgent;
+    private long duration;
     public final static String ERROR_CODE       = "error-code";
     public final static String ERROR_MESSAGE    = "error-message";
     public final static String PARAMETERS       = "parameters";

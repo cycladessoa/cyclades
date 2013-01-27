@@ -42,18 +42,26 @@ import org.w3c.dom.Node;
 import org.cyclades.xml.comparitor.XMLComparitor;
 
 public class XSTROMABrokerResponse {
+    
+    public XSTROMABrokerResponse (String responseString) throws Exception {
+        this((responseString.charAt(0) == '<') ? MetaTypeEnum.XML : MetaTypeEnum.JSON, responseString);
+    }
 
-    public XSTROMABrokerResponse (MetaTypeEnum metaTypeEnum, String data) throws Exception {
+    public XSTROMABrokerResponse (MetaTypeEnum metaTypeEnum, String responseString) throws Exception {
         final String eLabel = "XSTROMABrokerResponse.STROMABrokerResponse: ";
         try {
             if (metaTypeEnum.equals(MetaTypeEnum.JSON)) {
-                populate(new JSONObject(data));
+                populate(new JSONObject(responseString));
             } else {
-                populate((new GenericXMLObject(data)).getRootElement());
+                populate((new GenericXMLObject(responseString)).getRootElement());
             }
         } catch (Exception e) {
             throw new Exception(eLabel + e);
         }
+    }
+    
+    public static XSTROMABrokerResponse parse (String responseString) throws Exception {
+        return new XSTROMABrokerResponse(responseString);
     }
 
     private void populate (Node node) throws Exception {
@@ -73,6 +81,8 @@ public class XSTROMABrokerResponse {
             for (int i = 0; i < nodesVector.size(); i++) {
                 this.parameters = MapHelper.parameterMapFromMetaObject(nodesVector.get(i).getChildNodes());
             }
+            nodesVector = XMLComparitor.getMatchingChildNodes(node, "duration");
+            if (nodesVector.size() > 0) this.duration = Long.parseLong(XMLComparitor.getAttribute(nodesVector.firstElement(), "val"));
         } catch (Exception e) {
             throw new Exception(eLabel + e);
         }
@@ -95,6 +105,7 @@ public class XSTROMABrokerResponse {
                 serviceResponse = serviceResponses.getJSONObject(i);
                 responses.add(new STROMAResponse(serviceResponse));
             }
+            if (jsonObject.has("duration")) duration = Long.parseLong(jsonObject.getString("duration"));
         } catch (Exception e) {
             throw new Exception(eLabel + e);
         }
@@ -118,6 +129,10 @@ public class XSTROMABrokerResponse {
     
     public String getServiceAgent () {
         return serviceAgent;
+    }
+    
+    public long getDuration () {
+        return duration;
     }
 
     public List<STROMAResponse> getResponses() {
@@ -143,6 +158,7 @@ public class XSTROMABrokerResponse {
     private String transactionData = null;
     private String serviceAgent = null;
     private Map<String, List<String>> parameters = null;
+    private long duration = -1;
     public final static String PARAMETERS           = "parameters";
     public final static String ORCHESTRATION_FAULT  = "orchestration-fault";
     

@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import org.cyclades.engine.nyxlet.templates.xstroma.ServiceBrokerNyxletImpl;
 import org.cyclades.engine.nyxlet.templates.xstroma.message.api.MessageConsumer;
 import org.cyclades.engine.nyxlet.templates.xstroma.message.impl.RawMessageProcessor;
+import org.cyclades.engine.nyxlet.templates.xstroma.message.impl.ResponseProcessor;
 import org.cyclades.engine.util.MapHelper;
 
 public class ConsumerTarget {
@@ -44,7 +45,7 @@ public class ConsumerTarget {
             messageConsumer = (MessageConsumer)service.getClass().getClassLoader().loadClass(theClass).newInstance();
             messageConsumer.init(MapHelper.mapFromMetaObject(initializationData),
                     (rawMessageProcessorData == null) ? null : new RawMessageProcessor(rawMessageProcessorData),
-                    (responseProcessorData == null) ? null : new RawMessageProcessor(responseProcessorData), service);
+                    (responseProcessorData == null) ? null : new ResponseProcessor(responseProcessorData), service);
         } catch (Exception e) {
             throw new Exception(eLabel + e);
         }

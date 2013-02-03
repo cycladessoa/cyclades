@@ -74,7 +74,7 @@ public class RabbitMQDefaultConsumer extends DefaultConsumer implements RabbitMQ
                 // XXX - Verify this is what we want to do if there is no replyto set...DONT'T REPLY!
                 //System.out.println(baos.toString());
             }
-            if (connectionResource.hasResponseProcessor()) connectionResource.fireResponseProcessor(response);
+            if (connectionResource.hasResponseProcessor()) connectionResource.fireResponseProcessor(response, body);
         } catch (Exception e) {
             connectionResource.getCallBackServiceInstance().logError(eLabel + e);
         } finally {

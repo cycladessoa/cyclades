@@ -29,6 +29,7 @@ package org.cyclades.engine.stroma;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.cyclades.engine.MetaTypeEnum;
@@ -124,14 +125,30 @@ public class STROMARequestHelper {
      * @throws Exception
      */
     public static Object requestSetAndGetMapChannel (Map<String, List<String>> stromaParameters, String serviceName, String mapChannelKey, Object mapChannelObject, String returMapChannelKey) throws Exception {
+        Map<Object, Object> mapChannel = new HashMap<Object, Object>();
+        mapChannel.put(mapChannelKey, mapChannelObject);
+        return requestSetAndGetMapChannel(stromaParameters, serviceName, mapChannel).get(returMapChannelKey);
+    }
+    
+    /**
+     * Make a request to a local service, avoiding any serialization by setting and returning the mapChannel Object of the
+     * service requested directly.
+     *
+     * @param stromaParameters      Parameters for the service request
+     * @param serviceName           The name of the target service
+     * @param mapChannel            The Map to use as the Map Channel itself
+     * @return the MapChannel as modified, if modified by the request
+     * @throws Exception
+     */
+    public static Map<Object, Object> requestSetAndGetMapChannel (Map<String, List<String>> stromaParameters, String serviceName, Map<Object, Object> mapChannel) throws Exception {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         NyxletSession ns = new NyxletSession(stromaParameters, null, os);
-        ns.putMapChannelObject(mapChannelKey, mapChannelObject);
+        ns.setMapChannel(mapChannel);
         ns.setChainsForward(true);
         STROMAServiceRequest.execute(serviceName, ns);
         STROMAResponse sr = STROMAResponse.fromBytes(ns.getMetaTypeEnum(), os.toByteArray());
         if (sr.getErrorCode() != 0) throw new CycladesException(sr.getErrorMessage(), (short)sr.getErrorCode());
-        return ns.getMapChannelObject(returMapChannelKey);
+        return ns.getMapChannel();
     }
 
     /**
@@ -150,6 +167,24 @@ public class STROMARequestHelper {
     public static void requestSetMapChannel (Map<String, List<String>> stromaParameters, String serviceName, String mapChannelKey, Object mapChannelObject, OutputStream os) throws Exception {
         NyxletSession ns = new NyxletSession(stromaParameters, null, os);
         ns.putMapChannelObject(mapChannelKey, mapChannelObject);
+        STROMAServiceRequest.execute(serviceName, ns);
+    }
+    
+    /**
+     * Make a request to a local service, avoiding any input serialization by setting the mapChannel Object of the
+     * service requested directly.
+     *
+     * Nothing written to the OutputStream means error
+     *
+     * @param stromaParameters  Parameters for the service request
+     * @param serviceName       The name of the target service
+     * @param mapChannel        The Map Channel itself
+     * @param os                The OutputStream to write the service response
+     * @throws Exception
+     */
+    public static void requestSetMapChannel (Map<String, List<String>> stromaParameters, String serviceName, Map<Object, Object> mapChannel, OutputStream os) throws Exception {
+        NyxletSession ns = new NyxletSession(stromaParameters, null, os);
+        ns.setMapChannel(mapChannel);
         STROMAServiceRequest.execute(serviceName, ns);
     }
 

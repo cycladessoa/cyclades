@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.cyclades.engine.nyxlet.templates.xstroma.ServiceBrokerNyxletImpl;
 import org.cyclades.engine.nyxlet.templates.xstroma.message.impl.RawMessageProcessor;
+import org.cyclades.engine.nyxlet.templates.xstroma.message.impl.ResponseProcessor;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -49,7 +50,7 @@ public class ConnectionResource {
         this.callBackServiceInstance = callBackServiceInstance;
     }
 
-    public ConnectionResource init (Map<String, String> parameters, RawMessageProcessor rawMessageProcessor, RawMessageProcessor responseProcessor) throws Exception {
+    public ConnectionResource init (Map<String, String> parameters, RawMessageProcessor rawMessageProcessor, ResponseProcessor responseProcessor) throws Exception {
         this.parameters = parameters;
         this.rawMessageProcessor = rawMessageProcessor;
         this.responseProcessor = responseProcessor;
@@ -114,8 +115,8 @@ public class ConnectionResource {
         return callBackServiceInstance;
     }
 
-    public void fireResponseProcessor (byte[] response) throws Exception {
-        if (responseProcessor != null) responseProcessor.process(response);
+    public void fireResponseProcessor (byte[] response, byte[] request) throws Exception {
+        if (responseProcessor != null) responseProcessor.process(response, request);
     }
 
     public boolean hasResponseProcessor () {
@@ -130,7 +131,7 @@ public class ConnectionResource {
         return (rawMessageProcessor != null);
     }
 
-    private RawMessageProcessor responseProcessor = null;
+    private ResponseProcessor responseProcessor = null;
     private RawMessageProcessor rawMessageProcessor = null;
     RabbitMQConsumer consumer;
     ConsumerEnum consumerEnum = ConsumerEnum.DEFAULT;

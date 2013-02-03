@@ -30,6 +30,7 @@ package org.cyclades.engine.nyxlet.templates.xstroma.message.api;
 import java.util.Map;
 import org.cyclades.engine.nyxlet.templates.xstroma.ServiceBrokerNyxletImpl;
 import org.cyclades.engine.nyxlet.templates.xstroma.message.impl.RawMessageProcessor;
+import org.cyclades.engine.nyxlet.templates.xstroma.message.impl.ResponseProcessor;
 
 /**
  * Interface to implement in order to create a custom MessageConsumer for the
@@ -51,7 +52,7 @@ public interface MessageConsumer {
      * @param callBackServiceInstance   The instance of the ServiceBrokerNyxlet running in this Engine
      * @throws Exception
      */
-    public void init (Map<String, String> initializationMap, RawMessageProcessor rawMessageProcessor, RawMessageProcessor responseProcessor, ServiceBrokerNyxletImpl callBackServiceInstance) throws Exception;
+    public void init (Map<String, String> initializationMap, RawMessageProcessor rawMessageProcessor, ResponseProcessor responseProcessor, ServiceBrokerNyxletImpl callBackServiceInstance) throws Exception;
 
     /**
      * Destroy this MessageConsumer

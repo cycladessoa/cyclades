@@ -13,7 +13,8 @@ Field definitions in lined with the JSON below:
         "class": "org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.Consumer",  // The class that will be instantiated
         "response_processor": {
             "service_name": "log",                                                          // Nyxlet to call
-            "input_parameter": "entry",                                                     // Field that will contain the response
+            "response_input_parameter": "entry",                                            // Field that will contain the response
+            "request_input_parameter":"original-request",                                   // Field that will contain the original request
             "use_map_channel":"false",                                                      // If true, the binary value (byte[]) of the response will be placed in the MapChannel corresponding to the key above
             "encoding":"UTF-8",                                                             // String encoding to use when converting a byte[] to a String
             "data_type":"JSON",                                                             // The data type of the request/response

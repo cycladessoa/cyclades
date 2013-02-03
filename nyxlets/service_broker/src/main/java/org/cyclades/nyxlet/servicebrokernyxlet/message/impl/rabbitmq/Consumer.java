@@ -33,6 +33,8 @@ import java.util.Map;
 import org.cyclades.engine.nyxlet.templates.xstroma.ServiceBrokerNyxletImpl;
 import org.cyclades.engine.nyxlet.templates.xstroma.message.api.MessageConsumer;
 import org.cyclades.engine.nyxlet.templates.xstroma.message.impl.RawMessageProcessor;
+import org.cyclades.engine.nyxlet.templates.xstroma.message.impl.ResponseProcessor;
+
 import com.rabbitmq.client.ConnectionFactory;
 
 /**
@@ -54,7 +56,7 @@ import com.rabbitmq.client.ConnectionFactory;
 public class Consumer implements MessageConsumer {
 
     @Override
-    public void init (Map<String, String> initializationMap, RawMessageProcessor rawMessageProcessor, RawMessageProcessor responseProcessor, ServiceBrokerNyxletImpl callBackServiceInstance) throws Exception {
+    public void init (Map<String, String> initializationMap, RawMessageProcessor rawMessageProcessor, ResponseProcessor responseProcessor, ServiceBrokerNyxletImpl callBackServiceInstance) throws Exception {
         final String eLabel = "rabbitmq.Consumer.init: ";
         try {
             if (!initializationMap.containsKey(TARGET_QUEUE_CONFIG_PARAMETER)) throw new Exception("Initialization parameter missing: " + TARGET_QUEUE_CONFIG_PARAMETER);

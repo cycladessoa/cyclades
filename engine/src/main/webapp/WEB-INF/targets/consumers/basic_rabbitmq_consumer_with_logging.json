@@ -1,8 +1,9 @@
 {
         "class": "org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.Consumer",
         "response_processor": {
-            "service_name": "log",
-            "input_parameter": "entry",
+            "service_name":"log",
+            "response_input_parameter":"entry",
+            "request_input_parameter":"original-request",
             "use_map_channel":"false",
             "encoding":"UTF-8",
             "data_type":"JSON",

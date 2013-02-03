@@ -98,7 +98,10 @@ public class RabbitMQMergingDefaultConsumer extends TimerTask implements RabbitM
                 // Let's come back and revisit this as we test it.
                 byte[] accumulated = processMessages();
                 ackMessages();
-                if (connectionResource.hasResponseProcessor()) connectionResource.fireResponseProcessor(accumulated);
+                // XXX - Passing in "null" here as the value of the original request. Since the original request
+                // is actually an aggregation of multiple X-STROMA requests, we'll need to build in some sort of
+                // List structure to accommodate this later if needed
+                if (connectionResource.hasResponseProcessor()) connectionResource.fireResponseProcessor(accumulated, null);
             }
         } catch (Exception e) {
             throw new Exception(eLabel + e);

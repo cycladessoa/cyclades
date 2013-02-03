@@ -30,7 +30,12 @@ package org.cyclades.engine.stroma.xstroma;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
+import java.util.Vector;
 import org.cyclades.engine.util.MapHelper;
+import org.cyclades.xml.comparitor.XMLComparitor;
+import org.json.JSONObject;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 public class STROMARequest {
 
@@ -44,13 +49,63 @@ public class STROMARequest {
             throw new Exception(eLabel + e);
         }
     }
+    
+    public STROMARequest (Node stromaRequest) throws Exception {
+        serviceName = XMLComparitor.getAttribute(stromaRequest, "service");
+        Vector<Node> parametersNodeVector= XMLComparitor.getMatchingChildNodes(stromaRequest, BASE_PARAMETERS);
+        if (parametersNodeVector.size() > 0) parameters = 
+                MapHelper.parameterMapFromMetaObject(parametersNodeVector.firstElement().getChildNodes());
+        StringBuilder dataBuilder = new StringBuilder();
+        NodeList dataNodes = stromaRequest.getChildNodes();
+        for (int i = 0; i < dataNodes.getLength(); i++) {
+            if (!dataNodes.item(i).getNodeName().equals(BASE_PARAMETERS)) {
+                dataBuilder.append(XMLComparitor.nodeToString(dataNodes.item(i), false, false));
+            }
+        }
+        data = dataBuilder.toString();
+    }
+    
+    public STROMARequest (JSONObject stromaRequest) throws Exception {
+        serviceName = stromaRequest.getString("service");
+        JSONObject dataSection = stromaRequest.getJSONObject("data");
+        parameters = MapHelper.parameterMapFromMetaObject(dataSection.getJSONArray(BASE_PARAMETERS));
+        dataSection.remove(BASE_PARAMETERS);
+        StringBuilder dataBuilder = new StringBuilder(dataSection.toString());
+        dataBuilder.deleteCharAt(0);
+        dataBuilder.deleteCharAt(dataBuilder.length() - 1);
+        data = (dataBuilder.length() > 0) ? dataBuilder.toString() : null;
+    }
+    
+    public static STROMARequest parse (Node stromaRequest) throws Exception {
+        return new STROMARequest(stromaRequest);
+    }
+    
+    public static STROMARequest parse (JSONObject stromaRequest) throws Exception {
+        return new STROMARequest(stromaRequest);
+    }
 
     public String getData() {
         return data;
     }
+    
+    public void setData (String data) {
+        this.data = data;
+    }
 
     public String getServiceName() {
         return serviceName;
+    }
+    
+    public void setServiceName (String serviceName) {
+        this.serviceName = serviceName;
+    }
+    
+    public Map<String, List<String>> getParameters () {
+        return parameters;
+    }
+    
+    public void setParameters (Map<String, List<String>> parameters) {
+        this.parameters = parameters;
     }
 
     public String toJSONString () throws Exception {
@@ -88,8 +143,9 @@ public class STROMARequest {
         }
     }
 
-    private final String data;
-    private final String serviceName;
+    private String data;
+    private String serviceName;
     private Map<String, List<String>> parameters = new HashMap<String, List<String>>();
     private static final String BASE_PARAMETERS = "parameters";
+    
 }

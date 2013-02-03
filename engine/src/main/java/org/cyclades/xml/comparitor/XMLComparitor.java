@@ -29,8 +29,16 @@ package org.cyclades.xml.comparitor;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.TransformerFactoryConfigurationError;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import org.xml.sax.InputSource;
 import java.io.StringReader;
+import java.io.StringWriter;
 import org.cyclades.xml.parser.XMLParserException;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
@@ -554,6 +562,24 @@ public class XMLComparitor {
         } catch (Exception e) {
             System.out.println("" + e);
         }
+    }
+    
+    /**
+     * Return a String represenation of the Node passed in
+     * 
+     * @param node The Node object to convert to a String
+     * @return String represenation of the Node passed in
+     * @throws TransformerFactoryConfigurationError
+     * @throws TransformerException
+     */
+    public static String nodeToString (Node node, boolean XMLDeclaration, boolean indent) 
+            throws TransformerFactoryConfigurationError, TransformerException {
+        StringWriter sw = new StringWriter();
+        Transformer t = TransformerFactory.newInstance().newTransformer();
+        t.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, (XMLDeclaration) ? "no" : "yes");
+        t.setOutputProperty(OutputKeys.INDENT, (indent) ? "yes" : "no");
+        t.transform(new DOMSource(node), new StreamResult(sw));
+        return sw.toString();
     }
 
     public Element getDomRootElement () {

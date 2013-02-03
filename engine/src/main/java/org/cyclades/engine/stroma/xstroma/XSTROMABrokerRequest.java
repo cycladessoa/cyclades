@@ -38,7 +38,12 @@ import java.util.Map;
 import org.cyclades.engine.MetaTypeEnum;
 import org.cyclades.engine.api.Nyxlet;
 import org.cyclades.engine.nyxlet.NyxletRepository;
+import org.cyclades.engine.util.GenericXMLObject;
 import org.cyclades.engine.util.MapHelper;
+import org.cyclades.xml.comparitor.XMLComparitor;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.w3c.dom.Node;
 
 public class XSTROMABrokerRequest {
 
@@ -50,6 +55,40 @@ public class XSTROMABrokerRequest {
             this.metaTypeEnum = metaTypeEnum;
         } catch (Exception e) {
             throw new Exception(eLabel + e);
+        }
+    }
+    
+    public XSTROMABrokerRequest (byte[] xstromaMessage) throws Exception {
+        this(new String(xstromaMessage, "UTF-8"));
+    }
+    
+    public XSTROMABrokerRequest (String messageString) throws Exception{
+        if (messageString.charAt(0) == '<') {
+            fromXMLXTROMAString(messageString);
+        } else {
+            fromJSONXTROMAString(messageString);
+        }
+    }
+    
+    private void fromXMLXTROMAString (String messageString) throws Exception {
+        metaTypeEnum = MetaTypeEnum.XML;
+        GenericXMLObject xmlObject = new GenericXMLObject(messageString);
+        parameters = MapHelper.parameterMapFromMetaObject(((Node)XMLComparitor.getMatchingChildNodes(xmlObject.getRootElement(), BASE_PARAMETERS).firstElement()).getChildNodes());
+        Node dataNode = (Node)XMLComparitor.getMatchingChildNodes(xmlObject.getRootElement(), DATA).firstElement();
+        Node requestsNode = (Node)XMLComparitor.getMatchingChildNodes(dataNode, REQUESTS).firstElement();
+        for (Node requestNode : XMLComparitor.getMatchingChildNodes(requestsNode, "request")) {
+            addSTROMARequest(new STROMARequest(requestNode));
+        }
+    }
+    
+    private void fromJSONXTROMAString (String messageString) throws Exception {
+        metaTypeEnum = MetaTypeEnum.JSON;
+        JSONObject jsonObject = new JSONObject(messageString);
+        parameters = MapHelper.parameterMapFromMetaObject(jsonObject.getJSONArray(BASE_PARAMETERS));
+        JSONObject dataJSONObject = jsonObject.getJSONObject(DATA);
+        JSONArray requestsJSONArray  = dataJSONObject.getJSONArray(REQUESTS);
+        for (int i = 0; i < requestsJSONArray.length(); i++) {
+            addSTROMARequest(new STROMARequest(requestsJSONArray.getJSONObject(i)));
         }
     }
 
@@ -153,6 +192,10 @@ public class XSTROMABrokerRequest {
     public void setSTROMARequests (List<STROMARequest> serviceRequests) {
         this.serviceRequests = serviceRequests;
     }
+    
+    public List<STROMARequest> getSTROMARequests () {
+        return serviceRequests;
+    }
 
     public String generateData () throws Exception {
         return (metaTypeEnum.equals(MetaTypeEnum.XML)) ? generateXMLData() : generateJSONData();
@@ -240,8 +283,16 @@ public class XSTROMABrokerRequest {
         return parameters;
     }
     
+    public void setParameters (Map<String, List<String>> parameters) {
+        this.parameters = parameters;
+    }
+    
     public MetaTypeEnum getMetaTypeEnum () {
         return metaTypeEnum;
+    }
+    
+    public void setMetaTypeEnum (MetaTypeEnum metaTypeEnum) {
+        this.metaTypeEnum = metaTypeEnum;
     }
 
     private Map<String, List<String>> parameters = new HashMap<String, List<String>>();
@@ -249,5 +300,7 @@ public class XSTROMABrokerRequest {
     private String brokerName;
     private List<STROMARequest> serviceRequests = new ArrayList<STROMARequest>();
     private static final String BASE_PARAMETERS = "parameters";
+    private static final String DATA            = "data";
+    private static final String REQUESTS        = "requests";
     
 }

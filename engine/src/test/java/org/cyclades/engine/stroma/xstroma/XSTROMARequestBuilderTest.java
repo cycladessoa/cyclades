@@ -88,6 +88,38 @@ public class XSTROMARequestBuilderTest {
         new GenericXMLObject(dataOutput);
         if (xstromaOutput.indexOf(dataOutput) < 0) errorCollector.addError(new AssertionError("Data output is not a substring of XSTROMA message output"));
     }
+    
+    @Test
+    public void generateAndCreateFromJSONString_test () throws Exception {
+        XSTROMARequestBuilder xstromaBuilder = XSTROMARequestBuilder.newInstance(null);
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "tom").parameter("name", "nick").data("\"raw_json\":{\"l\":\"k\"}"));
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "tom2").parameter("name", "nick2"));
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "tom3").parameter("name", "nick3"));
+        xstromaBuilder.parameter("target", "localhost");
+        xstromaBuilder.parameter("connection-timeout", "2000");
+        String xstromaOutputOriginal = xstromaBuilder.build().toXSTROMAMessage();
+        System.out.println(xstromaOutputOriginal);
+        XSTROMABrokerRequest brokerRequest = new XSTROMABrokerRequest(xstromaOutputOriginal);
+        String xstromaOutputSecond = brokerRequest.toXSTROMAMessage();
+        System.out.println(xstromaOutputSecond);
+        if (!xstromaOutputOriginal.equals(xstromaOutputSecond)) errorCollector.addError(new AssertionError("X-STROMA Strings do not match!!!"));
+    }
+    
+    @Test
+    public void generateAndCreateFromXMLString_test () throws Exception {
+        XSTROMARequestBuilder xstromaBuilder = XSTROMARequestBuilder.newInstance(null).xml();
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "tom").parameter("name", "nick").data("<raw_xml>hi</raw_xml>"));
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "tom2").parameter("name", "nick2"));
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "tom3").parameter("name", "nick3"));
+        xstromaBuilder.parameter("target", "localhost");
+        xstromaBuilder.parameter("connection-timeout", "2000");
+        String xstromaOutputOriginal = xstromaBuilder.build().toXSTROMAMessage();
+        System.out.println(xstromaOutputOriginal);
+        XSTROMABrokerRequest brokerRequest = new XSTROMABrokerRequest(xstromaOutputOriginal);
+        String xstromaOutputSecond = brokerRequest.toXSTROMAMessage();
+        System.out.println(xstromaOutputSecond);
+        if (!xstromaOutputOriginal.equals(xstromaOutputSecond)) errorCollector.addError(new AssertionError("X-STROMA Strings do not match!!!"));
+    }
 
     @Rule
     public ErrorCollector errorCollector = new ErrorCollector();

@@ -99,7 +99,7 @@ public class XSTROMARequestBuilderTest {
         xstromaBuilder.parameter("connection-timeout", "2000");
         String xstromaOutputOriginal = xstromaBuilder.build().toXSTROMAMessage();
         System.out.println(xstromaOutputOriginal);
-        XSTROMABrokerRequest brokerRequest = new XSTROMABrokerRequest(xstromaOutputOriginal);
+        XSTROMABrokerRequest brokerRequest = new XSTROMABrokerRequest(null, xstromaOutputOriginal);
         String xstromaOutputSecond = brokerRequest.toXSTROMAMessage();
         System.out.println(xstromaOutputSecond);
         if (!xstromaOutputOriginal.equals(xstromaOutputSecond)) errorCollector.addError(new AssertionError("X-STROMA Strings do not match!!!"));
@@ -115,7 +115,7 @@ public class XSTROMARequestBuilderTest {
         xstromaBuilder.parameter("connection-timeout", "2000");
         String xstromaOutputOriginal = xstromaBuilder.build().toXSTROMAMessage();
         System.out.println(xstromaOutputOriginal);
-        XSTROMABrokerRequest brokerRequest = new XSTROMABrokerRequest(xstromaOutputOriginal);
+        XSTROMABrokerRequest brokerRequest = new XSTROMABrokerRequest(null, xstromaOutputOriginal);
         String xstromaOutputSecond = brokerRequest.toXSTROMAMessage();
         System.out.println(xstromaOutputSecond);
         if (!xstromaOutputOriginal.equals(xstromaOutputSecond)) errorCollector.addError(new AssertionError("X-STROMA Strings do not match!!!"));

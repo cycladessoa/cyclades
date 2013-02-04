@@ -58,11 +58,12 @@ public class XSTROMABrokerRequest {
         }
     }
     
-    public XSTROMABrokerRequest (byte[] xstromaMessage) throws Exception {
-        this(new String(xstromaMessage, "UTF-8"));
+    public XSTROMABrokerRequest (String brokerName, byte[] xstromaMessage) throws Exception {
+        this(brokerName, new String(xstromaMessage, "UTF-8"));
     }
     
-    public XSTROMABrokerRequest (String messageString) throws Exception{
+    public XSTROMABrokerRequest (String brokerName, String messageString) throws Exception {
+        this.brokerName = brokerName;
         if (messageString.charAt(0) == '<') {
             fromXMLXTROMAString(messageString);
         } else {

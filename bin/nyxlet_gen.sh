@@ -104,13 +104,26 @@ Now there are a set of steps and notes you need to take before proceeding with c
    which you can modify and/or copy and paste to create more Action Handlers. Action
    Handlers are the primary code point for adding functionality to your service.
 
-4. Please see the REQUEST_EXAMPLES file for some high level examples on how to make external requests
+4. X-STROMA service requests can be created and executed with the Cyclades Java DSL. Example HTTP service 
+   requests can be executed with the following commands (after a successful build and deploy):
+
+       gradle javaClientDSLExample
+       gradle javaClientDSLExamples
+
+    Please see the following file for the HTTP client examples: 
+    /cycladessoa/nyxlets/nyxlet-my_first_nyxlet/cyclades_java_client_dsl.gradle
+
+    [NOTE] Please feel free to modify and experiment with these Groovy/Gradle targets. Gradle and/or Groovy 
+    provide a convenient mechanism for rappidly developing clients using the Cyclades Java DSL, and clients in general.
+
+or
+
+   Please see the REQUEST_EXAMPLES file for some high level examples on how to make external requests
    to your Nyxlet once deployed. You can simply cut and paste the examples to a browser. Further documentation
    will be provided for advanced Nyxlet invocations, like Java APIs for making STROMA/X-STROMA requests
    from within a Nyxlet.
 
-5. You may need to modify ${PNAME_DIR}/build.gradle to include additional
-   compile and runtime dependencies.
+5. You can modify ${PNAME_DIR}/build.gradle to include additional compile and runtime dependencies.
 
 6. The local GIT repository has been initialized for your project "${PNAME_DIR}" 
 

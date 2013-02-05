@@ -97,6 +97,20 @@ base_engine_url_list={"url":"http://server1.mycompany.org:8080/cyclades","passwo
 
 == Send Requests To Your Newly Created And Deployed Service/Nyxlet
 
+=== Cyclades Java DSL Via Groovy/Gradle
+
+X-STROMA service requests can be created and executed with the Cyclades Java DSL. Example HTTP service requests can be executed with the following commands:
+
+* gradle javaClientDSLExample
+* gradle javaClientDSLExamples
+
+Please see the following file for the HTTP client examples: /cycladessoa/nyxlets/nyxlet-my_first_nyxlet/cyclades_java_client_dsl.gradle
+
+[NOTE]
+Please feel free to modify and experiment with these Groovy/Gradle targets. Gradle and/or Groovy provide a convenient mechanism for rappidly developing clients using the Cyclades Java DSL, and clients in general.
+
+=== Browser
+
 Copy and paste the entries in the file "/cycladessoa/nyxlets/nyxlet-my_first_nyxlet/REQUEST_EXAMPLES" to a browser. These are just a few examples of how to access and verify your service.
 
 == Generate Current Documentation

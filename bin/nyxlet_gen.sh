@@ -110,8 +110,7 @@ Now there are a set of steps and notes you need to take before proceeding with c
        gradle javaClientDSLExample
        gradle javaClientDSLExamples
 
-    Please see the following file for the HTTP client examples: 
-    /cycladessoa/nyxlets/nyxlet-my_first_nyxlet/cyclades_java_client_dsl.gradle
+    Please see the following file for the HTTP client examples: ${PNAME_DIR}/cyclades_java_client_dsl.gradle
 
     [NOTE] Please feel free to modify and experiment with these Groovy/Gradle targets. Gradle and/or Groovy 
     provide a convenient mechanism for rappidly developing clients using the Cyclades Java DSL, and clients in general.

@@ -67,7 +67,7 @@ public class XSTROMABrokerResponse {
     private void populate (Node node) throws Exception {
         final String eLabel = "XSTROMABrokerResponse.populate(Node): ";
         try {
-            // get error code of root node
+            serviceName = XMLComparitor.getAttribute(node, "service");
             errorCode = Integer.parseInt(XMLComparitor.getAttribute(node, ERROR_CODE));
             errorMessage = XMLComparitor.getAttribute(node, ERROR_MESSAGE);
             transactionData = XMLComparitor.getAttribute(node, NyxletSession.TRANSACTION_DATA_PARAMETER);
@@ -91,6 +91,7 @@ public class XSTROMABrokerResponse {
     private void populate (JSONObject jsonObject) throws Exception {
         final String eLabel = "XSTROMABrokerResponse.populate(JSONObject): ";
         try {
+            serviceName = jsonObject.getString("service");
             errorCode = Integer.parseInt(jsonObject.getString(ERROR_CODE));
             errorMessage = (jsonObject.has(ERROR_MESSAGE)) ? jsonObject.getString(ERROR_MESSAGE) : null;
             transactionData = (jsonObject.has(NyxletSession.TRANSACTION_DATA_PARAMETER)) ? jsonObject.getString(NyxletSession.TRANSACTION_DATA_PARAMETER) : null;
@@ -138,6 +139,10 @@ public class XSTROMABrokerResponse {
     public List<STROMAResponse> getResponses() {
         return responses;
     }
+    
+    public String getServiceName() {
+        return serviceName;
+    }
 
     /**
      * Get the parameters of this STROMAResponse. This could be null if there were no parameters
@@ -152,6 +157,7 @@ public class XSTROMABrokerResponse {
     public final static String ERROR_CODE       = "error-code";
     public final static String ERROR_MESSAGE    = "error-message";
     private List<STROMAResponse> responses = new ArrayList<STROMAResponse>();
+    private String serviceName;
     private int errorCode;
     private String errorMessage;
     private boolean orchestrationFault = false;

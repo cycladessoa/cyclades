@@ -4,6 +4,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +51,7 @@ public class Http {
             requestURL.append("?").append(ServiceBrokerNyxletImpl.XSTROMA_MESSAGE);
             xstromaString = xstromaRequest.toXSTROMAMessage();
         } else {
-            createParameterizedXSTOMAUrl(requestURL, xstromaRequest).toString();
+            requestURL.append(createParameterizedXSTOMAUrl(xstromaRequest));
             xstromaString = xstromaRequest.generateData();
         }
         InputStream is = null;
@@ -66,8 +68,9 @@ public class Http {
         return xstromaRequest.generateData();
     }
     
-    private static StringBuilder createParameterizedXSTOMAUrl (StringBuilder urlBuilder, XSTROMABrokerRequest xstromaRequest) {
-        urlBuilder.append("?data-type=").append(xstromaRequest.getMetaTypeEnum().name());
+    private static String createParameterizedXSTOMAUrl (XSTROMABrokerRequest xstromaRequest) throws URISyntaxException {
+        StringBuilder urlBuilder = new StringBuilder();
+        urlBuilder.append("data-type=").append(xstromaRequest.getMetaTypeEnum().name());
         Map<String, List<String>> parameters = xstromaRequest.getParameters();
         for (Map.Entry<String, List<String>> parametersEntry : parameters.entrySet()) {
             String key = parametersEntry.getKey();
@@ -76,7 +79,7 @@ public class Http {
                 urlBuilder.append("&").append(key).append("=").append(value);
             }
         }
-        return urlBuilder;
+        return new URI(null, null, null, urlBuilder.toString(), null).toString();
     }
     
     public static void main (String[] args) {

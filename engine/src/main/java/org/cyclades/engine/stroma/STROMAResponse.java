@@ -46,6 +46,14 @@ public class STROMAResponse {
             init((Node)object);
         }
     }
+    
+    public STROMAResponse (String responseString) throws Exception {
+        this((responseString.charAt(0) == '<') ? MetaTypeEnum.XML : MetaTypeEnum.JSON, responseString);
+    }
+    
+    public STROMAResponse (MetaTypeEnum metaTypeEnum, String responseString) throws Exception {
+        this(metaTypeEnum.createObjectFromMeta(responseString));
+    }
 
     private void init (Node node) throws Exception {
         final String eLabel = "STROMAResponse.STROMAResponse(Node): ";

@@ -176,33 +176,44 @@ task javaClientDSLExample () {
         * The response can be parsed and used as an Object if desired, here's an example
         *******************************************************************************/
         XSTROMABrokerResponse xstromaResponseObject = XSTROMABrokerResponse.parse(xstromaResponseString)
-	println "X-STROMA Level Parameters"
-        println "error-code: " + xstromaResponseObject.getErrorCode()
-        println "transaction-data: " + xstromaResponseObject.getTransactionData()
-        println "service-agent: " + xstromaResponseObject.getServiceAgent()
-        println "duration: " + xstromaResponseObject.getDuration()
-        if (xstromaResponseObject.getErrorCode() != 0) {
-            println "error-message: " + xstromaResponseObject.getErrorMessage()
-            return
-        }
-
-	xstromaResponseObject.getResponses().each { STROMAResponse sr ->
-            println ""
-            println "\tService (STROMA) Level Parameters"
-            println "\tservice: " + sr.getServiceName()
-            println "\taction: " + sr.getAction()
-            println "\terror-code: " + sr.getErrorCode()
-            println "\ttransaction-data: " + sr.getTransactionData()
-            println "\tservice-agent: " + sr.getServiceAgent()
-            println "\tduration: " + sr.getDuration()
-            if (sr.getErrorCode() != 0) {
-                println "\terror-message: " + sr.getErrorMessage()
+        if (!xstromaResponseObject.getServiceName().equals("servicebroker")) {
+            // If we're in here, this is most likely the response of a "chained" request, where it will always be 
+            // the response of the last request in the X-STROMA request
+            printSTROMAResponse(new STROMAResponse(xstromaResponseString))
+        } else {
+            // We have an X-STROMA formatted response
+	    println "X-STROMA Level Parameters"
+            println "error-code: " + xstromaResponseObject.getErrorCode()
+            println "transaction-data: " + xstromaResponseObject.getTransactionData()
+            println "service-agent: " + xstromaResponseObject.getServiceAgent()
+            println "duration: " + xstromaResponseObject.getDuration()
+            if (xstromaResponseObject.getErrorCode() != 0) {
+                println "error-message: " + xstromaResponseObject.getErrorMessage()
                 return
             }
-            // getData() retrieves any raw payload information embedded in the response (as a JSONObject or Node class type)
-            // depending on the meta type requested
-            //println "\t" + sr.getData().getClass()
-            println "\t" + sr.getParameters()
+
+	    xstromaResponseObject.getResponses().each { STROMAResponse sr ->
+                printSTROMAResponse(sr)
+            }
         }
     }
+}
+
+def printSTROMAResponse (STROMAResponse sr) {
+    println ""
+    println "\tService (STROMA) Level Parameters"
+    println "\tservice: " + sr.getServiceName()
+    println "\taction: " + sr.getAction()
+    println "\terror-code: " + sr.getErrorCode()
+    println "\ttransaction-data: " + sr.getTransactionData()
+    println "\tservice-agent: " + sr.getServiceAgent()
+    println "\tduration: " + sr.getDuration()
+    if (sr.getErrorCode() != 0) {
+        println "\terror-message: " + sr.getErrorMessage()
+        return
+    }
+    // getData() retrieves any raw payload information embedded in the response (as a JSONObject or Node class type)
+    // depending on the meta type requested
+    //println "\t" + sr.getData().getClass()
+    println "\t" + sr.getParameters()
 }

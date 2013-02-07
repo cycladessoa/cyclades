@@ -29,7 +29,6 @@ package org.cyclades.engine.nyxlet.templates.xstroma.message.api;
 
 import java.util.Map;
 import org.cyclades.engine.nyxlet.templates.xstroma.ServiceBrokerNyxletImpl;
-import org.cyclades.engine.nyxlet.templates.xstroma.message.impl.RawMessageProcessor;
 import org.cyclades.engine.nyxlet.templates.xstroma.message.impl.ResponseProcessor;
 
 /**
@@ -47,12 +46,12 @@ public interface MessageConsumer {
      * target.
      *
      * @param initializationMap         The Map to use as an initialization mechanism for this Object
-     * @param rawMessageProcessor       If not null, this service descriptor will be called with the raw message contents
+     * @param messageProcessor          If not null, this service descriptor will be called with the raw message contents
      * @param responseProcessor         If not null, this service descriptor will be called with the response of the executed message
      * @param callBackServiceInstance   The instance of the ServiceBrokerNyxlet running in this Engine
      * @throws Exception
      */
-    public void init (Map<String, String> initializationMap, RawMessageProcessor rawMessageProcessor, ResponseProcessor responseProcessor, ServiceBrokerNyxletImpl callBackServiceInstance) throws Exception;
+    public void init (Map<String, String> initializationMap, MessageProcessor messageProcessor, ResponseProcessor responseProcessor, ServiceBrokerNyxletImpl callBackServiceInstance) throws Exception;
 
     /**
      * Destroy this MessageConsumer
@@ -71,4 +70,5 @@ public interface MessageConsumer {
     public void onMessage (Object ... parameters) throws Exception;
 
     public boolean isHealthy () throws Exception;
+    
 }

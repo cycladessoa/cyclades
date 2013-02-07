@@ -31,7 +31,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import org.cyclades.engine.nyxlet.templates.xstroma.ServiceBrokerNyxletImpl;
-import org.cyclades.engine.nyxlet.templates.xstroma.message.impl.RawMessageProcessor;
+import org.cyclades.engine.nyxlet.templates.xstroma.message.api.MessageProcessor;
 import org.cyclades.engine.nyxlet.templates.xstroma.message.impl.ResponseProcessor;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -50,9 +50,9 @@ public class ConnectionResource {
         this.callBackServiceInstance = callBackServiceInstance;
     }
 
-    public ConnectionResource init (Map<String, String> parameters, RawMessageProcessor rawMessageProcessor, ResponseProcessor responseProcessor) throws Exception {
+    public ConnectionResource init (Map<String, String> parameters, MessageProcessor messageProcessor, ResponseProcessor responseProcessor) throws Exception {
         this.parameters = parameters;
-        this.rawMessageProcessor = rawMessageProcessor;
+        this.messageProcessor = messageProcessor;
         this.responseProcessor = responseProcessor;
         if (parameters.containsKey(CONSUMER_TYPE)) consumerEnum = ConsumerEnum.valueOf(parameters.get(CONSUMER_TYPE).toUpperCase());
         return this;
@@ -123,16 +123,16 @@ public class ConnectionResource {
         return (responseProcessor != null);
     }
 
-    public byte[] fireRawMessageProcessor (byte[] message) throws Exception {
-        return (rawMessageProcessor != null) ? rawMessageProcessor.processAndGetResponse(message) : null;
+    public byte[] fireMessageProcessor (byte[] message) throws Exception {
+        return (messageProcessor != null) ? messageProcessor.processAndGetResponse(message) : null;
     }
 
-    public boolean hasRawMessageProcessor () {
-        return (rawMessageProcessor != null);
+    public boolean hasMessageProcessor () {
+        return (messageProcessor != null);
     }
 
     private ResponseProcessor responseProcessor = null;
-    private RawMessageProcessor rawMessageProcessor = null;
+    private MessageProcessor messageProcessor = null;
     RabbitMQConsumer consumer;
     ConsumerEnum consumerEnum = ConsumerEnum.DEFAULT;
     Map<String, String> parameters = new HashMap<String, String>();

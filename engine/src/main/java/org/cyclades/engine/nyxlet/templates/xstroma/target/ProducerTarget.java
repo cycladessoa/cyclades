@@ -68,6 +68,30 @@ public class ProducerTarget {
             throw new Exception(eLabel + e);
         }
     }
+    
+    /**
+     * This constructor is for external use of a ConsumerTarget...i.e. client software.
+     * 
+     * Clients will need to use the ServiceBrokerNyxletImpl implementation of choice as a dependency for this to
+     * build...i.e. the "servicebroker" Nyxlet would be used in order to reuse the Producer targets of the existing Nyxlet.
+     *
+     * @param theClass              The class to instantiate as a service client (wrapped by this class)
+     * @param targetInitData        Initialization data in the form of a JSONObject, straight from the config file
+     * @throws Exception
+     */
+    public ProducerTarget (String theClass, JSONObject targetInitData)  throws Exception {
+        final String eLabel = "ProducerTarget.ProducerTarget: ";
+        try {
+            this.authenticationData = null;
+            this.authDataForwarding = false;
+            this.theClass = theClass;
+            messageProducer = (MessageProducer)this.getClass().getClassLoader().loadClass(theClass).newInstance();
+            messageProducer.init(MapHelper.mapFromMetaObject(targetInitData));
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new Exception(eLabel + e);
+        }
+    }
 
     public void destroy () throws Exception {
         final String eLabel = "ProducerTarget.destroy: ";

@@ -35,11 +35,12 @@ import java.util.List;
 import java.util.Map;
 import org.cyclades.engine.MetaTypeEnum;
 import org.cyclades.engine.NyxletSession;
+import org.cyclades.engine.nyxlet.templates.xstroma.message.api.MessageProcessor;
 import org.cyclades.engine.stroma.STROMARequestHelper;
 import org.cyclades.engine.util.MapHelper;
 import org.json.JSONObject;
 
-public class RawMessageProcessor {
+public class RawMessageProcessor implements MessageProcessor {
 
     public RawMessageProcessor (JSONObject jsonObject) throws Exception {
         serviceName = jsonObject.getString(SERVICE_NAME);
@@ -67,6 +68,7 @@ public class RawMessageProcessor {
      * 
      * @throws Exception
      */
+    @Override
     public void process (String message) throws Exception {
         if (useMapChannel) {
             processMapChannel(message.getBytes());
@@ -92,6 +94,7 @@ public class RawMessageProcessor {
      * @return The String value of the response of the service
      * @throws Exception
      */
+    @Override
     public String processAndGetResponse (String message) throws Exception {
         if (useMapChannel) {
             return new String(processAndGetResponseMapChannel(message.getBytes()), stringEncoding);
@@ -116,6 +119,7 @@ public class RawMessageProcessor {
      * 
      * @throws Exception
      */
+    @Override
     public void process (byte[] message) throws Exception {
         if (useMapChannel) {
             processMapChannel(message);
@@ -141,6 +145,7 @@ public class RawMessageProcessor {
      * @return The byte[] value of the response of the service
      * @throws Exception
      */
+    @Override
     public byte[] processAndGetResponse (byte[] message) throws Exception {
         if (useMapChannel) {
             return processAndGetResponseMapChannel(message);

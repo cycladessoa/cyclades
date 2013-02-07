@@ -32,20 +32,45 @@ import java.util.List;
 import java.util.ArrayList;
 import org.cyclades.engine.nyxlet.templates.xstroma.ServiceBrokerNyxletImpl;
 import org.cyclades.engine.nyxlet.templates.xstroma.message.api.MessageConsumer;
+import org.cyclades.engine.nyxlet.templates.xstroma.message.api.MessageProcessor;
 import org.cyclades.engine.nyxlet.templates.xstroma.message.impl.RawMessageProcessor;
 import org.cyclades.engine.nyxlet.templates.xstroma.message.impl.ResponseProcessor;
 import org.cyclades.engine.util.MapHelper;
 
 public class ConsumerTarget {
 
-    public ConsumerTarget (String theClass, JSONObject initializationData, JSONObject rawMessageProcessorData, JSONObject responseProcessorData, ServiceBrokerNyxletImpl service) throws Exception {
+    public ConsumerTarget (String theClass, JSONObject initializationData, JSONObject messageProcessorData, JSONObject responseProcessorData, ServiceBrokerNyxletImpl service) throws Exception {
         final String eLabel = "ConsumerTarget.ConsumerTarget: ";
         try {
             this.theClass = theClass;
             messageConsumer = (MessageConsumer)service.getClass().getClassLoader().loadClass(theClass).newInstance();
             messageConsumer.init(MapHelper.mapFromMetaObject(initializationData),
-                    (rawMessageProcessorData == null) ? null : new RawMessageProcessor(rawMessageProcessorData),
+                    (messageProcessorData == null) ? null : new RawMessageProcessor(messageProcessorData),
                     (responseProcessorData == null) ? null : new ResponseProcessor(responseProcessorData), service);
+        } catch (Exception e) {
+            throw new Exception(eLabel + e);
+        }
+    }
+    
+    /**
+     * This constructor is for external use of a ConsumerTarget...i.e. client software. Only the
+     * MessageProcessor will be utilized for this call.
+     * 
+     * Clients will need to use the ServiceBrokerNyxletImpl implementation of choice as a dependency for this to
+     * build...i.e. the "servicebroker" Nyxlet would be used in order to reuse the Consumer targets of the existing Nyxlet.
+     * 
+     * @param theClass The String representation of the class to load as the consumer implementation
+     * @param initializationData The JSONObject that will be used to initialize the consumer (see "target_init_data" field of
+     *  one of the consumer targets in ../WEB-INF/targets/consumers/...)
+     * @param messageProcessor The message processor implementation for the consumer to use
+     * @throws Exception
+     */
+    public ConsumerTarget (String theClass, JSONObject initializationData, MessageProcessor messageProcessor) throws Exception {
+        final String eLabel = "ConsumerTarget.ConsumerTarget: ";
+        try {
+            this.theClass = theClass;
+            messageConsumer = (MessageConsumer)this.getClass().getClassLoader().loadClass(theClass).newInstance();
+            messageConsumer.init(MapHelper.mapFromMetaObject(initializationData), messageProcessor, null, null);
         } catch (Exception e) {
             throw new Exception(eLabel + e);
         }

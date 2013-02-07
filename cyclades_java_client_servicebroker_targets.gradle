@@ -1,0 +1,146 @@
+/*******************************************************************************
+ * Copyright (c) 2012, THE BOARD OF TRUSTEES OF THE LELAND STANFORD JUNIOR UNIVERSITY
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ *    Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *    Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *    Neither the name of the STANFORD UNIVERSITY nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software without
+ *    specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ *******************************************************************************/
+buildscript {
+        repositories {
+                mavenCentral()
+        }
+
+
+        dependencies {
+                classpath group:'com.github.cycladessoa.nyxlets', name:'servicebroker', version:'latest.integration'
+		//classpath files('/Users/tomangelopoulos/git/github/cycladessoa/cyclades/engine/build/libs/json-20090211.jar')
+		//classpath files('/Users/tomangelopoulos/git/github/cycladessoa/cyclades/engine/build/libs/engine-1.0.0.SNAPSHOT.jar')
+		//classpath files('/Users/tomangelopoulos/git/github/cycladessoa/cyclades/engine/build/libs/commons-lang-2.5.jar')
+		//classpath files('/Users/tomangelopoulos/git/github/cycladessoa/cyclades/nyxlets/service_broker/build/libs/servicebroker-1.0.0.SNAPSHOT.nyxlet')
+  		//classpath files('/Users/tomangelopoulos/git/github/cycladessoa/cyclades/nyxlets/service_broker/build/libs/commons-pool-1.6.jar')
+        }
+}
+
+import org.json.JSONObject
+import org.cyclades.engine.nyxlet.templates.xstroma.target.ConsumerTarget
+import org.cyclades.engine.nyxlet.templates.xstroma.target.ProducerTarget
+import org.cyclades.engine.nyxlet.templates.xstroma.message.api.MessageProcessor
+import org.cyclades.engine.nyxlet.templates.xstroma.message.api.RawMessageProducer
+import org.cyclades.engine.stroma.xstroma.XSTROMARequestBuilder
+import org.cyclades.engine.stroma.xstroma.STROMARequestBuilder
+
+MessageProcessor mp = new MessageProcessor() { 
+    public void process (String message) throws Exception {}
+    public String processAndGetResponse (String message) throws Exception {}
+    public void process (byte[] message) throws Exception {}
+    public byte[] processAndGetResponse (byte[] message) throws Exception {
+        System.out.println(new String(message));
+        return message;
+    }
+}
+
+String consumerJSON = "{" + \
+             "\"target_queue\": \"my_output_queue\"," \
+            + "\"connection_string\": \"amqp://guest:guest@localhost:5672\"," \
+            + "\"connection_heartbeat_seconds\": \"60\"," \
+            + "\"consumer_tag\": \"my_output_queue_logger-consumer\"," \
+            + "\"num_consumers\": \"5\"," \
+            + "\"cancel_recovery\": \"false\"," \
+            + "\"prefetch_count\": \"1\"," \
+            + "\"replyto_message_delivery_mode\": \"2\"," \
+            + "\"ha_policy\": \"all\"," \
+            + "\"durable\": \"true\"" \
+            + "}"
+
+task javaConsumerTargetExample () {
+    description = 'An example of how to create a consumer target with Cyclades service broker targets'
+
+    doLast () {
+        long keepAlive = 20000
+        if (rootProject.hasProperty('alive')) keepAlive = Long.parseLong(alive)
+        println ''
+        println "Using alive time of (in milliseconds):  " + keepAlive
+        println 'You can override this value by setting the Gradle command line parameter like this: -Palive=30000'
+        println ''
+
+        ConsumerTarget ct = new ConsumerTarget("org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.Consumer", new JSONObject(consumerJSON), mp)
+        println "Consumer target created...will consume for $keepAlive milliseconds"
+        sleep keepAlive
+        ct.destroy()
+    }
+}
+
+String producerJSON = "{" + \
+        "\"pool\": \"true\"," \
+        + "\"maxActive\": \"5\"," \
+        + "\"target_queue\": \"my_output_queue\"," \
+        + "\"connection_string\": \"amqp://guest:guest@localhost:5672\"," \
+        + "\"connection_heartbeat_seconds\": \"60\"," \
+        + "\"message_delivery_mode\": \"2\"," \
+        + "\"replyto_ha_policy\": \"all\"," \
+        + "\"replyto_durable\": \"true\"" \
+        + "}"
+
+task javaXSTROMAProducerTargetExample () {
+    description = 'An example of how to create an X-STROMA producer target with Cyclades service broker targets (must run task "javaConsumerTargetExample" first to intialize queues)'
+
+    doLast () {
+        XSTROMARequestBuilder xstromaBuilder = XSTROMARequestBuilder.newInstance(null)
+        xstromaBuilder.parameter("transaction-data", "sample-2").parameter("duration", "true")
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "foo").parameter("name", "foo2"))
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "bar").parameter("name", "bar2"))
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "baz").parameter("name", "baz2"))
+        ProducerTarget pt = new ProducerTarget("org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.RawProducer", new JSONObject(producerJSON))
+        Map messageAttributes = new HashMap<String, List<String>>()
+        // If you wanted the reply (return value of the MessageConsumer) to be inserted into a designated queue
+        //messageAttributes.put("replyto", new ArrayList<String>(Arrays.asList("my_reply_queue")))
+	((RawMessageProducer)pt.getMessageProducer()).sendMessage(xstromaBuilder.xml().build().toString(), messageAttributes)
+        pt.destroy()
+    }
+}
+
+task javaTextProducerTargetExample () {
+    description = 'An example of how to create a text producer target with Cyclades service broker targets (must run task "javaConsumerTargetExample" first to intialize queues)'
+
+    doLast () {
+        ProducerTarget pt = new ProducerTarget("org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.RawProducer", new JSONObject(producerJSON))
+        Map messageAttributes = new HashMap<String, List<String>>()
+        // If you wanted the reply (return value of the MessageConsumer) to be inserted into a designated queue
+        //messageAttributes.put("replyto", new ArrayList<String>(Arrays.asList("my_reply_queue")))
+        ((RawMessageProducer)pt.getMessageProducer()).sendMessage("Holy Smokes This Worked!", messageAttributes)
+        pt.destroy()
+    }
+}
+
+task javaBinaryProducerTargetExample () {
+    description = 'An example of how to create a binary producer target with Cyclades service broker targets (must run task "javaConsumerTargetExample" first to intialize queues)'
+
+    doLast () {
+        ProducerTarget pt = new ProducerTarget("org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.RawProducer", new JSONObject(producerJSON))
+        Map messageAttributes = new HashMap<String, List<String>>()
+        // If you wanted the reply (return value of the MessageConsumer) to be inserted into a designated queue
+        //messageAttributes.put("replyto", new ArrayList<String>(Arrays.asList("my_reply_queue")))
+        ((RawMessageProducer)pt.getMessageProducer()).sendMessage("Holy Smokes This Worked!".getBytes(), messageAttributes)
+        pt.destroy()
+    }
+}

@@ -58,8 +58,8 @@ public class RabbitMQDefaultConsumer extends DefaultConsumer implements RabbitMQ
         try {
             //System.out.println("CONSUMER: " + consumerTag);
             byte[] response;
-            if (connectionResource.hasRawMessageProcessor()) {
-                response = connectionResource.fireRawMessageProcessor(body);
+            if (connectionResource.hasMessageProcessor()) {
+                response = connectionResource.fireMessageProcessor(body);
             } else {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 connectionResource.getCallBackServiceInstance().processXSTROMAMessagePayload(baos, new String(body, "UTF-8"));

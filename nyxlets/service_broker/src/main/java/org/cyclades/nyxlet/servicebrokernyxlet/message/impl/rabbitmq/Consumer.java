@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 import org.cyclades.engine.nyxlet.templates.xstroma.ServiceBrokerNyxletImpl;
 import org.cyclades.engine.nyxlet.templates.xstroma.message.api.MessageConsumer;
-import org.cyclades.engine.nyxlet.templates.xstroma.message.impl.RawMessageProcessor;
+import org.cyclades.engine.nyxlet.templates.xstroma.message.api.MessageProcessor;
 import org.cyclades.engine.nyxlet.templates.xstroma.message.impl.ResponseProcessor;
 
 import com.rabbitmq.client.ConnectionFactory;
@@ -56,7 +56,7 @@ import com.rabbitmq.client.ConnectionFactory;
 public class Consumer implements MessageConsumer {
 
     @Override
-    public void init (Map<String, String> initializationMap, RawMessageProcessor rawMessageProcessor, ResponseProcessor responseProcessor, ServiceBrokerNyxletImpl callBackServiceInstance) throws Exception {
+    public void init (Map<String, String> initializationMap, MessageProcessor messageProcessor, ResponseProcessor responseProcessor, ServiceBrokerNyxletImpl callBackServiceInstance) throws Exception {
         final String eLabel = "rabbitmq.Consumer.init: ";
         try {
             if (!initializationMap.containsKey(TARGET_QUEUE_CONFIG_PARAMETER)) throw new Exception("Initialization parameter missing: " + TARGET_QUEUE_CONFIG_PARAMETER);
@@ -78,7 +78,7 @@ public class Consumer implements MessageConsumer {
             if (initializationMap.containsKey(CONNECTION_HEARTBEAT_SECONDS_PARAMETER)) factory.setRequestedHeartbeat(Integer.parseInt(initializationMap.get(CONNECTION_HEARTBEAT_SECONDS_PARAMETER)));
             factory.setUri(connectionString);
             for (int i = 0; i < numConsumers; i++) {
-                connectionResources.add(new ConnectionResource(factory, targetQueue, consumerTag + i, cancelRecovery, prefetchCount, callBackServiceInstance).init(initializationMap, rawMessageProcessor, responseProcessor).connect());
+                connectionResources.add(new ConnectionResource(factory, targetQueue, consumerTag + i, cancelRecovery, prefetchCount, callBackServiceInstance).init(initializationMap, messageProcessor, responseProcessor).connect());
             }
         } catch (Exception e) {
             e.printStackTrace();

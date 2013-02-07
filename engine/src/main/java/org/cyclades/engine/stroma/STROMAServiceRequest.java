@@ -37,7 +37,6 @@ import org.cyclades.engine.MetaTypeEnum;
 import org.cyclades.engine.NyxletSession;
 import org.cyclades.engine.api.Nyxlet;
 import org.cyclades.engine.nyxlet.NyxletRepository;
-
 import java.util.List;
 
 /**
@@ -45,7 +44,9 @@ import java.util.List;
  * capabilities, please see the class VirtualizedSTROMARequest.
  */
 public class STROMAServiceRequest {
-
+    
+    public STROMAServiceRequest () {}
+    
     public STROMAServiceRequest (String serviceName, MetaTypeEnum metaTypeEnum, Map<String, List<String>> params, String data) throws Exception {
         final String eLabel = "STROMAServiceRequest.STROMAServiceRequest: ";
         try {
@@ -120,8 +121,9 @@ public class STROMAServiceRequest {
 
     public final static String ERROR_CODE       = "error-code";
     public final static String ERROR_MESSAGE    = "error-message";
-    private Map<String, List<String>> parameters = new HashMap<String, List<String>>();
-    private final MetaTypeEnum metaTypeEnum;
-    private final String data;
-    private final String serviceName;
+    protected Map<String, List<String>> parameters = new HashMap<String, List<String>>();
+    protected MetaTypeEnum metaTypeEnum = MetaTypeEnum.JSON;
+    protected String data;
+    protected String serviceName;
+    
 }

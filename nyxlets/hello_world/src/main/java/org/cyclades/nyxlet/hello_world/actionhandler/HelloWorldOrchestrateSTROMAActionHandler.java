@@ -43,6 +43,7 @@ import org.cyclades.engine.stroma.STROMARequestHelper;
 import org.cyclades.engine.stroma.STROMAResponse;
 import org.cyclades.engine.stroma.STROMAResponseWriter;
 import org.cyclades.engine.stroma.STROMAServiceRequest;
+import org.cyclades.engine.stroma.xstroma.STROMARequestBuilder;
 import org.cyclades.engine.stroma.xstroma.VirtualizedSTROMARequest;
 
 @AHandler("orchestratesayhello")
@@ -56,6 +57,23 @@ public class HelloWorldOrchestrateSTROMAActionHandler extends ActionHandler {
         final String eLabel = "HelloWorldOrchestrateSTROMAActionHandler.handle: ";
         try {
             int requestCount = 1;
+            
+            /************************************************************************************************************/
+            /** Example of a Nyxlet request local to this engine. This strategy returns a "STROMAResponse" object with **/
+            /** parsed meta data. This is a convenient strategy for a typical local request, using the                 **/
+            /** using the STROMARequestBuilder.                                                                        **/
+            /** NOTE: You can NOT use the "raw-response" parameter with this strategy                                  **/
+            /************************************************************************************************************/
+            {
+                STROMARequestBuilder stromaBuilder = new STROMARequestBuilder("helloworld");
+                stromaResponseWriter.addResponseParameter("request:" + requestCount++, 
+                        stromaBuilder
+                        .parameter("action", "sayhello")
+                        .xml()
+                        .parameter("name", "Easy does it!")
+                        .build()
+                        .execute().getParameters().get("message-as-parameter").get(0));            
+            }
             /************************************************************************************************************/
             /** Example of a Nyxlet request local to this engine. This strategy returns a "STROMAResponse" object with **/
             /** parsed meta data. This is a convenient strategy for a typical local request.                           **/

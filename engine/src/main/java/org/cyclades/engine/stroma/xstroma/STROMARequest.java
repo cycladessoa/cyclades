@@ -27,30 +27,29 @@
  *******************************************************************************/
 package org.cyclades.engine.stroma.xstroma;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 import java.util.Vector;
+import org.cyclades.engine.MetaTypeEnum;
+import org.cyclades.engine.stroma.STROMAServiceRequest;
 import org.cyclades.engine.util.MapHelper;
 import org.cyclades.xml.comparitor.XMLComparitor;
 import org.json.JSONObject;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-public class STROMARequest {
+public class STROMARequest extends STROMAServiceRequest {
+    
+    public STROMARequest (String serviceName, MetaTypeEnum metaTypeEnum, Map<String, List<String>> params, String data) throws Exception {
+        super(serviceName, metaTypeEnum, params, data);
+    }
 
     public STROMARequest (String serviceName, Map<String, List<String>> params, String data) throws Exception {
-        final String eLabel = "STROMARequest.STROMARequest: ";
-        try {
-            if (params != null) this.parameters = params;
-            this.serviceName = serviceName;
-            this.data = data;
-        } catch (Exception e) {
-            throw new Exception(eLabel + e);
-        }
+        super(serviceName, MetaTypeEnum.JSON, params, data);
     }
     
     public STROMARequest (Node stromaRequest) throws Exception {
+        super();
         serviceName = XMLComparitor.getAttribute(stromaRequest, "service");
         Vector<Node> parametersNodeVector= XMLComparitor.getMatchingChildNodes(stromaRequest, BASE_PARAMETERS);
         if (parametersNodeVector.size() > 0) parameters = 
@@ -113,13 +112,9 @@ public class STROMARequest {
         try {
             StringBuilder builder = new StringBuilder();
             builder.append("{\"service\":\"").append(serviceName);
-            builder.append("\",\"data\":{\"").append(BASE_PARAMETERS).append("\":");
-            builder.append(MapHelper.parameterMapToJSON(parameters));
-            if (data != null) {
-                builder.append(",");
-                builder.append(data);
-            }
-            builder.append("}}");
+            builder.append("\",\"data\":");
+            generateJSONData(builder);
+            builder.append("}");
             return builder.toString();
         } catch (Exception e) {
             throw new Exception(eLabel + e);
@@ -131,21 +126,62 @@ public class STROMARequest {
         try {
             StringBuilder builder = new StringBuilder();
             builder.append("<request ");
-            builder.append("service=\"").append(serviceName);
-            builder.append("\"><").append(BASE_PARAMETERS).append(">");
-            builder.append(MapHelper.parameterMapToXML(parameters, "parameter"));
-            builder.append("</").append(BASE_PARAMETERS).append(">");
-            if (data != null) builder.append(data);
+            builder.append("service=\"").append(serviceName).append("\">");
+            generateXMLData(builder);
             builder.append("</request>");
             return builder.toString();
         } catch (Exception e) {
             throw new Exception(eLabel + e);
         }
     }
+    
+    /**
+     * Generate data section for a direct STROMA request
+     * 
+     * @return Data section for the STROMA request
+     * @throws Exception
+     */
+    public String generateData () throws Exception {
+        StringBuilder sb = new StringBuilder();
+        if (metaTypeEnum.equals(MetaTypeEnum.XML)) {
+            sb.append("<data>");
+            generateXMLData(sb);
+            sb.append("</data>");
+        } else {
+            generateJSONData(sb);
+        }
+        return sb.toString();
+    }
+    
+    private String generateJSONData (StringBuilder builder) throws Exception {
+        final String eLabel = "STROMARequest.generateJSONData: ";
+        try {
+            builder.append("{\"").append(BASE_PARAMETERS).append("\":");
+            builder.append(MapHelper.parameterMapToJSON(parameters));
+            if (data != null) {
+                builder.append(",");
+                builder.append(data);
+            }
+            builder.append("}");
+            return builder.toString();
+        } catch (Exception e) {
+            throw new Exception(eLabel + e);
+        }
+    }
 
-    private String data;
-    private String serviceName;
-    private Map<String, List<String>> parameters = new HashMap<String, List<String>>();
+    private String generateXMLData (StringBuilder builder) throws Exception {
+        final String eLabel = "STROMARequest.generateXMLData: ";
+        try {
+            builder.append("<").append(BASE_PARAMETERS).append(">");
+            builder.append(MapHelper.parameterMapToXML(parameters, "parameter"));
+            builder.append("</").append(BASE_PARAMETERS).append(">");
+            if (data != null) builder.append(data);
+            return builder.toString();
+        } catch (Exception e) {
+            throw new Exception(eLabel + e);
+        }
+    }
+
     private static final String BASE_PARAMETERS = "parameters";
     
 }

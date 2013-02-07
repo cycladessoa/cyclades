@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.cyclades.engine.MetaTypeEnum;
 
 public class STROMARequestBuilder {
     
@@ -35,12 +36,23 @@ public class STROMARequestBuilder {
         return this;
     }
     
+    public STROMARequestBuilder json () {
+        metaTypeEnum = MetaTypeEnum.JSON;
+        return this;
+    }
+    
+    public STROMARequestBuilder xml () {
+        metaTypeEnum = MetaTypeEnum.XML;
+        return this;
+    }
+    
     public STROMARequest build () throws Exception {
-        return new STROMARequest(serviceName, parameters, data);
+        return new STROMARequest(serviceName, metaTypeEnum, parameters, data);
     }
     
     private final String serviceName;
     private String data = null;
     private Map<String, List<String>> parameters = new HashMap<String, List<String>>();
+    private MetaTypeEnum metaTypeEnum = MetaTypeEnum.JSON;
 
 }

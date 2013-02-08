@@ -70,7 +70,7 @@ public class ProducerTarget {
     }
     
     /**
-     * This constructor is for external use of a ConsumerTarget...i.e. client software.
+     * This constructor is for external use of a ProducerTarget...i.e. client software.
      * 
      * Clients will need to use the ServiceBrokerNyxletImpl implementation of choice as a dependency for this to
      * build...i.e. the "servicebroker" Nyxlet would be used in order to reuse the Producer targets of the existing Nyxlet.

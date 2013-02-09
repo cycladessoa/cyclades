@@ -25,6 +25,39 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *******************************************************************************/
+
+/*******************************************************************************
+ * This script is configured to access a RabbitMQ instance running on the 
+ * "localhost". Please modify the "connection_string" fields in the following
+ * consumer and producer JSON configurations to point to a RabbitMQ instance 
+ * located on another machine. You must have a RabbitMQ instance up to run 
+ * these targets.
+ ******************************************************************************/
+
+String consumerJSON = "{" \
+            + "\"target_queue\": \"my_output_queue\"," \
+            + "\"connection_string\": \"amqp://guest:guest@localhost:5672\"," \
+            + "\"connection_heartbeat_seconds\": \"60\"," \
+            + "\"consumer_tag\": \"my_output_queue_logger-consumer\"," \
+            + "\"num_consumers\": \"5\"," \
+            + "\"cancel_recovery\": \"false\"," \
+            + "\"prefetch_count\": \"1\"," \
+            + "\"replyto_message_delivery_mode\": \"2\"," \
+            + "\"ha_policy\": \"all\"," \
+            + "\"durable\": \"true\"" \
+            + "}"
+
+String producerJSON = "{" \
+        + "\"pool\": \"true\"," \
+        + "\"maxActive\": \"5\"," \
+        + "\"target_queue\": \"my_output_queue\"," \
+        + "\"connection_string\": \"amqp://guest:guest@localhost:5672\"," \
+        + "\"connection_heartbeat_seconds\": \"60\"," \
+        + "\"message_delivery_mode\": \"2\"," \
+        + "\"replyto_ha_policy\": \"all\"," \
+        + "\"replyto_durable\": \"true\"" \
+        + "}"
+
 buildscript {
         repositories {
                 mavenCentral()
@@ -33,11 +66,6 @@ buildscript {
 
         dependencies {
                 classpath group:'com.github.cycladessoa.nyxlets', name:'servicebroker', version:'latest.integration'
-		//classpath files('/Users/tomangelopoulos/git/github/cycladessoa/cyclades/engine/build/libs/json-20090211.jar')
-		//classpath files('/Users/tomangelopoulos/git/github/cycladessoa/cyclades/engine/build/libs/engine-1.0.0.SNAPSHOT.jar')
-		//classpath files('/Users/tomangelopoulos/git/github/cycladessoa/cyclades/engine/build/libs/commons-lang-2.5.jar')
-		//classpath files('/Users/tomangelopoulos/git/github/cycladessoa/cyclades/nyxlets/service_broker/build/libs/servicebroker-1.0.0.SNAPSHOT.nyxlet')
-  		//classpath files('/Users/tomangelopoulos/git/github/cycladessoa/cyclades/nyxlets/service_broker/build/libs/commons-pool-1.6.jar')
         }
 }
 
@@ -59,21 +87,8 @@ MessageProcessor mp = new MessageProcessor() {
     }
 }
 
-String consumerJSON = "{" + \
-             "\"target_queue\": \"my_output_queue\"," \
-            + "\"connection_string\": \"amqp://guest:guest@localhost:5672\"," \
-            + "\"connection_heartbeat_seconds\": \"60\"," \
-            + "\"consumer_tag\": \"my_output_queue_logger-consumer\"," \
-            + "\"num_consumers\": \"5\"," \
-            + "\"cancel_recovery\": \"false\"," \
-            + "\"prefetch_count\": \"1\"," \
-            + "\"replyto_message_delivery_mode\": \"2\"," \
-            + "\"ha_policy\": \"all\"," \
-            + "\"durable\": \"true\"" \
-            + "}"
-
 task javaConsumerTargetExample () {
-    description = 'An example of how to create a consumer target with Cyclades service broker targets'
+    description = 'An example of how to create a consumer target with Cyclades service broker targets (RabbitMQ must be running)'
 
     doLast () {
         long keepAlive = 20000
@@ -90,19 +105,8 @@ task javaConsumerTargetExample () {
     }
 }
 
-String producerJSON = "{" + \
-        "\"pool\": \"true\"," \
-        + "\"maxActive\": \"5\"," \
-        + "\"target_queue\": \"my_output_queue\"," \
-        + "\"connection_string\": \"amqp://guest:guest@localhost:5672\"," \
-        + "\"connection_heartbeat_seconds\": \"60\"," \
-        + "\"message_delivery_mode\": \"2\"," \
-        + "\"replyto_ha_policy\": \"all\"," \
-        + "\"replyto_durable\": \"true\"" \
-        + "}"
-
 task javaXSTROMAProducerTargetExample () {
-    description = 'An example of how to create an X-STROMA producer target with Cyclades service broker targets (must run task "javaConsumerTargetExample" first to intialize queues)'
+    description = 'An example of how to create an X-STROMA producer target with Cyclades service broker targets (RabbitMQ must be running, must run task "javaConsumerTargetExample" first to intialize queues)'
 
     doLast () {
         XSTROMARequestBuilder xstromaBuilder = XSTROMARequestBuilder.newInstance(null)
@@ -120,7 +124,7 @@ task javaXSTROMAProducerTargetExample () {
 }
 
 task javaTextProducerTargetExample () {
-    description = 'An example of how to create a text producer target with Cyclades service broker targets (must run task "javaConsumerTargetExample" first to intialize queues)'
+    description = 'An example of how to create a text producer target with Cyclades service broker targets (RabbitMQ must be running, must run task "javaConsumerTargetExample" first to intialize queues)'
 
     doLast () {
         ProducerTarget pt = new ProducerTarget("org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.RawProducer", new JSONObject(producerJSON))
@@ -133,7 +137,7 @@ task javaTextProducerTargetExample () {
 }
 
 task javaBinaryProducerTargetExample () {
-    description = 'An example of how to create a binary producer target with Cyclades service broker targets (must run task "javaConsumerTargetExample" first to intialize queues)'
+    description = 'An example of how to create a binary producer target with Cyclades service broker targets (RabbitMQ must be running, must run task "javaConsumerTargetExample" first to intialize queues)'
 
     doLast () {
         ProducerTarget pt = new ProducerTarget("org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.RawProducer", new JSONObject(producerJSON))

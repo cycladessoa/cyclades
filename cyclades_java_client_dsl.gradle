@@ -25,6 +25,25 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *******************************************************************************/
+
+/*******************************************************************************
+ * This is the base XSTROMA_URL for the X-STROMA requests. Please note that it 
+ * resolves to the "servicebroker" service. Feel free to modify this XSTROMA_URL and
+ * change the host if your Cyclades instance runs on a differnt machine other
+ * than "localhost"
+ ******************************************************************************/
+
+String XSTROMA_URL = "http://localhost:8080/cyclades/servicebroker"
+
+/*******************************************************************************
+ * This is the base STROMA_URL for the STROMA requests. Please note that it
+ * resolves to the "helloworld" service. Feel free to modify this STROMA_URL and
+ * change the host if your Cyclades instance runs on a differnt machine other
+ * than "localhost"
+ ******************************************************************************/
+
+String STROMA_URL = "http://localhost:8080/cyclades/helloworld"
+
 buildscript {
         repositories {
                 mavenCentral()
@@ -59,16 +78,9 @@ task javaClientDSLExamples () {
     **********************************************************************/
 
     doLast () {
-        String URL = "http://localhost:8080/cyclades/servicebroker"
-        if (rootProject.hasProperty('serviceUrl')) URL = serviceUrl
-        println ''
-        println "Using service URL:  " + URL
-        println 'You can override this URL by setting the Gradle command line parameter like this: -PserviceUrl="http://myhost:8080/cyclades/servicebroker"'
-        println ''
-
         println '1 service request via X-STROMA and HTTP defaulting to JSON format'
         println '------------------------------------------------------------------------'
-        println new String(Http.execute(URL,
+        println new String(Http.execute(XSTROMA_URL,
             XSTROMARequestBuilder.newInstance(null).parameter("transaction-data", "sample-1").add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "foo")).build()))
         println '------------------------------------------------------------------------'
         println ''
@@ -80,7 +92,7 @@ task javaClientDSLExamples () {
         xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "foo").parameter("name", "foo2"))
         xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "bar").parameter("name", "bar2"))
         xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "baz").parameter("name", "baz2"))
-        println new String(Http.execute(URL, xstromaBuilder.xml().build()))
+        println new String(Http.execute(XSTROMA_URL, xstromaBuilder.xml().build()))
         println '------------------------------------------------------------------------'
         println ''
 
@@ -91,7 +103,7 @@ task javaClientDSLExamples () {
         xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhellochainable").parameter("name", "foo").parameter("name", "foo2"))
         xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhellochainable").parameter("name", "bar").parameter("name", "bar2"))
         xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhellochainable").parameter("name", "baz").parameter("name", "baz2"))
-        println new String(Http.execute(URL, xstromaBuilder.json().build()))
+        println new String(Http.execute(XSTROMA_URL, xstromaBuilder.json().build()))
         println '------------------------------------------------------------------------'
         println ''
 
@@ -102,7 +114,7 @@ task javaClientDSLExamples () {
         xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "foo").parameter("name", "foo2"))
         xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "bar").parameter("name", "bar2"))
         xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "baz").parameter("name", "baz2"))
-        Http.execute(URL, xstromaBuilder.json().build(), System.out)
+        Http.execute(XSTROMA_URL, xstromaBuilder.json().build(), System.out)
         println ''
         println '------------------------------------------------------------------------'
         println ''
@@ -139,13 +151,6 @@ task javaClientDSLExample () {
     description = 'Execute a more detailed sample X-STROMA request with the Cyclades Java DSL that you can modify and experiment with'
 
     doLast () {
-        String URL = "http://localhost:8080/cyclades/servicebroker"
-        if (rootProject.hasProperty('serviceUrl')) URL = serviceUrl
-        println ''
-        println "Using service URL:  " + URL
-        println 'You can override this URL by setting the Gradle command line parameter like this: -PserviceUrl="http://myhost:8080/cyclades/servicebroker"'
-        println ''
-
         // Create X-STROMA request builder
         XSTROMARequestBuilder xstromaBuilder = XSTROMARequestBuilder.newInstance(null)
 
@@ -168,7 +173,7 @@ task javaClientDSLExample () {
         //xstromaBuilder.json()
 
         // Send the X-STROMA request via HTTP, and print the result
-        String xstromaResponseString =  new String(Http.execute(URL, xstromaBuilder.build()))
+        String xstromaResponseString =  new String(Http.execute(XSTROMA_URL, xstromaBuilder.build()))
         println xstromaResponseString
         println ''
 
@@ -203,13 +208,6 @@ task javaClientDSLExample_STROMA () {
     description = 'Execute a sample STROMA (direct service, without the X-STROMA broker) request with the Cyclades Java DSL that you can modify and experiment with'
 
     doLast () {
-        String URL = "http://localhost:8080/cyclades/helloworld"
-        if (rootProject.hasProperty('serviceUrl')) URL = serviceUrl
-        println ''
-        println "Using service URL:  " + URL
-        println 'You can override this URL by setting the Gradle command line parameter like this: -PservicerUrl="http://myhost:8080/cyclades/helloworld"'
-        println ''
-
         // Create STROMA request builder
         STROMARequestBuilder stromaBuilder = STROMARequestBuilder.newInstance(null)
 
@@ -218,7 +216,7 @@ task javaClientDSLExample_STROMA () {
         stromaBuilder.parameter("transaction-data", "my sample request").parameter("duration", "true").parameter("service-agent", "true")
 
         // Send the STROMA request via HTTP, ddand print the result
-        String stromaResponseString =  new String(Http.execute(URL, stromaBuilder.build()))
+        String stromaResponseString =  new String(Http.execute(STROMA_URL, stromaBuilder.build()))
         println stromaResponseString
         println ''
 

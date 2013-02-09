@@ -38,6 +38,7 @@ apply plugin: 'eclipse'
 
 apply from: 'tasks.gradle'
 apply from: 'cyclades_java_client_dsl.gradle'
+apply from: 'cyclades_java_client_servicebroker_targets.gradle'
 
 version = nyxlet_NYXLET_NAME_version + '.' + build_number
 ext.isReleaseVersion = !version.endsWith("SNAPSHOT")

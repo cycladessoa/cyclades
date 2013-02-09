@@ -115,7 +115,7 @@ Example RabbitMQ X-STROMA service requests and general client to queue access ca
 * gradle javaConsumerTargetExample
     ** Runs a multi threaded consumer for a specified queue
     ** Run this command first to initialize the queues in RabbitMQ
-* gradle javaXSTROMAProducerTargetExample ()
+* gradle javaXSTROMAProducerTargetExample
     ** Produces a X-STROMA message to the specified queue
     ** Good example of how to submit an asynchronous X-STROMA request to a Cyclades instance consuming from the specified queue
 * gradle javaTextProducerTargetExample

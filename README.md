@@ -102,14 +102,33 @@ base_engine_url_list={"url":"http://server1.mycompany.org:8080/cyclades","passwo
 X-STROMA service requests can be created and executed with the Cyclades Java DSL. Example HTTP service requests can be executed with the following commands:
 
 * gradle javaClientDSLExample
+    ** Runs a single X-STROMA request
 * gradle javaClientDSLExamples
+    ** Runs mutiple high level X-STROMA request examples
+* gradle javaClientDSLExample_STROMA 
+    ** Runs a STROMA request (direct service request, not via X-STROMA)
 
 Please see the following file for the HTTP client examples: /cycladessoa/nyxlets/nyxlet-my_first_nyxlet/cyclades_java_client_dsl.gradle
+
+Example RabbitMQ X-STROMA service requests and general client to queue access can be executed with the following commands:
+
+* gradle javaConsumerTargetExample
+    ** Runs a multi threaded consumer for a specified queue
+    ** Run this command first to initialize the queues in RabbitMQ
+* gradle javaXSTROMAProducerTargetExample ()
+    ** Produces a X-STROMA message to the specified queue
+    ** Good example of how to submit an asynchronous X-STROMA request to a Cyclades instance consuming from the specified queue
+* gradle javaTextProducerTargetExample
+    ** Produces a Text message to the specified queue
+* gradle javaBinaryProducerTargetExample
+    ** Produces a binary message to the specified queue
+
+Please see the following file for the RabbitMQ client examples: /cycladessoa/nyxlets/nyxlet-my_first_nyxlet/cyclades_java_client_servicebroker_targets.gradle
 
 [NOTE]
 Please feel free to modify and experiment with these Groovy/Gradle targets. Gradle and/or Groovy provide a convenient mechanism for rapidly developing clients using the Cyclades Java DSL, and clients in general.
 
-=== Browser
+=== Browser 
 
 Copy and paste the entries in the file "/cycladessoa/nyxlets/nyxlet-my_first_nyxlet/REQUEST_EXAMPLES" to a browser. These are just a few examples of how to access and verify your service.
 

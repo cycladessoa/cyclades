@@ -104,16 +104,34 @@ Now there are a set of steps and notes you need to take before proceeding with c
    which you can modify and/or copy and paste to create more Action Handlers. Action
    Handlers are the primary code point for adding functionality to your service.
 
-4. X-STROMA service requests can be created and executed with the Cyclades Java DSL. Example HTTP service 
-   requests can be executed with the following commands (after a successful build and deploy):
+4. X-STROMA service requests can be created and executed with the Cyclades Java DSL. Example HTTP service requests can be executed with the following commands:
 
-       gradle javaClientDSLExample
-       gradle javaClientDSLExamples
+     gradle javaClientDSLExample
+       Runs a single X-STROMA request
+     gradle javaClientDSLExamples
+       Runs mutiple high level X-STROMA request examples
+     gradle javaClientDSLExample_STROMA
+       Runs a STROMA request (direct service request, not via X-STROMA)
 
-    Please see the following file for the HTTP client examples: ${PNAME_DIR}/cyclades_java_client_dsl.gradle
+    Please see the following file for the HTTP client examples: /cycladessoa/nyxlets/nyxlet-my_first_nyxlet/cyclades_java_client_dsl.gradle
 
-    [NOTE] Please feel free to modify and experiment with these Groovy/Gradle targets. Gradle and/or Groovy 
-    provide a convenient mechanism for rappidly developing clients using the Cyclades Java DSL, and clients in general.
+   Example RabbitMQ X-STROMA service requests and general client to queue access can be executed with the following commands:
+
+     gradle javaConsumerTargetExample
+       Runs a multi threaded consumer for a specified queue
+       Run this command first to initialize the queues in RabbitMQ
+     gradle javaXSTROMAProducerTargetExample ()
+       Produces a X-STROMA message to the specified queue
+       Good example of how to submit an asynchronous X-STROMA request to a Cyclades instance consuming from the specified queue
+     gradle javaTextProducerTargetExample
+       Produces a Text message to the specified queue
+     gradle javaBinaryProducerTargetExample
+       Produces a binary message to the specified queue
+
+    Please see the following file for the RabbitMQ client examples: /cycladessoa/nyxlets/nyxlet-my_first_nyxlet/cyclades_java_client_servicebroker_targets.gradle
+
+   [NOTE]
+   Please feel free to modify and experiment with these Groovy/Gradle targets. Gradle and/or Groovy provide a convenient mechanism for rapidly developing clients using the Cyclades Java DSL, and clients in general.
 
 or
 

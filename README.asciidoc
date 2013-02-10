@@ -39,6 +39,11 @@ A specification and corresponding reference implementation for a service engine 
 * RabbitMQ Service Broker target implementation included
 	** Asynchronous capabilities for all services via RabbitMQ with no additional development effort
 	** Other transport mechanism implentations are pluggable via Service Broker "targets"
+* Cyclades Java Client DSL
+        ** Can be used from external clients to conveniently create service requests and parse the corresponding responses
+        ** HTTP client included
+        ** RabbitMQ client targets included
+        ** Examples included in Groovy/Gradle build system, please see below
 
 == Overview
 

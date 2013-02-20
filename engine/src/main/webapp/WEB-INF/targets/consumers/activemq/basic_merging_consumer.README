@@ -18,7 +18,7 @@ Field definitions in lined with the JSON below:
         "accumulation_wait_mills": "60000",                                            // The maximum accumulation wait time before processing accumulated messages
         "min_messages": "1000",                                                        // The minumum amout of messages to accuulate before processing
         "target_queue": "merging_work_queue",                                          // The queue from which to consume messages
-        "connection_string": "tcp://localhost:6161",                                   // The ActiveMQ connection string
+        "connection_string": "tcp://localhost:61616",                                  // The ActiveMQ connection string
         "connection_heartbeat_seconds": "60",                                          // The connection heartbeat in seconds
         "consumer_tag": "merging_work_queue-consumer",                                 // A unique consumer tag for all consumers created under this definition
         "num_consumers": "1",                                                          // The number of concurrent cosumers/workers

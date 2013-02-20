@@ -29,7 +29,7 @@ Field definitions in lined with the JSON below:
         },
         "target_init_data": {
             "target_queue": "my_output_queue",                                             // The queue from which to consume messages
-            "connection_string": "tcp://localhost:6161",                                   // The ActiveMQ connection string
+            "connection_string": "tcp://localhost:61616",                                  // The ActiveMQ connection string
             "connection_heartbeat_seconds": "60",                                          // The connection heartbeat in seconds
             "consumer_tag": "my_output_queue_logger-consumer",                             // A unique consumer tag for all consumers created under this definition
             "num_consumers": "1",                                                          // The number of concurrent cosumers/workers

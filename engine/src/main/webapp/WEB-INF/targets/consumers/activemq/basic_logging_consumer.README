@@ -1,0 +1,42 @@
+This target definition creates a raw message consumer that listens to the specified queue.
+A "raw_message_processor" is defined, which dispatches the queued message
+to a specified service for processing. This can be utilized for many tasks.
+The following example simply requests the "log" Nyxlet to log the message in its entirety. This 
+target example is essentially a log aggregator...logging statements can be submitted to a queue from 
+multiple machines. The queue is then processed by this target into a log file for further use.
+This is just one example implementation for reference. 
+
+Field definitions in lined with the JSON below:
+
+{
+        "class": "org.cyclades.nyxlet.servicebrokernyxlet.message.impl.activemq.Consumer", // The class that will be instantiated
+        "raw_message_processor": {
+            "service_name": "log",                                                         // Nyxlet to call
+            "response_input_parameter": "entry",                                           // Field that will contain the response
+            "use_map_channel":"false",                                                     // If true, the binary value (byte[]) of the response will be placed in the MapChannel corresponding to the key above
+            "encoding":"UTF-8",                                                            // String encoding to use when converting a byte[] to a String
+            "data_type":"JSON",                                                            // The data type of the request/response
+            "parameters": [                                                                // The following are parameters specific to the specified Nyxlet
+                {
+                    "name": "action",
+                    "value": "appendlog"                                                   // ActionHandler of the Nyxlet to call
+                },
+                {
+                    "name": "alias",
+                    "value": "default"                                                     // Logging alias we want to use
+                }
+            ]
+        },
+        "target_init_data": {
+            "target_queue": "my_output_queue",                                             // The queue from which to consume messages
+            "connection_string": "tcp://localhost:6161",                                   // The ActiveMQ connection string
+            "connection_heartbeat_seconds": "60",                                          // The connection heartbeat in seconds
+            "consumer_tag": "my_output_queue_logger-consumer",                             // A unique consumer tag for all consumers created under this definition
+            "num_consumers": "1",                                                          // The number of concurrent cosumers/workers
+            "cancel_recovery": "false",                                                    // Placeholder for future implemention on server cancel events
+            "prefetch_count": "1",                                                         // The number of messages that a worker will batch on the host
+            "replyto_message_delivery_mode": "2",                                          // Reply to message delivery mode, 2 is persisted
+            "ha_policy": "all",                                                            // The HA policy
+            "durable": "true"                                                              // Should the target_queue (work_queue) be durable (persisted)
+        }
+}

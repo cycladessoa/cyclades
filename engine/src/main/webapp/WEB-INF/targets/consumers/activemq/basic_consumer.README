@@ -1,0 +1,21 @@
+This target definition creates a basic consumer that listens for X-STROMA requests on the specified queue.
+The response to the X-STROMA request is submited to the queue named in the X-STROMA parameter "replyto". 
+If no "replyto" parameter is specified, the response is disregarded/dropped.
+
+Field definitions in lined with the JSON below:
+
+{
+    "class": "org.cyclades.nyxlet.servicebrokernyxlet.message.impl.activemq.Consumer", // The class that will be instantiated
+    "target_init_data": {
+        "target_queue": "work_queue",                                                  // The queue from which to consume messages
+        "connection_string": "tcp://localhost:61616",                                  // The ActiveMQ connection string
+        "connection_heartbeat_seconds": "60",                                          // The connection heartbeat in seconds
+        "consumer_tag": "work_queue-consumer",                                         // A unique consumer tag for all consumers created under this definition
+        "num_consumers": "5",                                                          // The number of concurrent cosumers/workers
+        "cancel_recovery": "false",                                                    // Placeholder for future implemention on server cancel events
+        "prefetch_count": "1",                                                         // The number of messages that a worker will batch on the host
+        "replyto_message_delivery_mode": "2",                                          // Reply to message delivery mode, 2 is persisted
+        "ha_policy": "all",                                                            // The HA policy
+        "durable": "true"                                                              // Should the target_queue (work_queue) be durable (persisted)
+    }
+}

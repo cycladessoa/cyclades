@@ -1,0 +1,44 @@
+This target definition creates a basic consumer that listens for X-STROMA requests on the specified queue.
+The response to the X-STROMA request is submited to the queue named in the X-STROMA parameter "replyto".
+If no "replyto" parameter is specified, the response is disregarded/dropped.
+In addition to the base processing logic, a "response_processor" is defined, which dispatches the response
+to a specified service for a chance to interprest and act on the X-STROMA response. This can be utilized for 
+many algorithms, i.e. anything from simply logging the response to more complicated logic for interpreting and
+resubmitting failed work requests back to the queue. The following example simply requests the "log" Nyxlet
+to log the response in its entirety.
+
+Field definitions in lined with the JSON below:
+
+{
+        "class": "org.cyclades.nyxlet.servicebrokernyxlet.message.impl.activemq.Consumer",  // The class that will be instantiated
+        "response_processor": {
+            "service_name": "log",                                                          // Nyxlet to call
+            "response_input_parameter": "entry",                                            // Field that will contain the response
+            "request_input_parameter":"original-request",                                   // Field that will contain the original request
+            "use_map_channel":"false",                                                      // If true, the binary value (byte[]) of the response will be placed in the MapChannel corresponding to the key above
+            "encoding":"UTF-8",                                                             // String encoding to use when converting a byte[] to a String
+            "data_type":"JSON",                                                             // The data type of the request/response
+            "parameters": [                                                                 // The following are parameters specific to the specified Nyxlet
+                {
+                    "name": "action",
+                    "value": "appendlog"                                                    // ActionHandler of the Nyxlet to call
+                },
+                {
+                    "name": "alias",
+                    "value": "default"                                                      // Logging alias we want to use
+                }
+            ]
+        },
+        "target_init_data": {
+            "target_queue": "work_queue",                                                   // The queue from which to consume messages
+            "connection_string": "tcp://localhost:61616",                                   // The ActiveMQ connection string
+            "connection_heartbeat_seconds": "60",                                           // The connection heartbeat in seconds
+            "consumer_tag": "work_queue_with_logging-consumer",                             // A unique consumer tag for all consumers created under this definition
+            "num_consumers": "5",                                                           // The number of concurrent cosumers/workers
+            "cancel_recovery": "false",                                                     // Placeholder for future implemention on server cancel events
+            "prefetch_count": "1",                                                          // The number of messages that a worker will batch on the host
+            "replyto_message_delivery_mode": "2",                                           // Reply to message delivery mode, 2 is persisted
+            "ha_policy": "all",                                                             // The HA policy
+            "durable": "true"                                                               // Should the target_queue (work_queue) be durable (persisted)
+        }
+}

@@ -1,0 +1,31 @@
+This target definition creates a merging consumer that listens for X-STROMA requests on the specified queue.
+The response to the X-STROMA request is submited to the queue named in the X-STROMA parameter "replyto".
+If no "replyto" parameter is specified, the response is disregarded/dropped.
+This consumer waits until it has either accumulated min_messages or accumlation_wait_mills has been reached. 
+When processed, all messages accumulated are handled as though they are all part of one orchestration. This
+target is specifically useful when a batch of messages/events is more efficient to process than many independent
+ones. Coupling this target with chained X-STROMA requests can be helpful in collecting similar service requests and
+merging them together prior to executing a potentially expensive operation. Somewhat comparable to a map reduce. 
+There will be an example of how to use this in the main documentaion.
+
+Field definitions in lined with the JSON below:
+
+{
+    "class": "org.cyclades.nyxlet.servicebrokernyxlet.message.impl.activemq.Consumer", // The class that will be instantiated
+    "target_init_data": {
+        "consumer_type": "merging",                                                    // Specify this as a merging consumer
+        "timer_period_mills": "10000",                                                 // Check for new messages every 10 seconds
+        "accumulation_wait_mills": "60000",                                            // The maximum accumulation wait time before processing accumulated messages
+        "min_messages": "1000",                                                        // The minumum amout of messages to accuulate before processing
+        "target_queue": "merging_work_queue",                                          // The queue from which to consume messages
+        "connection_string": "tcp://localhost:6161",                                   // The ActiveMQ connection string
+        "connection_heartbeat_seconds": "60",                                          // The connection heartbeat in seconds
+        "consumer_tag": "merging_work_queue-consumer",                                 // A unique consumer tag for all consumers created under this definition
+        "num_consumers": "1",                                                          // The number of concurrent cosumers/workers
+        "cancel_recovery": "false",                                                    // Placeholder for future implemention on server cancel events
+        "prefetch_count": "1",                                                         // The number of messages that a worker will batch on the host
+        "replyto_message_delivery_mode": "2",                                          // Reply to message delivery mode, 2 is persisted
+        "ha_policy": "all",                                                            // The HA policy
+        "durable": "true"                                                              // Should the target_queue (work_queue) be durable (persisted)
+    }
+}

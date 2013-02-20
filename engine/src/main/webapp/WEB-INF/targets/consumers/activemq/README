@@ -1,0 +1,7 @@
+Although there is an attempt to maintain consistent functionality across target implementations, not all technologies utilized in their implementations consistently implement the same features. The following are fields that are no-ops in the target definitions within the current directory:
+
+- Fields containing the "ha" term
+- Fields containing the "durable" term
+- Feilds containing the "heartbeat" term
+
+NOTE: These features may be enabled at a later date if matching functionality is discovered in the implementing technology

@@ -1,0 +1,16 @@
+{
+    "target": "merging-producer",
+    "authentication_data": "authenticate",
+    "auth_data_forwarding": "false",
+    "class": "org.cyclades.nyxlet.servicebrokernyxlet.message.impl.activemq.Producer",
+    "target_init_data": {
+        "pool": "true",
+        "maxActive": "5",
+        "target_queue": "merging_work_queue",
+        "connection_string": "tcp://localhost:61616",
+        "connection_heartbeat_seconds": "60",
+        "message_delivery_mode": "2",
+        "replyto_ha_policy": "all",
+        "replyto_durable": "true"
+    }
+}

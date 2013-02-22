@@ -34,7 +34,6 @@ import org.cyclades.nyxlet.servicebrokernyxlet.message.impl.activemq.ConnectionR
 import org.cyclades.nyxlet.servicebrokernyxlet.message.impl.activemq.MessageUtils;
 import javax.jms.MessageProducer;
 import javax.jms.MessageConsumer;
-import javax.jms.Connection;
 import javax.jms.Session;
 import javax.jms.Message;
 import javax.jms.BytesMessage;
@@ -49,23 +48,25 @@ public class ActiveMQDefaultConsumer implements ActiveMQConsumer, Runnable {
 
     public ActiveMQDefaultConsumer init (Map<String, String> parameters) throws Exception {
         if (parameters.containsKey(REPLYTO_MESSAGE_DELIVERY_MODE)) replyToMessageDeliveryMode = Integer.parseInt(parameters.get(REPLYTO_MESSAGE_DELIVERY_MODE));
+        session = connectionResource.getConnection().createSession(false, Session.CLIENT_ACKNOWLEDGE);
+        consumer = session.createConsumer(session.createQueue(connectionResource.getQueueName()));
+        producer = session.createProducer(null);
+        if (replyToMessageDeliveryMode > -1) producer.setDeliveryMode(replyToMessageDeliveryMode);
         return this;
     }
 
     @Override
     public void destroy () throws Exception {
         alive = false;
-        consumer.close();
+        try { session.close(); } catch (Exception e) {}
+        try { consumer.close(); } catch (Exception e) {}
+        try { producer.close(); } catch (Exception e) {}
     }
 
     @Override
     public void run () {
         final String eLabel = "ActiveMQDefaultConsumer.run: ";
-        Connection connection = connectionResource.getConnection();
-        Session session = null;
         try {
-            session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
-            consumer = session.createConsumer(session.createQueue(connectionResource.getQueueName()));
             Message message = null;
             while (alive) {
                 try {
@@ -90,16 +91,9 @@ public class ActiveMQDefaultConsumer implements ActiveMQConsumer, Runnable {
                     }
                     Destination replyToQueue = message.getJMSReplyTo();
                     if (replyToQueue != null) {
-                        MessageProducer producer = null;
-                        try {
-                            producer = session.createProducer(replyToQueue);
-                            if (replyToMessageDeliveryMode > -1) producer.setDeliveryMode(replyToMessageDeliveryMode);
-                            BytesMessage outMessage = session.createBytesMessage();
-                            outMessage.writeBytes(response);
-                            producer.send(outMessage);
-                        } finally {
-                            try { producer.close(); } catch (Exception e) {}
-                        }
+                        BytesMessage outMessage = session.createBytesMessage();
+                        outMessage.writeBytes(response);
+                        producer.send(replyToQueue, outMessage);
                     } else {
                         // XXX - Verify this is what we want to do if there is no replyto set...DONT'T REPLY!
                         //System.out.println(baos.toString());
@@ -116,12 +110,15 @@ public class ActiveMQDefaultConsumer implements ActiveMQConsumer, Runnable {
         } finally {
             try { session.close(); } catch (Exception e) {}
             try { consumer.close(); } catch (Exception e) {}
+            try { producer.close(); } catch (Exception e) {}
         }
     }
 
     ConnectionResource connectionResource;
     private int replyToMessageDeliveryMode = -1;
+    private Session session;
     private MessageConsumer consumer;
+    private MessageProducer producer;
     private volatile boolean alive = true;
 
 }

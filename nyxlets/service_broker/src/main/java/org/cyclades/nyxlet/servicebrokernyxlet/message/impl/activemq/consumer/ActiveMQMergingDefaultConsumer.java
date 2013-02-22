@@ -63,6 +63,8 @@ public class ActiveMQMergingDefaultConsumer extends TimerTask implements ActiveM
             if (parameters.containsKey(REPLYTO_MESSAGE_DELIVERY_MODE)) replyToMessageDeliveryMode = Integer.parseInt(parameters.get(REPLYTO_MESSAGE_DELIVERY_MODE));
             session = connectionResource.getConnection().createSession(false, Session.CLIENT_ACKNOWLEDGE);
             consumer = session.createConsumer(session.createQueue(connectionResource.getQueueName()));
+            producer = session.createProducer(null);
+            if (replyToMessageDeliveryMode > -1) producer.setDeliveryMode(replyToMessageDeliveryMode);
             timer = new Timer();
             timer.schedule(this, timerDelayMills, timerPeriodMills);
             return this;
@@ -75,6 +77,7 @@ public class ActiveMQMergingDefaultConsumer extends TimerTask implements ActiveM
         final String eLabel = "ActiveMQMergingDefaultConsumer.destroy: ";
         try { session.close(); } catch (Exception e) {}
         try { consumer.close(); } catch (Exception e) {}
+        try { producer.close(); } catch (Exception e) {}
         try {
             timer.cancel();
         } catch (Exception e) {
@@ -136,14 +139,9 @@ public class ActiveMQMergingDefaultConsumer extends TimerTask implements ActiveM
 
     public synchronized void releaseAlternateFormatMessages () throws Exception {
         final String eLabel = "ActiveMQMergingDefaultConsumer.releaseAlternateFormatMessages: ";
-        try {
-            MessageProducer producer = null;
-            try {
-                producer = session.createProducer(session.createQueue(connectionResource.getQueueName()));
-                for (Message message : messages.getAlternateFormatMessages()) producer.send(message.jmsMessage);
-            } finally {
-                try { producer.close(); } catch (Exception e) {}
-            }
+        try { 
+            for (Message message : messages.getAlternateFormatMessages()) producer.send(session.createQueue(
+                    connectionResource.getQueueName()), message.jmsMessage);
             messages.getAlternateFormatMessages().clear();
         } catch (Exception e) {
             throw new Exception(eLabel + e);
@@ -167,17 +165,10 @@ public class ActiveMQMergingDefaultConsumer extends TimerTask implements ActiveM
                     (messages.messageStartsWith == '{') ? MetaTypeEnum.JSON : MetaTypeEnum.XML);
             byte[] message = baos.toByteArray();
             if (replyToQueueMap.size() > 0) {                
-                MessageProducer producer = null;
                 for (Map.Entry<Destination, Integer> queueEntry : replyToQueueMap.entrySet()) {
-                    try {
-                        producer = session.createProducer(queueEntry.getKey());
-                        if (replyToMessageDeliveryMode > -1) producer.setDeliveryMode(replyToMessageDeliveryMode);
-                        BytesMessage outMessage = session.createBytesMessage();
-                        outMessage.writeBytes(message);
-                        producer.send(outMessage);
-                    } finally {
-                        try { producer.close(); } catch (Exception e) {}
-                    }
+                    BytesMessage outMessage = session.createBytesMessage();
+                    outMessage.writeBytes(message);
+                    producer.send(queueEntry.getKey(), outMessage);
                 }
             }
             return message;
@@ -206,10 +197,11 @@ public class ActiveMQMergingDefaultConsumer extends TimerTask implements ActiveM
     private long timerPeriodMills = 10000;
     private long accumulationWaitMills = 10000;
     private int minMessages = 10;
-    ConnectionResource connectionResource;
-    Session session;
-    MessageConsumer consumer;
-    MessageListAggregate messages = new MessageListAggregate();
+    private ConnectionResource connectionResource;
+    private Session session;
+    private MessageConsumer consumer;
+    private MessageProducer producer;
+    private MessageListAggregate messages = new MessageListAggregate();
     private int replyToMessageDeliveryMode = -1;
 
 }

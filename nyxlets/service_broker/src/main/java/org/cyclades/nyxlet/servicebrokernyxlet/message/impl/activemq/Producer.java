@@ -56,7 +56,6 @@ public class Producer implements MessageProducer {
 
     @Override
     public void init(Map<String, String> initializationMap) throws Exception {
-        final String eLabel = "rabbitmq.Producer.init: ";
         if (!initializationMap.containsKey(TARGET_QUEUE_CONFIG_PARAMETER)) throw new Exception("Initialization parameter missing: " + TARGET_QUEUE_CONFIG_PARAMETER);
         if (!initializationMap.containsKey(CONNECTION_STRING_CONFIG_PARAMETER)) throw new Exception("Initialization parameter missing: " + CONNECTION_STRING_CONFIG_PARAMETER);
         if (initializationMap.containsKey(REPLYTO_INACTIVITY_DELETE_CONFIG_PARAMETER)) replyToInactivityTimeout = Long.parseLong(initializationMap.get(REPLYTO_INACTIVITY_DELETE_CONFIG_PARAMETER));

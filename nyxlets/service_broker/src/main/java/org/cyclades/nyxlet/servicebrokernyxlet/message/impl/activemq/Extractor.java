@@ -30,15 +30,12 @@ package org.cyclades.nyxlet.servicebrokernyxlet.message.impl.activemq;
 import java.util.List;
 import java.util.Map;
 import org.cyclades.engine.nyxlet.templates.xstroma.message.api.MessageProducer;
-import javax.jms.Connection;
 import javax.jms.Session;
 import javax.jms.Message;
 import javax.jms.BytesMessage;
 import javax.jms.TextMessage;
 import javax.jms.MessageConsumer;
 import org.apache.activemq.ActiveMQConnectionFactory;
-import org.apache.activemq.ActiveMQConnection;
-import org.apache.activemq.ActiveMQPrefetchPolicy;
 import org.apache.commons.pool.ObjectPool;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.cyclades.pool.GenericObjectPoolConfigBuilder;
@@ -70,7 +67,8 @@ public class Extractor implements MessageProducer {
         if (initializationMap.containsKey(PREFETCH_COUNT_CONFIG_PARAMETER)) prefetchCount = Integer.parseInt(initializationMap.get(PREFETCH_COUNT_CONFIG_PARAMETER));
         if (usePool) {
             connectionPool = new GenericObjectPool<ConnectionObject>(
-                    new ConnectionPoolableObjectFactory(factory, (prefetchCount > -1) ? prefetchCount : 1), 
+                    new ConnectionPoolableObjectFactory(factory, (prefetchCount > -1) ? prefetchCount : 1, 1, false, 
+                            Session.CLIENT_ACKNOWLEDGE), 
                     new GenericObjectPoolConfigBuilder().build(initializationMap));
         }
     }
@@ -84,8 +82,6 @@ public class Extractor implements MessageProducer {
     public String sendMessage(String message, Map<String, List<String>> attributeMap) throws Exception {
         boolean pooled = false;
         ConnectionObject connObj = null;
-        Connection connection = null;
-        Session session = null;
         MessageConsumer consumer = null;
         Message inMessage = null;
         try {
@@ -93,18 +89,13 @@ public class Extractor implements MessageProducer {
             String queue = attributeMap.get(QUEUE_PARAMETER).get(0);
             if (connectionPool != null) {
                 connObj = connectionPool.borrowObject();
-                connection = connObj.getConnection();
                 pooled = true;
             } else {
-                connection = factory.createConnection();
-                ActiveMQPrefetchPolicy policy = new ActiveMQPrefetchPolicy();
-                policy.setAll((prefetchCount > -1) ? prefetchCount : 1);
-                ((ActiveMQConnection)connection).setPrefetchPolicy(policy);
-                connection.start();
-                connObj = new ConnectionObject(connection);
+                connObj = ConnectionPoolableObjectFactory.makeObject(factory, (prefetchCount > -1) ? prefetchCount : 1, 1, false,
+                        Session.CLIENT_ACKNOWLEDGE);
             }
             try {
-                connection.getMetaData();
+                connObj.getConnection().getMetaData();
             } catch (Exception e) {
                 if (pooled && connObj != null) {
                     connectionPool.invalidateObject(connObj);
@@ -113,8 +104,7 @@ public class Extractor implements MessageProducer {
                 e.printStackTrace();
                 throw e;
             }            
-            session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
-            consumer = session.createConsumer(session.createQueue(queue));
+            consumer = connObj.getSession().createConsumer(connObj.getSession().createQueue(queue));
             inMessage = consumer.receive(100);
             if (inMessage == null) return null;
             if (inMessage instanceof BytesMessage) {
@@ -127,7 +117,6 @@ public class Extractor implements MessageProducer {
             }
         } finally {
             try { if (inMessage != null) inMessage.acknowledge(); } catch (Exception e) {}
-            try { session.close(); } catch (Exception e) {}
             try { consumer.close(); } catch (Exception e) {}
             if (pooled) {
                 try { if (connObj != null) connectionPool.returnObject(connObj); } catch (Exception e) { e.printStackTrace(); }

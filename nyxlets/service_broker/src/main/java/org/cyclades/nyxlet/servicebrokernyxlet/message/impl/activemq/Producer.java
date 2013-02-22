@@ -30,12 +30,9 @@ package org.cyclades.nyxlet.servicebrokernyxlet.message.impl.activemq;
 import java.util.List;
 import java.util.Map;
 import org.cyclades.engine.nyxlet.templates.xstroma.message.api.MessageProducer;
-import javax.jms.Connection;
 import javax.jms.Session;
 import javax.jms.BytesMessage;
 import org.apache.activemq.ActiveMQConnectionFactory;
-import org.apache.activemq.ActiveMQConnection;
-import org.apache.activemq.ActiveMQPrefetchPolicy;
 import org.apache.commons.pool.ObjectPool;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.cyclades.pool.GenericObjectPoolConfigBuilder;
@@ -74,7 +71,8 @@ public class Producer implements MessageProducer {
         if (initializationMap.containsKey(POOL_CONFIG_PARAMETER)) usePool = Boolean.parseBoolean(initializationMap.get(POOL_CONFIG_PARAMETER));
         if (usePool) {
             connectionPool = new GenericObjectPool<ConnectionObject>(
-                    new ConnectionPoolableObjectFactory(factory, (prefetchCount > -1) ? prefetchCount : 1), 
+                    new ConnectionPoolableObjectFactory(factory, (prefetchCount > -1) ? prefetchCount : 1, messageDeliveryMode, 
+                            true, Session.AUTO_ACKNOWLEDGE), 
                     new GenericObjectPoolConfigBuilder().build(initializationMap));
         }
     }
@@ -93,25 +91,17 @@ public class Producer implements MessageProducer {
     public byte[] sendMessage(byte[] message, Map<String, List<String>> attributeMap) throws Exception {
         boolean pooled = false;
         ConnectionObject connObj = null;
-        Connection connection = null;
-        Session session = null;
-        javax.jms.MessageProducer producer = null;
         try {
             String replyToQueue = "";
             if (connectionPool != null) {
                 connObj = connectionPool.borrowObject();
-                connection = connObj.getConnection();
                 pooled = true;
             } else {
-                connection = factory.createConnection();
-                ActiveMQPrefetchPolicy policy = new ActiveMQPrefetchPolicy();
-                policy.setAll((prefetchCount > -1) ? prefetchCount : 1);
-                ((ActiveMQConnection)connection).setPrefetchPolicy(policy);
-                connection.start();
-                connObj = new ConnectionObject(connection);
+                connObj = ConnectionPoolableObjectFactory.makeObject(factory, (prefetchCount > -1) ? prefetchCount : 1, 
+                        messageDeliveryMode, true, Session.AUTO_ACKNOWLEDGE);
             }
             try {
-                connection.getMetaData();
+                connObj.getConnection().getMetaData();
             } catch (Exception e) {
                 if (pooled && connObj != null) {
                     connectionPool.invalidateObject(connObj);
@@ -120,21 +110,16 @@ public class Producer implements MessageProducer {
                 e.printStackTrace();
                 throw e;
             }
-            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            producer = session.createProducer(session.createQueue(targetQueue));
-            if (messageDeliveryMode > -1) producer.setDeliveryMode(messageDeliveryMode);
-            BytesMessage outboundMessage = session.createBytesMessage();
+            BytesMessage outboundMessage = connObj.getSession().createBytesMessage();
             outboundMessage.writeBytes(message);
             if (attributeMap.containsKey(REPLY_TO_PARAMETER)) {
                 replyToQueue = attributeMap.get(REPLY_TO_PARAMETER).get(0);
-                outboundMessage.setJMSReplyTo(session.createQueue(replyToQueue));
+                outboundMessage.setJMSReplyTo(connObj.getSession().createQueue(replyToQueue));
             }
-            producer.send(outboundMessage);
+            connObj.getMessageProducer().send(connObj.getSession().createQueue(targetQueue), outboundMessage);
             // Make sure to return null, there is no message to return.
             return null;
         } finally {
-            try { session.close(); } catch (Exception e) {}
-            try { producer.close(); } catch (Exception e) {}
             if (pooled) {
                 try { if (connObj != null) connectionPool.returnObject(connObj); } catch (Exception e) { e.printStackTrace(); }
             } else {

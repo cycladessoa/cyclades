@@ -30,31 +30,41 @@ package org.cyclades.nyxlet.servicebrokernyxlet.message.impl.activemq;
 import org.apache.commons.pool.BasePoolableObjectFactory;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import javax.jms.Connection;
+import javax.jms.Session;
+import javax.jms.MessageProducer;
 import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.ActiveMQPrefetchPolicy;
 
 public class ConnectionPoolableObjectFactory extends BasePoolableObjectFactory <ConnectionObject> {
 
-    public ConnectionPoolableObjectFactory (ActiveMQConnectionFactory factory, int prefetchCount) throws Exception {
-       this(factory, null, prefetchCount);
-    }
-
-    public ConnectionPoolableObjectFactory (ActiveMQConnectionFactory factory, String queueName, int prefetchCount) throws Exception {
+    public ConnectionPoolableObjectFactory (ActiveMQConnectionFactory factory, int prefetchCount, 
+            int messageDeliveryMode, boolean createProducer, int sessionAckMode) throws Exception {
         this.factory = factory;
-        this.queueName = queueName;
         this.prefetchCount = prefetchCount;
+        this.messageDeliveryMode = messageDeliveryMode;
+        this.createProducer = createProducer;
+        this.sessionAckMode = sessionAckMode;
     }
 
     @Override
     public ConnectionObject makeObject() throws Exception {
-        final String eLabel = "ConnectionPoolObjectFactory.makeObject: ";
+        return makeObject(factory, prefetchCount, messageDeliveryMode, createProducer, sessionAckMode);
+    }
+    
+    public static ConnectionObject makeObject (ActiveMQConnectionFactory factory, int prefetchCount, 
+            int messageDeliveryMode, boolean createProducer, int sessionAckMode) throws Exception {
         Connection connection = factory.createConnection();
         ActiveMQPrefetchPolicy policy = new ActiveMQPrefetchPolicy();
         policy.setAll(prefetchCount);
         ((ActiveMQConnection)connection).setPrefetchPolicy(policy);
         connection.start();
-        return new ConnectionObject(connection);
-
+        Session session = connection.createSession(false, sessionAckMode);
+        MessageProducer producer = null;
+        if (createProducer) {
+            producer = session.createProducer(null);
+            if (messageDeliveryMode > -1) producer.setDeliveryMode(messageDeliveryMode);
+        }
+        return new ConnectionObject(connection, session, producer);
     }
 
     @Override
@@ -74,25 +84,41 @@ public class ConnectionPoolableObjectFactory extends BasePoolableObjectFactory <
     }
 
     private final ActiveMQConnectionFactory factory;
-    private final String queueName;
-    private int prefetchCount;
+    private final int prefetchCount;
+    private final int messageDeliveryMode;
+    private final boolean createProducer;
+    private final int sessionAckMode;
 
 }
 
 class ConnectionObject {
 
-    public ConnectionObject (Connection connection) {
+    public ConnectionObject (Connection connection, Session session, MessageProducer producer) {
         this.connection = connection;
+        this.session = session;
+        this.producer = producer;
     }
 
     public void destroy () throws Exception {
+        try { session.close(); } catch (Exception e) {}
+        try { producer.close(); } catch (Exception e) {}
         try { connection.close(); } catch (Exception e) { e.printStackTrace(); };
     }
 
-    public Connection getConnection() {
+    public Connection getConnection () {
         return connection;
     }
-
+    
+    public Session getSession () {
+        return session;
+    }
+    
+    public MessageProducer getMessageProducer () {
+        return producer;
+    }
+    
     private final Connection connection;
+    private final Session session;
+    private final MessageProducer producer;
 
 }

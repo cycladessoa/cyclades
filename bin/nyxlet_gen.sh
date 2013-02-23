@@ -115,20 +115,20 @@ Now there are a set of steps and notes you need to take before proceeding with c
 
     Please see the following file for the HTTP client examples: /cycladessoa/nyxlets/nyxlet-my_first_nyxlet/cyclades_java_client_dsl.gradle
 
-   Example RabbitMQ X-STROMA service requests and general client to queue access can be executed with the following commands:
+   Example Message Queue X-STROMA service requests and general client to queue access can be executed with the following commands (you must have at least one Message Queue installed to use its targets):
 
-     gradle javaConsumerTargetExample
+     gradle rabbitMQConsumerTargetExample/activeMQConsumerTargetExample
        Runs a multi threaded consumer for a specified queue
-       Run this command first to initialize the queues in RabbitMQ
-     gradle javaXSTROMAProducerTargetExample ()
+       Run this command first to initialize the queues for RabbitMQ
+     gradle rabbitMQXSTROMAProducerTargetExample/activeMQXSTROMAProducerTargetExample
        Produces a X-STROMA message to the specified queue
        Good example of how to submit an asynchronous X-STROMA request to a Cyclades instance consuming from the specified queue
-     gradle javaTextProducerTargetExample
+     gradle rabbitMQTextProducerTargetExample/activeMQTextProducerTargetExample
        Produces a Text message to the specified queue
-     gradle javaBinaryProducerTargetExample
+     gradle rabbitMQBinaryProducerTargetExample/activeMQBinaryProducerTargetExample
        Produces a binary message to the specified queue
 
-    Please see the following file for the RabbitMQ client examples: /cycladessoa/nyxlets/nyxlet-my_first_nyxlet/cyclades_java_client_servicebroker_targets.gradle
+    Please see the following file for the Message Queue client examples: /cycladessoa/nyxlets/nyxlet-my_first_nyxlet/cyclades_java_client_servicebroker_targets.gradle
 
    [NOTE]
    Please feel free to modify and experiment with these Groovy/Gradle targets. Gradle and/or Groovy provide a convenient mechanism for rapidly developing clients using the Cyclades Java DSL, and clients in general.

@@ -39,10 +39,14 @@ A specification and corresponding reference implementation for a service engine 
 * RabbitMQ Service Broker target implementation included
 	** Asynchronous capabilities for all services via RabbitMQ with no additional development effort
 	** Other transport mechanism implentations are pluggable via Service Broker "targets"
+* ActiveMQ Service Broker target implementation included
+        ** Asynchronous capabilities for all services via ActiveMQ with no additional development effort
+        ** Other transport mechanism implentations are pluggable via Service Broker "targets"
 * Cyclades Java Client DSL
         ** Can be used from external clients to conveniently create service requests and parse the corresponding responses
         ** HTTP client included
         ** RabbitMQ client targets included
+        ** ActiveMQ client targets included
         ** Examples included in Groovy/Gradle build system, please see below
 
 == Overview
@@ -115,20 +119,23 @@ X-STROMA service requests can be created and executed with the Cyclades Java DSL
 
 Please see the following file for the HTTP client examples: /cycladessoa/nyxlets/nyxlet-my_first_nyxlet/cyclades_java_client_dsl.gradle
 
-Example RabbitMQ X-STROMA service requests and general client to queue access can be executed with the following commands:
+Example Message Queue  X-STROMA service requests and general client to queue access can be executed with the following commands:
 
-* gradle javaConsumerTargetExample
+[NOTE]
+You must have at least one of the supported Message Queues installed to run these examples...RabbitMQ and ActiveMQ for their respective targets below.
+
+* gradle rabbitMQConsumerTargetExample/activeMQConsumerTargetExample
     ** Runs a multi threaded consumer for a specified queue
-    ** Run this command first to initialize the queues in RabbitMQ
-* gradle javaXSTROMAProducerTargetExample
+    ** Run this command first to initialize the queues for RabbitMQ
+* gradle rabbitMQXSTROMAProducerTargetExample/activeMQXSTROMAProducerTargetExample
     ** Produces a X-STROMA message to the specified queue
     ** Good example of how to submit an asynchronous X-STROMA request to a Cyclades instance consuming from the specified queue
-* gradle javaTextProducerTargetExample
+* gradle rabbitMQTextProducerTargetExample/activeMQTextProducerTargetExample
     ** Produces a Text message to the specified queue
-* gradle javaBinaryProducerTargetExample
+* gradle rabbitMQBinaryProducerTargetExample/activeMQBinaryProducerTargetExample
     ** Produces a binary message to the specified queue
 
-Please see the following file for the RabbitMQ client examples: /cycladessoa/nyxlets/nyxlet-my_first_nyxlet/cyclades_java_client_servicebroker_targets.gradle
+Please see the following file for the Message Queue client examples: /cycladessoa/nyxlets/nyxlet-my_first_nyxlet/cyclades_java_client_servicebroker_targets.gradle
 
 [NOTE]
 Please feel free to modify and experiment with these Groovy/Gradle targets. Gradle and/or Groovy provide a convenient mechanism for rapidly developing clients using the Cyclades Java DSL, and clients in general.

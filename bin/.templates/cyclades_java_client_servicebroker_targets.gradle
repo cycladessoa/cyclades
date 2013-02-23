@@ -27,52 +27,65 @@
  *******************************************************************************/
 
 /*******************************************************************************
- *                          RabbitMQ Targets
+ *                          Message Queue Targets 
  *
- * This following targets are configured to access a RabbitMQ instance running on
+ * Currently Supported Message Queues:
+ * - RabbitMQ
+ * - ActiveMQ
+ *
+ * This following targets are configured to access a Message Queue instance running on
  * the "localhost". Please modify the "connection_string" fields in the following
- * consumer and producer JSON configurations to point to a RabbitMQ instance 
- * located on another machine. You must have a RabbitMQ instance up to run 
+ * consumer and producer JSON configurations to point to a Message Queue instance 
+ * located on another machine. You must have a Message Queue instance up to run 
  * these targets. You can also modify the queue names, for example, if your
  * producerJSON configuration is pointing to a queue consumed by a Cyclades 
  * Engine instance, the "javaXSTROMAProducerTargetExample" target example
  * essientially becomes your Cyclades client (so, instead of using HTTP, you 
- * are using the asynchronous RabbitMQ targets and drivers as your transport
+ * are using the asynchronous Message Queue targets and drivers as your transport
  * mechanism).
  * 
  * To run these targets and simply produce and consume messages:
- * - Install RabbitMQ on localhost (the machine that you will be running these
- *  examples from 
- * - Run javaConsumerTargetExample (gradle javaConsumerTargetExample) first to
- *  initialize the queues, or simply run in a seperate window
+ * - Install one of the supported Message Queues on the localhost (the machine that you will
+ *  be running these examples from
  * - Run any of the producer targets to produce messages to the designated queue
- * - Run javaConsumerTargetExample (gradle javaConsumerTargetExample) to fetch
- *  and print the messages out to the console
+ * - Run any of the consumer targets to consume messages from the designated queue
  ******************************************************************************/
 
-String consumerJSON = "{" \
-            + "\"target_queue\": \"my_output_queue\"," \
-            + "\"connection_string\": \"amqp://guest:guest@localhost:5672\"," \
-            + "\"connection_heartbeat_seconds\": \"60\"," \
-            + "\"consumer_tag\": \"my_output_queue_logger-consumer\"," \
-            + "\"num_consumers\": \"5\"," \
-            + "\"cancel_recovery\": \"false\"," \
-            + "\"prefetch_count\": \"1\"," \
-            + "\"replyto_message_delivery_mode\": \"2\"," \
-            + "\"ha_policy\": \"all\"," \
-            + "\"durable\": \"true\"" \
-            + "}"
+String rabbitMQConnectionString = "amqp://guest:guest@localhost:5672"
+String rabbitMQProducerClass = "org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.RawProducer"
+String rabbitMQConsumerClass = "org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.Consumer"
 
-String producerJSON = "{" \
+String activeMQConnectionString = "tcp://localhost:61616"
+String activeMQProducerClass = "org.cyclades.nyxlet.servicebrokernyxlet.message.impl.activemq.RawProducer"
+String activeMQConsumerClass = "org.cyclades.nyxlet.servicebrokernyxlet.message.impl.activemq.Consumer"
+
+def getProducerJSON (String connectionString) {
+    String producerJSON = "{" \
         + "\"pool\": \"true\"," \
         + "\"maxActive\": \"5\"," \
         + "\"target_queue\": \"my_output_queue\"," \
-        + "\"connection_string\": \"amqp://guest:guest@localhost:5672\"," \
+        + "\"connection_string\": \"${connectionString}\"," \
         + "\"connection_heartbeat_seconds\": \"60\"," \
         + "\"message_delivery_mode\": \"2\"," \
         + "\"replyto_ha_policy\": \"all\"," \
         + "\"replyto_durable\": \"true\"" \
         + "}"
+}
+
+def getConsumerJSON (String connectionString) {
+    String consumerJSON = "{" \
+        + "\"target_queue\": \"my_output_queue\"," \
+        + "\"connection_string\": \"${connectionString}\"," \
+        + "\"connection_heartbeat_seconds\": \"60\"," \
+        + "\"consumer_tag\": \"my_output_queue_logger-consumer\"," \
+        + "\"num_consumers\": \"5\"," \
+        + "\"cancel_recovery\": \"false\"," \
+        + "\"prefetch_count\": \"1\"," \
+        + "\"replyto_message_delivery_mode\": \"2\"," \
+        + "\"ha_policy\": \"all\"," \
+        + "\"durable\": \"true\"" \
+        + "}"
+}
 
 buildscript {
         repositories {
@@ -103,7 +116,7 @@ MessageProcessor mp = new MessageProcessor() {
     }
 }
 
-task javaConsumerTargetExample () {
+task rabbitMQConsumerTargetExample () {
     description = 'An example of how to create a consumer target with Cyclades service broker targets (RabbitMQ must be running)'
 
     doLast () {
@@ -114,15 +127,34 @@ task javaConsumerTargetExample () {
         println 'You can override this value by setting the Gradle command line parameter like this: -Palive=30000'
         println ''
 
-        ConsumerTarget ct = new ConsumerTarget("org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.Consumer", new JSONObject(consumerJSON), mp)
-        println "Consumer target created...will consume for $keepAlive milliseconds"
-        sleep keepAlive
-        ct.destroy()
+        javaConsumerTarget(getConsumerJSON(rabbitMQConnectionString), rabbitMQConsumerClass, keepAlive, mp)
     }
 }
 
-task javaXSTROMAProducerTargetExample () {
-    description = 'An example of how to create an X-STROMA producer target with Cyclades service broker targets (RabbitMQ must be running, must run task "javaConsumerTargetExample" first to intialize queues). NOTE: If you produce this message to a queue from which a Cyclades Engine Instance is consuming, this essentially becomes your asynchronous service client.'
+task activeMQConsumerTargetExample () {
+    description = 'An example of how to create a consumer target with Cyclades service broker targets (ActiveMQ must be running)'
+
+    doLast () {
+        long keepAlive = 20000
+        if (rootProject.hasProperty('alive')) keepAlive = Long.parseLong(alive)
+        println ''
+        println "Using alive time of (in milliseconds):  " + keepAlive
+        println 'You can override this value by setting the Gradle command line parameter like this: -Palive=30000'
+        println ''
+
+        javaConsumerTarget(getConsumerJSON(activeMQConnectionString), activeMQConsumerClass, keepAlive, mp)
+    }
+}
+
+def javaConsumerTarget (String consumerJSON, String consumerClass, long keepAlive, MessageProcessor mp) {
+    ConsumerTarget ct = new ConsumerTarget(consumerClass, new JSONObject(consumerJSON), mp)
+    println "Consumer target created...will consume for $keepAlive milliseconds"
+    sleep keepAlive
+    ct.destroy()
+}
+
+task rabbitMQXSTROMAProducerTargetExample () {
+    description = 'An example of how to create an X-STROMA producer target with Cyclades service broker targets (RabbitMQ must be running, must run task "activeMQConsumerTargetExample" first to intialize queues). NOTE: If you produce this message to a queue from which a Cyclades Engine Instance is consuming, this essentially becomes your asynchronous service client.'
 
     doLast () {
         XSTROMARequestBuilder xstromaBuilder = XSTROMARequestBuilder.newInstance(null)
@@ -130,37 +162,64 @@ task javaXSTROMAProducerTargetExample () {
         xstromaBuilder.add(STROMARequestBuilder.newInstance("NYXLET_NAME").parameter("action", "sayhello").parameter("name", "foo").parameter("name", "foo2"))
         xstromaBuilder.add(STROMARequestBuilder.newInstance("NYXLET_NAME").parameter("action", "sayhello").parameter("name", "bar").parameter("name", "bar2"))
         xstromaBuilder.add(STROMARequestBuilder.newInstance("NYXLET_NAME").parameter("action", "sayhello").parameter("name", "baz").parameter("name", "baz2"))
-        ProducerTarget pt = new ProducerTarget("org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.RawProducer", new JSONObject(producerJSON))
-        Map messageAttributes = new HashMap<String, List<String>>()
-        // If you wanted the reply (return value of the MessageConsumer) to be inserted into a designated queue
-        //messageAttributes.put("replyto", new ArrayList<String>(Arrays.asList("my_reply_queue")))
-	((RawMessageProducer)pt.getMessageProducer()).sendMessage(xstromaBuilder.xml().build().toString(), messageAttributes)
-        pt.destroy()
+        javaProducerTarget(getConsumerJSON(rabbitMQConnectionString), rabbitMQProducerClass, xstromaBuilder.xml().build().toString(), false)
     }
 }
 
-task javaTextProducerTargetExample () {
-    description = 'An example of how to create a text producer target with Cyclades service broker targets (RabbitMQ must be running, must run task "javaConsumerTargetExample" first to intialize queues)'
+task activeMQXSTROMAProducerTargetExample () {
+    description = 'An example of how to create an X-STROMA producer target with Cyclades service broker targets (ActiveMQ must be running). NOTE: If you produce this message to a queue from which a Cyclades Engine Instance is consuming, this essentially becomes your asynchronous service client.'
 
     doLast () {
-        ProducerTarget pt = new ProducerTarget("org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.RawProducer", new JSONObject(producerJSON))
-        Map messageAttributes = new HashMap<String, List<String>>()
-        // If you wanted the reply (return value of the MessageConsumer) to be inserted into a designated queue
-        //messageAttributes.put("replyto", new ArrayList<String>(Arrays.asList("my_reply_queue")))
-        ((RawMessageProducer)pt.getMessageProducer()).sendMessage("Holy Smokes This Worked!", messageAttributes)
-        pt.destroy()
+        XSTROMARequestBuilder xstromaBuilder = XSTROMARequestBuilder.newInstance(null)
+        xstromaBuilder.parameter("transaction-data", "sample-2").parameter("duration", "true")
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("NYXLET_NAME").parameter("action", "sayhello").parameter("name", "foo").parameter("name", "foo2"))
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("NYXLET_NAME").parameter("action", "sayhello").parameter("name", "bar").parameter("name", "bar2"))
+        xstromaBuilder.add(STROMARequestBuilder.newInstance("NYXLET_NAME").parameter("action", "sayhello").parameter("name", "baz").parameter("name", "baz2"))
+        javaProducerTarget(getConsumerJSON(activeMQConnectionString), activeMQProducerClass, xstromaBuilder.xml().build().toString(), false)
     }
 }
 
-task javaBinaryProducerTargetExample () {
-    description = 'An example of how to create a binary producer target with Cyclades service broker targets (RabbitMQ must be running, must run task "javaConsumerTargetExample" first to intialize queues)'
+task rabbitMQTextProducerTargetExample () {
+    description = 'An example of how to create a text producer target with Cyclades service broker targets (RabbitMQ must be running, must run task "activeMQConsumerTargetExample" first to intialize queues)'
 
     doLast () {
-        ProducerTarget pt = new ProducerTarget("org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq.RawProducer", new JSONObject(producerJSON))
-        Map messageAttributes = new HashMap<String, List<String>>()
-        // If you wanted the reply (return value of the MessageConsumer) to be inserted into a designated queue
-        //messageAttributes.put("replyto", new ArrayList<String>(Arrays.asList("my_reply_queue")))
-        ((RawMessageProducer)pt.getMessageProducer()).sendMessage("Holy Smokes This Worked!".getBytes(), messageAttributes)
-        pt.destroy()
+        javaProducerTarget(getConsumerJSON(rabbitMQConnectionString), rabbitMQProducerClass, "Hello World!", false)
     }
+}
+
+task activeMQTextProducerTargetExample () {
+    description = 'An example of how to create a text producer target with Cyclades service broker targets (ActiveMQ must be running)'
+
+    doLast () {
+        javaProducerTarget(getConsumerJSON(activeMQConnectionString), activeMQProducerClass, "Hello World!", false)
+    }
+}
+
+task rabbitMQBinaryProducerTargetExample () {
+    description = 'An example of how to create a binary producer target with Cyclades service broker targets (RabbitMQ must be running, must run task "activeMQConsumerTargetExample" first to intialize queues)'
+
+    doLast () {
+        javaProducerTarget(getConsumerJSON(rabbitMQConnectionString), rabbitMQProducerClass, "Hello World!", true)
+    }
+}
+
+task activeMQBinaryProducerTargetExample () {
+    description = 'An example of how to create a binary producer target with Cyclades service broker targets (ActiveMQ must be running)'
+
+    doLast () {
+        javaProducerTarget(getConsumerJSON(activeMQConnectionString), activeMQProducerClass, "Hello World!", true)
+    }
+}
+
+def javaProducerTarget (String producerJSON, String producerClass, String message, boolean useBytes) {
+    ProducerTarget pt = new ProducerTarget(producerClass, new JSONObject(producerJSON))
+    Map messageAttributes = new HashMap<String, List<String>>()
+    // If you wanted the reply (return value of the MessageConsumer) to be inserted into a designated queue
+    //messageAttributes.put("replyto", new ArrayList<String>(Arrays.asList("my_reply_queue")))
+    if (useBytes) {
+        ((RawMessageProducer)pt.getMessageProducer()).sendMessage(message.getBytes(), messageAttributes)
+    } else {
+        ((RawMessageProducer)pt.getMessageProducer()).sendMessage(message, messageAttributes)
+    }
+    pt.destroy()
 }

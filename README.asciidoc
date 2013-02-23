@@ -36,10 +36,10 @@ A specification and corresponding reference implementation for a service engine 
 	** Chaining (i.e. Unix pipes and filters paradigm)
 * Service template generation and deployment
         ** Services are hot loadable. They can be deployed/redeployed without interruption to existing requests
-* RabbitMQ Service Broker target implementation included
+* RabbitMQ Service Broker target implementations included
 	** Asynchronous capabilities for all services via RabbitMQ with no additional development effort
 	** Other transport mechanism implentations are pluggable via Service Broker "targets"
-* ActiveMQ Service Broker target implementation included
+* ActiveMQ Service Broker target implementations included
         ** Asynchronous capabilities for all services via ActiveMQ with no additional development effort
         ** Other transport mechanism implentations are pluggable via Service Broker "targets"
 * Cyclades Java Client DSL

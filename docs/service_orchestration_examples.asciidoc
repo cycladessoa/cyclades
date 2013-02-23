@@ -195,9 +195,9 @@ There are two approaches for adding targets to the servicebroker.properties conf
 
 .Link Example (recommended for clarity)
 ----
-serviceProducerTargets=[{"link":"targets/producers/basic_rabbitmq_producer.json"},{"link":"targets/producers/basic_rabbitmq_extractor.json"}]
+serviceProducerTargets=[{"link":"targets/producers/rabbitmq/basic_producer.json"},{"link":"targets/producers/rabbitmq/basic_extractor.json"}]
 
-serviceConsumerTargets=[{"link":"targets/consumers/basic_rabbitmq_consumer.json"}]
+serviceConsumerTargets=[{"link":"targets/consumers/rabbitmq/basic_consumer.json"}]
 ----
 
 _link values can be a relative directory (as shown above), an absolute directory or a http URL to a resource. Relative directories are resolved from the "../webapps/cyclades/WEB-INF" directory in your Tomcat installation_

@@ -222,6 +222,9 @@ The Service Broker can implement targets that facilitate service communication o
 [NOTE]
 This assumes you have a RabbitMQ server installed and running somewhere accessible by your Cycaldes Engine. You will have to modify the connection_string fields below to reflect your server name. RabbitMQ 2.8.2 and above have been run successfully using these examples.
 
+[NOTE]
+Although RabbitMQ is utilized in the following examples, other Message Queues are/will be supported. For example, ActiveMQ can be used instead of RabbitMQ simply by using the provided ActiveMQ targets along with an ActiveMQ instance. The Message Queue implementation is abstracted away from Cyclades Services and Clients.
+
 ==== One Node/Cluster Service Broker Configuration
 
 In addtion to direct access to the Cyclades Engine, the following targets will enable asynchronous capabilty to your server setup once added to your servicebroker.properies file...
@@ -233,9 +236,9 @@ There are two approaches for adding targets to the servicebroker.properties conf
 
 .Link Example (recommended for clarity)
 ----
-serviceProducerTargets=[{"link":"targets/producers/basic_rabbitmq_producer.json"},{"link":"targets/producers/basic_rabbitmq_extractor.json"}]
+serviceProducerTargets=[{"link":"targets/producers/rabbitmq/basic_producer.json"},{"link":"targets/producers/rabbitmq/basic_extractor.json"}]
 
-serviceConsumerTargets=[{"link":"targets/consumers/basic_rabbitmq_consumer.json"}]
+serviceConsumerTargets=[{"link":"targets/consumers/rabbitmq/basic_consumer.json"}]
 ----
 
 _link values can be a relative directory (as shown above), an absolute directory or a http URL to a resource. Relative directories are resolved from the "../webapps/cyclades/WEB-INF" directory in your Tomcat installation_
@@ -281,24 +284,24 @@ it's entirety, just as though it has been processed on the local host. This targ
 mulitple scenarios...and is used frequently for remote service discovery and invocation. There will be
 more information on how this can be setup in the documentation.
 
-* *basic_rabbitmq_producer.json*
+* *basic_producer.json*
 This target definition creates a producer that submits a X-STROMA message to the queue specified by this target.
 
-* *basic_rabbitmq_raw_producer.json*
+* *basic_raw_producer.json*
 This target definition creates a producer that submits a RAW (Not necessarily a X-STROMA formatted) message to the queue specified by this target.
 Use for logging statements, X-STROMA responses, general Strings etc...
 
-* *basic_rabbitmq_extractor.json*
+* *basic_extractor.json*
 This target definition creates a producer that fetches the next available message from a specified queue.
 
 ==== Consumer Targets Included With The Cyclades Service Engine (can be found in the ../webapps/cyclades/WEB-INF/targets/consumers directory of your Cyclades installation)
 
-* *basic_rabbitmq_consumer.json*
+* *basic__consumer.json*
 This target definition creates a basic consumer that listens for X-STROMA requests on the specified queue.
 The response to the X-STROMA request is submited to the queue named in the X-STROMA parameter "replyto".
 If no "replyto" parameter is specified, the response is disregarded/dropped.
 
-* *basic_rabbitmq_consumer_with_logging.json*
+* *basic_consumer_with_logging.json*
 This target definition creates a basic consumer that listens for X-STROMA requests on the specified queue.
 The response to the X-STROMA request is submited to the queue named in the X-STROMA parameter "replyto".
 If no "replyto" parameter is specified, the response is disregarded/dropped.
@@ -308,7 +311,7 @@ many algorithms, i.e. anything from simply logging the response to more complica
 resubmitting failed work requests back to the queue. The following example simply requests the "log" Nyxlet
 to log the response in its entirety.
 
-* *basic_rabbitmq_logging_consumer.json*
+* *basic_logging_consumer.json*
 This target definition creates a raw message consumer that listens to the specified queue.
 A "raw_message_processor" is defined, which dispatches the queued message
 to a specified service for processing. This can be utilized for many tasks.
@@ -317,7 +320,7 @@ target example is essentially a log aggregator...logging statements can be submi
 multiple machines. The queue is then processed by this target into a log file for further use.
 This is just one example implementation for reference.
 
-* *basic_rabbitmq_merging_consumer.json*
+* *basic_merging_consumer.json*
 This target definition creates a merging consumer that listens for X-STROMA requests on the specified queue.
 The response to the X-STROMA request is submited to the queue named in the X-STROMA parameter "replyto".
 If no "replyto" parameter is specified, the response is disregarded/dropped.

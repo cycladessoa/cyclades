@@ -162,7 +162,7 @@ task rabbitMQXSTROMAProducerTargetExample () {
         xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "foo").parameter("name", "foo2"))
         xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "bar").parameter("name", "bar2"))
         xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "baz").parameter("name", "baz2"))
-        javaProducerTarget(getConsumerJSON(rabbitMQConnectionString), rabbitMQProducerClass, xstromaBuilder.xml().build().toString(), false)
+        javaProducerTarget(getProducerJSON(rabbitMQConnectionString), rabbitMQProducerClass, xstromaBuilder.xml().build().toString(), false)
     }
 }
 
@@ -175,7 +175,7 @@ task activeMQXSTROMAProducerTargetExample () {
         xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "foo").parameter("name", "foo2"))
         xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "bar").parameter("name", "bar2"))
         xstromaBuilder.add(STROMARequestBuilder.newInstance("helloworld").parameter("action", "sayhello").parameter("name", "baz").parameter("name", "baz2"))
-        javaProducerTarget(getConsumerJSON(activeMQConnectionString), activeMQProducerClass, xstromaBuilder.xml().build().toString(), false)
+        javaProducerTarget(getProducerJSON(activeMQConnectionString), activeMQProducerClass, xstromaBuilder.xml().build().toString(), false)
     }
 }
 
@@ -183,7 +183,7 @@ task rabbitMQTextProducerTargetExample () {
     description = 'An example of how to create a text producer target with Cyclades service broker targets (RabbitMQ must be running, must run task "activeMQConsumerTargetExample" first to intialize queues)'
 
     doLast () {
-        javaProducerTarget(getConsumerJSON(rabbitMQConnectionString), rabbitMQProducerClass, "Hello World!", false)
+        javaProducerTarget(getProducerJSON(rabbitMQConnectionString), rabbitMQProducerClass, "Hello World!", false)
     }
 }
 
@@ -191,7 +191,7 @@ task activeMQTextProducerTargetExample () {
     description = 'An example of how to create a text producer target with Cyclades service broker targets (ActiveMQ must be running)'
 
     doLast () {
-        javaProducerTarget(getConsumerJSON(activeMQConnectionString), activeMQProducerClass, "Hello World!", false)
+        javaProducerTarget(getProducerJSON(activeMQConnectionString), activeMQProducerClass, "Hello World!", false)
     }
 }
 
@@ -199,7 +199,7 @@ task rabbitMQBinaryProducerTargetExample () {
     description = 'An example of how to create a binary producer target with Cyclades service broker targets (RabbitMQ must be running, must run task "activeMQConsumerTargetExample" first to intialize queues)'
 
     doLast () {
-        javaProducerTarget(getConsumerJSON(rabbitMQConnectionString), rabbitMQProducerClass, "Hello World!", true)
+        javaProducerTarget(getProducerJSON(rabbitMQConnectionString), rabbitMQProducerClass, "Hello World!", true)
     }
 }
 
@@ -207,7 +207,7 @@ task activeMQBinaryProducerTargetExample () {
     description = 'An example of how to create a binary producer target with Cyclades service broker targets (ActiveMQ must be running)'
 
     doLast () {
-        javaProducerTarget(getConsumerJSON(activeMQConnectionString), activeMQProducerClass, "Hello World!", true)
+        javaProducerTarget(getProducerJSON(activeMQConnectionString), activeMQProducerClass, "Hello World!", true)
     }
 }
 

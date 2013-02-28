@@ -27,8 +27,6 @@
  *******************************************************************************/
 package org.cyclades.nyxlet.servicebrokernyxlet.message.impl.activemq;
 
-import java.util.List;
-import java.util.Map;
 import org.cyclades.engine.nyxlet.templates.xstroma.message.api.RawMessageProducer;
 
 /**
@@ -36,11 +34,4 @@ import org.cyclades.engine.nyxlet.templates.xstroma.message.api.RawMessageProduc
  * for fetching, or extraction of binary messages for a message initiator (client).
  */
 public class RawExtractor extends Extractor implements RawMessageProducer {
-
-    @Override
-    public byte[] sendMessage(byte[] message, Map<String, List<String>> attributeMap) throws Exception {
-        String returnString = super.sendMessage(null, attributeMap);
-        return (returnString == null) ? null : returnString.getBytes();
-    }
-
 }

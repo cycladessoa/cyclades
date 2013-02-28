@@ -34,6 +34,7 @@ import javax.jms.Session;
 import javax.jms.MessageProducer;
 import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.ActiveMQPrefetchPolicy;
+import org.apache.commons.pool.ObjectPool;
 
 public class ConnectionPoolableObjectFactory extends BasePoolableObjectFactory <ConnectionObject> {
 
@@ -115,6 +116,28 @@ class ConnectionObject {
     
     public MessageProducer getMessageProducer () {
         return producer;
+    }
+   
+   public static ConnectionObject getConnectionObject (ObjectPool<ConnectionObject> connectionPool, 
+           ActiveMQConnectionFactory factory, int prefetchCount, int messageDeliveryMode, boolean createProducer, 
+           int sessionAckMode, boolean pooled) throws Exception {
+        ConnectionObject connObj = null;
+        if (pooled) {
+            connObj = connectionPool.borrowObject();
+        } else {
+            connObj = ConnectionPoolableObjectFactory.makeObject(factory, (prefetchCount > -1) ? prefetchCount : 1, 
+                    messageDeliveryMode, createProducer, sessionAckMode);
+        }
+        return connObj;
+    }
+    
+    public static void releaseConnectionObject (ObjectPool<ConnectionObject> connectionPool, ConnectionObject connObj, 
+            boolean pooled) throws Exception {
+        if (pooled) {
+            if (connObj != null) connectionPool.returnObject(connObj);
+        } else {
+            if (connObj != null) connObj.destroy();
+        }
     }
     
     private final Connection connection;

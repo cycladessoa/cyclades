@@ -393,14 +393,24 @@ public class ServiceBrokerNyxletImpl extends XSTROMANyxlet {
 
     @Override
     public boolean isHealthy () throws CycladesException {
-        try {
-            for (Map.Entry<String, ProducerTarget> entry : producerTargetMap.entrySet()) if (!entry.getValue().isHealthy()) return false;
-            for (ConsumerTarget consumerTarget : consumerTargetList) if (!consumerTarget.isHealthy()) return false;
-        } catch (Exception e) {
-            logStackTrace(e);
-            return false;
+        boolean failed = false;
+        for (Map.Entry<String, ProducerTarget> entry : producerTargetMap.entrySet()) {
+            try {
+                if (!entry.getValue().isHealthy()) failed = true;
+            } catch (Exception e) {
+                logStackTrace(e);
+                failed = true;
+            }
         }
-        return true;
+        for (ConsumerTarget consumerTarget : consumerTargetList) {
+            try {
+                if (!consumerTarget.isHealthy()) failed = true;
+            } catch (Exception e) {
+                logStackTrace(e);
+                failed = true;
+            }
+        }
+        return (!failed);
     }
 
     protected Map<String, ProducerTarget> producerTargetMap = new HashMap<String, ProducerTarget>();

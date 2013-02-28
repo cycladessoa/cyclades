@@ -74,12 +74,17 @@ public class Extractor implements MessageProducer {
     }
 
     @Override
-    public void destroy() throws Exception {
+    public synchronized void destroy() throws Exception {
         try { if (connectionPool != null) connectionPool.close(); } catch (Exception e) {}
     }
 
     @Override
     public String sendMessage(String message, Map<String, List<String>> attributeMap) throws Exception {
+        byte[] responseBytes = sendMessage((message != null) ? message.getBytes() : new byte[0], attributeMap);
+        return (responseBytes != null) ? new String(responseBytes, "UTF-8") : null;
+    }
+    
+    public byte[] sendMessage(byte[] message, Map<String, List<String>> attributeMap) throws Exception {
         boolean pooled = false;
         ConnectionObject connObj = null;
         MessageConsumer consumer = null;
@@ -87,13 +92,9 @@ public class Extractor implements MessageProducer {
         try {
             if (!attributeMap.containsKey(QUEUE_PARAMETER)) throw new Exception("Missing parameter: " + QUEUE_PARAMETER);
             String queue = attributeMap.get(QUEUE_PARAMETER).get(0);
-            if (connectionPool != null) {
-                connObj = connectionPool.borrowObject();
-                pooled = true;
-            } else {
-                connObj = ConnectionPoolableObjectFactory.makeObject(factory, (prefetchCount > -1) ? prefetchCount : 1, 1, false,
-                        Session.CLIENT_ACKNOWLEDGE);
-            }
+            pooled = (connectionPool != null);
+            connObj = ConnectionObject.getConnectionObject(connectionPool, factory, prefetchCount, 1, false, 
+                    Session.CLIENT_ACKNOWLEDGE, pooled);
             try {
                 connObj.getConnection().getMetaData();
             } catch (Exception e) {
@@ -108,27 +109,52 @@ public class Extractor implements MessageProducer {
             inMessage = consumer.receive(100);
             if (inMessage == null) return null;
             if (inMessage instanceof BytesMessage) {
-                byte[] body = MessageUtils.readBytes((BytesMessage)inMessage);
-                return new String(body, "UTF-8");
+                return MessageUtils.readBytes((BytesMessage)inMessage);
             } else if (inMessage instanceof TextMessage) {
-                return ((TextMessage)inMessage).getText();
+                return ((TextMessage)inMessage).getText().getBytes();
             } else {
                 throw new UnsupportedOperationException("Message type not supported: " + inMessage.getClass().getName());
             }
         } finally {
             try { if (inMessage != null) inMessage.acknowledge(); } catch (Exception e) {}
             try { consumer.close(); } catch (Exception e) {}
-            if (pooled) {
-                try { if (connObj != null) connectionPool.returnObject(connObj); } catch (Exception e) { e.printStackTrace(); }
-            } else {
-                try { if (connObj != null) connObj.destroy(); } catch (Exception e) { e.printStackTrace(); }
+            try { 
+                ConnectionObject.releaseConnectionObject(connectionPool, connObj, pooled);
+            } catch (Exception e) { 
+                e.printStackTrace();
             }
         }
     }
 
     @Override
-    public boolean isHealthy () throws Exception {
-        return true;
+    public synchronized boolean isHealthy () throws Exception {
+        boolean pooled = false;
+        ConnectionObject connObj = null;
+        try {
+            pooled = (connectionPool != null);
+            connObj = ConnectionObject.getConnectionObject(connectionPool, factory, prefetchCount, 1, false,
+                    Session.CLIENT_ACKNOWLEDGE, pooled);
+            try {
+                connObj.getConnection().getMetaData();
+            } catch (Exception e) {
+                if (pooled && connObj != null) {
+                    connectionPool.invalidateObject(connObj);
+                    connObj = null; // Do not return again in finally statement
+                }
+                e.printStackTrace();
+                throw e;
+            }
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            try { 
+                ConnectionObject.releaseConnectionObject(connectionPool, connObj, pooled);
+            } catch (Exception e) { 
+                e.printStackTrace();
+            }
+        }
     }
 
     private ActiveMQConnectionFactory factory;

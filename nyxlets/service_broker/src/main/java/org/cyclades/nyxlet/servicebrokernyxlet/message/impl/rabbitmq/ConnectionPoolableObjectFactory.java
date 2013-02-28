@@ -31,6 +31,7 @@ import org.apache.commons.pool.BasePoolableObjectFactory;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.Channel;
+import org.apache.commons.pool.ObjectPool;
 
 public class ConnectionPoolableObjectFactory extends BasePoolableObjectFactory <ConnectionObject> {
 
@@ -91,6 +92,28 @@ class ConnectionObject {
     }
     public Channel getChannel() {
         return channel;
+    }
+    
+    public static ConnectionObject getConnectionObject (ObjectPool<ConnectionObject> connectionPool, ConnectionFactory factory, 
+            boolean pooled) throws Exception {
+        ConnectionObject connObj = null;
+        if (pooled) {
+            connObj = connectionPool.borrowObject();
+        } else {
+            Connection connection = factory.newConnection();
+            Channel channel = connection.createChannel();
+            connObj = new ConnectionObject(connection, channel);
+        }
+        return connObj;
+    }
+    
+    public static void releaseConnectionObject (ObjectPool<ConnectionObject> connectionPool, ConnectionObject connObj, 
+            boolean pooled) throws Exception {
+        if (pooled) {
+            if (connObj != null) connectionPool.returnObject(connObj);
+        } else {
+            if (connObj != null) connObj.destroy();
+        }
     }
 
     private final Connection connection;

@@ -29,12 +29,8 @@ package org.cyclades.nyxlet.servicebrokernyxlet.message.impl.rabbitmq;
 
 import java.util.List;
 import java.util.Map;
-
 import org.cyclades.engine.nyxlet.templates.xstroma.message.api.MessageProducer;
-
 import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.GetResponse;
 import org.apache.commons.pool.ObjectPool;
@@ -72,29 +68,27 @@ public class Extractor implements MessageProducer {
     }
 
     @Override
-    public void destroy() throws Exception {
+    public synchronized void destroy() throws Exception {
         try { if (connectionPool != null) connectionPool.close(); } catch (Exception e) {}
     }
 
     @Override
     public String sendMessage(String message, Map<String, List<String>> attributeMap) throws Exception {
+        byte[] messageBytes = sendMessage(message.getBytes(), attributeMap);
+        // Hard code the UTF-8 for now, we can always pass it in as an attribute as well
+        return (messageBytes != null) ? new String(messageBytes,"UTF-8") : null;
+    }
+    
+    public byte[] sendMessage(byte[] message, Map<String, List<String>> attributeMap) throws Exception {
         boolean pooled = false;
         ConnectionObject connObj = null;
         try {
-            Channel channel = null;
             if (!attributeMap.containsKey(QUEUE_PARAMETER)) throw new Exception("Missing parameter: " + QUEUE_PARAMETER);
             String queue = attributeMap.get(QUEUE_PARAMETER).get(0);
-            if (connectionPool != null) {
-                connObj = connectionPool.borrowObject();
-                channel = connObj.getChannel();
-                pooled = true;
-            } else {
-                Connection connection = factory.newConnection();
-                channel = connection.createChannel();
-                connObj = new ConnectionObject(connection, channel);
-            }
+            pooled = (connectionPool != null);
+            connObj = ConnectionObject.getConnectionObject(connectionPool, factory, pooled);
             try {
-                channel.queueDeclarePassive(queue);
+                connObj.getChannel().queueDeclarePassive(queue);
             } catch (Exception e) {
                 if (pooled && connObj != null) {
                     connectionPool.invalidateObject(connObj);
@@ -104,28 +98,53 @@ public class Extractor implements MessageProducer {
                 throw e;
             }
             boolean autoAck = false;
-            GetResponse response = channel.basicGet(queue, autoAck);
-            String responseString = null;
+            GetResponse response = connObj.getChannel().basicGet(queue, autoAck);
+            byte[] responseBytes = null;
             if (response != null) {
                 AMQP.BasicProperties props = response.getProps();
                 long deliveryTag = response.getEnvelope().getDeliveryTag();
-                responseString = new String(response.getBody());
-                channel.basicAck(deliveryTag, false);
+                responseBytes = response.getBody();
+                connObj.getChannel().basicAck(deliveryTag, false);
             }
             // Make sure to return null if there is no message to return.
-            return responseString;
+            return responseBytes;
         } finally {
-            if (pooled) {
-                try { if (connObj != null) connectionPool.returnObject(connObj); } catch (Exception e) { e.printStackTrace(); }
-            } else {
-                try { if (connObj != null) connObj.destroy(); } catch (Exception e) { e.printStackTrace(); }
+            try { 
+                ConnectionObject.releaseConnectionObject(connectionPool, connObj, pooled);
+            } catch (Exception e) { 
+                e.printStackTrace();
             }
         }
     }
 
     @Override
-    public boolean isHealthy () throws Exception {
-        return true;
+    public synchronized boolean isHealthy () throws Exception {
+        boolean pooled = false;
+        ConnectionObject connObj = null;
+        try {
+            pooled = (connectionPool != null);
+            connObj = ConnectionObject.getConnectionObject(connectionPool, factory, pooled);
+            try {
+                if (!connObj.getChannel().isOpen()) throw new Exception("Channel is closed!!!");
+            } catch (Exception e) {
+                if (pooled && connObj != null) {
+                    connectionPool.invalidateObject(connObj);
+                    connObj = null; // Do not return again in finally statement
+                }
+                e.printStackTrace();
+                throw e;
+            }
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            try { 
+                ConnectionObject.releaseConnectionObject(connectionPool, connObj, pooled);
+            } catch (Exception e) { 
+                e.printStackTrace();
+            }
+        }
     }
 
     private ConnectionFactory factory;

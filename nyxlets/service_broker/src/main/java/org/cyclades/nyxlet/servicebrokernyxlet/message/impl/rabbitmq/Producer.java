@@ -32,8 +32,6 @@ import java.util.List;
 import java.util.Map;
 import org.cyclades.engine.nyxlet.templates.xstroma.message.api.MessageProducer;
 import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.AMQP;
 import org.apache.commons.pool.ObjectPool;
 import org.apache.commons.pool.impl.GenericObjectPool;
@@ -76,7 +74,7 @@ public class Producer implements MessageProducer {
     }
 
     @Override
-    public void destroy() throws Exception {
+    public synchronized void destroy() throws Exception {
         try { if (connectionPool != null) connectionPool.close(); } catch (Exception e) {}
     }
 
@@ -90,19 +88,10 @@ public class Producer implements MessageProducer {
         boolean pooled = false;
         ConnectionObject connObj = null;
         try {
-            Channel channel = null;
-            String replyToQueue = "";
-            if (connectionPool != null) {
-                connObj = connectionPool.borrowObject();
-                channel = connObj.getChannel();
-                pooled = true;
-            } else {
-                Connection connection = factory.newConnection();
-                channel = connection.createChannel();
-                connObj = new ConnectionObject(connection, channel);
-            }
+            pooled = (connectionPool != null);
+            connObj = ConnectionObject.getConnectionObject(connectionPool, factory, pooled);
             try {
-                channel.queueDeclarePassive(targetQueue);
+                connObj.getChannel().queueDeclarePassive(targetQueue);
             } catch (Exception e) {
                 if (pooled && connObj != null) {
                     connectionPool.invalidateObject(connObj);
@@ -114,31 +103,56 @@ public class Producer implements MessageProducer {
             AMQP.BasicProperties.Builder propsBuilder = new AMQP.BasicProperties.Builder();
             if (messageDeliveryMode > -1) propsBuilder.deliveryMode(messageDeliveryMode);
             if (attributeMap.containsKey(REPLY_TO_PARAMETER)) {
-                replyToQueue = attributeMap.get(REPLY_TO_PARAMETER).get(0);
+                String replyToQueue = attributeMap.get(REPLY_TO_PARAMETER).get(0);
                 propsBuilder.replyTo(replyToQueue);
                 Map<String, Object> attributes = new HashMap<String, Object>();
                 if (replyToInactivityTimeout > -1) attributes.put("x-expires", replyToInactivityTimeout);
                 if (replyToHAPolicy != null) attributes.put("x-ha-policy", replyToHAPolicy);
-                channel.queueDeclare(replyToQueue, replyToDurableQueue, false, false, attributes);
+                connObj.getChannel().queueDeclare(replyToQueue, replyToDurableQueue, false, false, attributes);
             } /*else {
                 Should we make this synchronous? Probably not, abuse is imminent! Use HTTP adapter instead for now
                 unless you plan on making this Message Queue an Enterprise Integration pattern...good luck.
             }*/
-            channel.basicPublish("", targetQueue, propsBuilder.build(), message);
+            connObj.getChannel().basicPublish("", targetQueue, propsBuilder.build(), message);
             // Make sure to return null, there is no message to return.
             return null;
         } finally {
-            if (pooled) {
-                try { if (connObj != null) connectionPool.returnObject(connObj); } catch (Exception e) { e.printStackTrace(); }
-            } else {
-                try { if (connObj != null) connObj.destroy(); } catch (Exception e) { e.printStackTrace(); }
+            try { 
+                ConnectionObject.releaseConnectionObject(connectionPool, connObj, pooled);
+            } catch (Exception e) { 
+                e.printStackTrace();
             }
         }
     }
 
     @Override
-    public boolean isHealthy () throws Exception {
-        return true;
+    public synchronized boolean isHealthy () throws Exception {
+        boolean pooled = false;
+        ConnectionObject connObj = null;
+        try {
+            pooled = (connectionPool != null);
+            connObj = ConnectionObject.getConnectionObject(connectionPool, factory, pooled);
+            try {
+                connObj.getChannel().queueDeclarePassive(targetQueue);
+            } catch (Exception e) {
+                if (pooled && connObj != null) {
+                    connectionPool.invalidateObject(connObj);
+                    connObj = null; // Do not return again in finally statement
+                }
+                e.printStackTrace();
+                throw e;
+            }
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            try { 
+                ConnectionObject.releaseConnectionObject(connectionPool, connObj, pooled);
+            } catch (Exception e) { 
+                e.printStackTrace();
+            }
+        }
     }
 
     ConnectionFactory factory;

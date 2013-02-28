@@ -77,7 +77,7 @@ public class Producer implements MessageProducer {
     }
 
     @Override
-    public void destroy() throws Exception {
+    public synchronized void destroy() throws Exception {
         try { if (connectionPool != null) connectionPool.close(); } catch (Exception e) {}
     }
 
@@ -91,14 +91,9 @@ public class Producer implements MessageProducer {
         boolean pooled = false;
         ConnectionObject connObj = null;
         try {
-            String replyToQueue = "";
-            if (connectionPool != null) {
-                connObj = connectionPool.borrowObject();
-                pooled = true;
-            } else {
-                connObj = ConnectionPoolableObjectFactory.makeObject(factory, (prefetchCount > -1) ? prefetchCount : 1, 
-                        messageDeliveryMode, true, Session.AUTO_ACKNOWLEDGE);
-            }
+            pooled = (connectionPool != null);
+            connObj = ConnectionObject.getConnectionObject(connectionPool, factory, prefetchCount, messageDeliveryMode, true,
+                    Session.AUTO_ACKNOWLEDGE, pooled);
             try {
                 connObj.getConnection().getMetaData();
             } catch (Exception e) {
@@ -112,24 +107,50 @@ public class Producer implements MessageProducer {
             BytesMessage outboundMessage = connObj.getSession().createBytesMessage();
             outboundMessage.writeBytes(message);
             if (attributeMap.containsKey(REPLY_TO_PARAMETER)) {
-                replyToQueue = attributeMap.get(REPLY_TO_PARAMETER).get(0);
+                String replyToQueue = attributeMap.get(REPLY_TO_PARAMETER).get(0);
                 outboundMessage.setJMSReplyTo(connObj.getSession().createQueue(replyToQueue));
             }
             connObj.getMessageProducer().send(connObj.getSession().createQueue(targetQueue), outboundMessage);
             // Make sure to return null, there is no message to return.
             return null;
         } finally {
-            if (pooled) {
-                try { if (connObj != null) connectionPool.returnObject(connObj); } catch (Exception e) { e.printStackTrace(); }
-            } else {
-                try { if (connObj != null) connObj.destroy(); } catch (Exception e) { e.printStackTrace(); }
+            try { 
+                ConnectionObject.releaseConnectionObject(connectionPool, connObj, pooled);
+            } catch (Exception e) { 
+                e.printStackTrace();
             }
         }
     }
 
     @Override
-    public boolean isHealthy () throws Exception {
-        return true;
+    public synchronized boolean isHealthy () throws Exception {
+        boolean pooled = false;
+        ConnectionObject connObj = null;
+        try {
+            pooled = (connectionPool != null);
+            connObj = ConnectionObject.getConnectionObject(connectionPool, factory, prefetchCount, messageDeliveryMode, true,
+                    Session.AUTO_ACKNOWLEDGE, pooled);
+            try {
+                connObj.getConnection().getMetaData();
+            } catch (Exception e) {
+                if (pooled && connObj != null) {
+                    connectionPool.invalidateObject(connObj);
+                    connObj = null; // Do not return again in finally statement
+                }
+                e.printStackTrace();
+                throw e;
+            }
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            try { 
+                ConnectionObject.releaseConnectionObject(connectionPool, connObj, pooled);
+            } catch (Exception e) { 
+                e.printStackTrace();
+            }
+        }
     }
 
     ActiveMQConnectionFactory factory;

@@ -10,6 +10,7 @@ Field definitions in lined with the JSON below:
     "target_init_data": {
         "pool": "true",                                                                 // Pool connections to RabbitMQ?
         "maxActive": "5",                                                               // The maximum number of active connections in the pool
+        "testOnBorrow":"true",                                                          // Test pooled connections when borrowing
         "connection_string": "amqp://guest:guest@localhost:5672",                       // The RabbitMQ connection string
         "connection_heartbeat_seconds": "60"                                            // The connection heartbeat in seconds
     }

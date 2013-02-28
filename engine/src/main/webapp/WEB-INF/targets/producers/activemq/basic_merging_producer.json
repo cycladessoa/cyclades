@@ -6,6 +6,7 @@
     "target_init_data": {
         "pool": "true",
         "maxActive": "5",
+        "testOnBorrow":"true",
         "target_queue": "merging_work_queue",
         "connection_string": "tcp://localhost:61616",
         "connection_heartbeat_seconds": "60",

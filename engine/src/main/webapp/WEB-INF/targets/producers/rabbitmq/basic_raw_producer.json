@@ -6,6 +6,7 @@
     "target_init_data": {
         "pool": "true",
         "maxActive": "5",
+        "testOnBorrow":"true",
         "target_queue": "work_queue",
         "connection_string": "amqp://guest:guest@localhost:5672",
         "connection_heartbeat_seconds": "60",

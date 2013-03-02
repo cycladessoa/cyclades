@@ -2,22 +2,8 @@
 ----------------------------------------------------
 Pre-requisites (One time setup)
 ----------------------------------------------------
-1. Goto 'http://gradle.org/downloads' and download 'gradle-1.0-milestone-7-all.zip'
+1. Goto 'http://gradle.org/downloads' and download the latest release of Gradle
 
 2. Unzip it to your system. Setup a GRADLE_HOME environment variable and add it to the PATH
    (i.e.: PATH=%PATH%;%GRADLE_HOME%\bin)
    Detail installation instruction can be found at http://gradle.org/docs/current/userguide/installation.html
-
-3. Download the Gradle Artifactory plugin 
-   http://wiki.jfrog.org/confluence/display/RTF/Gradle+Artifactory+Plugin
-   copy the jar to your home path ~/.gradle/plugin
-
-4. Create a gradle.properties in the ~/.gradle path with the following contents
-
-   hwp_company="Highwire Press"
-   artifactory_user=deployer
-   artifactory_password={DESede}vux+bfjRSOCG6eLUqBPoUA==
-   dev_user=devbuild
-   dev_password={DESede}AKnZq9J6gwMitWC5BOrpbQ==
-
-

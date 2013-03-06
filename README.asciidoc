@@ -106,7 +106,7 @@ base_engine_url_list={"url":"http://server1.mycompany.org:8080/cyclades","passwo
 * You may use any name for your Nyxlet instead of "my_first_nyxlet", please use alphanumeric characters and underscores only.
 * Once generated, feel free to modify the package names, documents, JUnit tests etc. to reflect your company's/organization's taste.
 * Within your Cyclades Source Distribution, please see _/cycladessoa/cyclades/nyxlets/hello_world_ for more examples of how to use Cyclades (intra service orchestration, logging, request validation etc...)
-* Please see https://github.com/cycladessoa/cyclades-deployment for an alternative and preferred Cyclades Service Engine deployment procedure yielding greater operational maintainability for your Cyclades installation.
+* Please see https://github.com/cycladessoa/cyclades-deployment for an alternative and preferred Cyclades Service Engine deployment procedure providing greater operational maintainability for your Cyclades installation.
 
 == Send Requests To Your Newly Created And Deployed Service/Nyxlet
 

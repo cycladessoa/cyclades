@@ -67,6 +67,9 @@ A specification and corresponding reference implementation for a service engine 
 
 This document describes the steps involved for Service (Nyxlet) developers to generate a working Nyxlet Template workspace. The generated Nyxlet will be ready to build and deploy with sample ActionHandlers (where you will add your functionality). You must have *Gradle* installed to build. You must additionally have a running Cyclades Engine instance if a deployment is to be done. After we are done, you will have generated, deployed and used your first Cyclades service (Nyxlet). Please follow the instructions below.
 
+[NOTE]
+Please see https://github.com/cycladessoa/cyclades-deployment if you simply want to deploy a default Cyclades installation hosting all of the current Cyclades SOA Nyxlets.
+
 == Generate And Run Your First Service (Nyxlet)
 
 . Install Gradle (if you do not already have it): http://www.gradle.org
@@ -103,6 +106,7 @@ base_engine_url_list={"url":"http://server1.mycompany.org:8080/cyclades","passwo
 * You may use any name for your Nyxlet instead of "my_first_nyxlet", please use alphanumeric characters and underscores only.
 * Once generated, feel free to modify the package names, documents, JUnit tests etc. to reflect your company's/organization's taste.
 * Within your Cyclades Source Distribution, please see _/cycladessoa/cyclades/nyxlets/hello_world_ for more examples of how to use Cyclades (intra service orchestration, logging, request validation etc...)
+* Please see https://github.com/cycladessoa/cyclades-deployment for an alternative and preferred Cyclades Service Engine deployment procedure yielding greater operational maintainability for your Cyclades installation.
 
 == Send Requests To Your Newly Created And Deployed Service/Nyxlet
 

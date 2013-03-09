@@ -42,9 +42,6 @@ ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
 group = 'com.github.cycladessoa'
 archivesBaseName = 'cyclades'
 
-List<String> listKey = new ArrayList<String>()
-List<String> listValue = new ArrayList<String>()
-
 allprojects {
     apply plugin: 'eclipse'
 }
@@ -139,7 +136,7 @@ war {
     from (project(':engine').files('src/main/webapp/WEB-INF')) {
         into('WEB-INF')
     }
-    def nyxletList = ['hello_world', 'service_broker'] //NYXLET-END-1
+    def nyxletList = ['hello_world', 'service_broker'] 
     for (nyxlet in nyxletList) {
         from (project(':nyxlets:'+nyxlet).file('build/libs')) {
             include('*.nyxlet')
@@ -152,7 +149,7 @@ war {
     }
 
     // Admin Nyxlets
-    def adminNyxletList = ['admin'] //NYXLET-END-1
+    def adminNyxletList = ['admin'] 
     for (nyxlet in adminNyxletList) {
         from (project(':nyxlets:'+nyxlet).file('build/libs')) {
             include('*.nyxlet')
@@ -168,42 +165,48 @@ war {
     rootSpec.allSpecs*.rename('(.*)helloworld-'+nyxlet_hello_world_version+'.'+build_number+'.nyxlet(.*)', '$1helloworld.nyxlet$2')
     rootSpec.allSpecs*.rename('(.*)servicebroker-'+nyxlet_service_broker_version+'.'+build_number+'.nyxlet(.*)', '$1servicebroker.nyxlet$2')
     rootSpec.allSpecs*.rename('(.*)admin-'+nyxlet_admin_version+'.'+build_number+'.nyxlet(.*)', '$1admin.nyxlet$2')
-    //NYXLET-END-4
-
-    manifest {
-        attributes 'Main-Class': 'org.cyclades.engine.CycladesEngine'
-        attributes 'Provider': "Cyclades SOA"
-        attributes 'Extension-Name': 'Cyclades'
-        attributes 'Implementation-Title': System.getProperty("user.name")
-        attributes 'Implementation-Vendor-Id': "CycladesSOA"
-        attributes 'Implementation-Version': version
-        attributes 'Built-With': 'gradle-' + GradleVersion.current()
-        attributes 'Cyclades-Engine': engine_version + '-' + build_number
-        attributes 'Nyxlet-hello_world': nyxlet_hello_world_version + '-' + build_number 
-        attributes 'Nyxlet-service_broker': nyxlet_service_broker_version + '-' + build_number
-        attributes 'Nyxlet-admin': nyxlet_admin_version + '-' + build_number
-        //NYXLET-END-3
-    }
 }
+
+/***************************************************
+ * Create MANIFEST.MF
+ ***************************************************/
 war.doFirst() {
+    List<String> listKey = new ArrayList<String>()
+    List<String> listValue = new ArrayList<String>()
+
     configurations.runtime.each { f->
         RelativePath rp = RelativePath.parse(true, "$f")
         String[] pathParts = rp.getSegments()
         listKey.add(pathParts[pathParts.size() - 5])
         listValue.add(pathParts[pathParts.size() - 1])
     }
-}
-war.doLast() {
-    for (i in 0..listKey.size()-1) {
-        project.ext.tmpKey = listKey.get(i)
-        if (project.ext.tmpKey.contains('.'))  {
-            project.ext.tmpKey = project.ext.tmpKey.replaceAll('\\.', '-')
-        }
-        ant.jar(destfile: war.archivePath, update: true) {
-            delegate.manifest {
-                attribute(name: project.ext.tmpKey, value: listValue.get(i))
+
+    manifest {
+        attributes 'Main-Class': 'com.cyclades.engine.CycladesEngine'
+        attributes 'Provider': "Cyclades SOA"
+        attributes 'Extension-Name': 'Cyclades'
+        attributes 'Implementation-Title': "Gradle"
+        attributes 'Implementation-Vendor-Id': "Cyclades SOA"
+        attributes 'Implementation-Version': version
+        attributes 'Built-With': 'gradle-' + GradleVersion.current()
+        attributes 'Built-By': System.getProperty('user.name')
+        attributes 'Cyclades-Engine': engine_version + '-' + build_number
+        attributes 'Nyxlet-hello_world': nyxlet_hello_world_version + '-' + build_number
+        attributes 'Nyxlet-service_broker': nyxlet_service_broker_version + '-' + build_number
+        attributes 'Nyxlet-admin': nyxlet_admin_version + '-' + build_number
+
+        Map dynamicAttributes = new HashMap()
+        String key;
+        for (int i = 0; i < listKey.size(); i++) {
+            key = listKey.get(i)
+            //println "key: " + key + " value: " + listValue.get(i)
+            //address issue with tomcat where the attribute key cannot contain . in it
+            if (key.contains('.'))  {
+                key = key.replaceAll('\\.', '-')
             }
+            dynamicAttributes.put(key, listValue.get(i))
         }
+        attributes(dynamicAttributes)
     }
 }
 
@@ -216,6 +219,5 @@ dependencies {
     compile project(':nyxlets:hello_world')
     compile project(':nyxlets:service_broker')
     compile project(':nyxlets:admin')
-    //NYXLET-END-2
 }
 

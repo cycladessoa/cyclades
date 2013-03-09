@@ -45,9 +45,6 @@ ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
 group = 'PACKAGE_NAME'
 archivesBaseName = 'NYXLET_NAME'
 
-List<String> listKey = new ArrayList<String>()
-List<String> listValue = new ArrayList<String>()
-
 uploadArchives {
     repositories {
         mavenDeployer {
@@ -117,22 +114,13 @@ signArchives.onlyIf { ext.isReleaseVersion }
 jar {
     // save the extension as *.nyxlet
     extension = 'nyxlet'
-
     dependsOn classes
     from { configurations.newConf.collect { it.isDirectory() ? it : zipTree(it) }}
-
-    manifest {
-        attributes 'Main-Class': 'PACKAGE_NAME.NYXLET_NAME.Main'
-        attributes 'Provider': "Cyclades SOA"
-        attributes 'Extension-Name': archivesBaseName
-        attributes 'Implementation-Title': "Gradle" 
-        attributes 'Implementation-Vendor-Id': "CycladesSOA"
-        attributes 'Implementation-Version': version
-        attributes 'Built-With': 'gradle-' + GradleVersion.current()
-        attributes 'Built-By': System.getProperty("user.name")
-  }
 }
+
 jar.doFirst() {
+    List<String> listKey = new ArrayList<String>()
+    List<String> listValue = new ArrayList<String>()
     configurations.runtime.each { f->
         RelativePath rp = RelativePath.parse(true, "$f")
         String[] pathParts = rp.getSegments()
@@ -145,27 +133,37 @@ jar.doFirst() {
         listKey.add(pathParts[pathParts.size() - 5])
         listValue.add(pathParts[pathParts.size() - 1])
     }
-}
-jar.doLast() {
-    println "jar.doLast() ... updating manifest.mf"
-    for (i in 0..listKey.size()-1) {
-        project.ext.tmpKey = listKey.get(i)
-        if (project.ext.tmpKey.contains('.'))  {
-            project.ext.tmpKey = project.ext.tmpKey.replaceAll('\\.', '-')
-        }
-        ant.jar(destfile: jar.archivePath, update: true) {
-            delegate.manifest {
-                attribute(name: project.ext.tmpKey, value: listValue.get(i))
+    manifest {
+        attributes 'Main-Class': 'PACKAGE_NAME.NYXLET_NAME.Main'
+        attributes 'Provider': "Cyclades SOA"
+        attributes 'Extension-Name': archivesBaseName
+        attributes 'Implementation-Title': "Gradle"
+        attributes 'Implementation-Vendor-Id': "CycladesSOA"
+        attributes 'Implementation-Version': version
+        attributes 'Built-With': 'gradle-' + GradleVersion.current()
+        attributes 'Built-By': System.getProperty("user.name")
+
+        Map dynamicAttributes = new HashMap()
+        String key;
+        for (int i = 0; i < listKey.size(); i++) {
+            key = listKey.get(i)
+            //println "key: " + key + " value: " + listValue.get(i)
+            //address issue with tomcat where the attribute key cannot contain . in it
+            if (key.contains('.'))  {
+                key = key.replaceAll('\\.', '-')
             }
+            dynamicAttributes.put(key, listValue.get(i))
         }
-    }
-    println("jar.doLast() ... start")
+        attributes(dynamicAttributes)
+   }
+}
+
+jar.doLast() {
     javaexec {
         main = 'org.cyclades.engine.nyxlet.BuildNyxletManifest'
         classpath = sourceSets.main.runtimeClasspath
         args = ['-q', jar.archivePath]
     }
-    println("jar.doLast() ... end")
     ant.delete(file: "${buildDir}/libs/"+archivesBaseName+".nyxlet")
     copy {
         from "${buildDir}/libs"
@@ -218,5 +216,6 @@ task copyToLib(type: Copy) {
     into "$buildDir/libs"
     from configurations.runtime
 }
+
 build.dependsOn(copyToLib)
 

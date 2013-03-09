@@ -182,7 +182,7 @@ configurations {
 }
 
 dependencies {
-    // Cyclades Engine required dependencies --- NO NOT MODIFIED ---
+    // BEGIN Cyclades Service Engine dependencies 
     compile group: 'junit', name: 'junit', version: '4.8.2'
     compile group: 'servletapi', name: 'servlet-api', version: '2.4'
     compile group: 'com.puppycrawl.tools', name: 'checkstyle', version: '5.5'
@@ -200,10 +200,16 @@ dependencies {
 
     compile group: 'com.github.cycladessoa', name: 'engine', version: 'latest.integration'
     compile group: 'com.github.cycladessoa', name: 'cyclades', version: 'latest.integration', transitive: false
-    // Cyclades Engine required dependencies --- NO NOT MODIFIED ---
+    // END Cyclades Service Engine dependencies 
 
     // -------------------------------------------------------------------
     // INSERT ANY NEW DEPENDENCIES HERE FOR THIS SPECIFIC NYXLET
+    //
+    // NOTE: Specify a "compile" dependency if that dependency will exist in
+    //   the target Cyclades Service Engine deployment. Specify an additional 
+    //   "newConf" dependency if that dependency will not exist in the target Cyclades
+    //   Service Engine deployment and you want to package that dependency for
+    //   deployment with this Nyxlet. 
     //
     // Use
     // compile ... for Build time compilation

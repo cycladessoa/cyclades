@@ -37,6 +37,15 @@ import com.google.common.io.ByteStreams;
 
 public class Zip {
 
+    /**
+     * Create a zip file from a given directory
+     * 
+     * NOTE: Missing directories will be created for you. Also, the current algorithm will not include empty directories.
+     * 
+     * @param sourceDir The source directory to zip
+     * @param destinationFile The destination file where the extracted archive will be stored
+     * @throws Exception
+     */
     public static void zipDirectory (String sourceDir, String destinationFile) throws Exception {
         final String eLabel = "Zip.zipDirectory: ";
         FileOutputStream dest = null;
@@ -57,12 +66,12 @@ public class Zip {
         }
     }
 
-    private static void addResourcesToZip (File sourceFile, ZipOutputStream out, File base) throws Exception {
+    private static void addResourcesToZip (File sourceDirectory, ZipOutputStream out, File base) throws Exception {
         final String eLabel = "Zip.addResourcesToZip: ";
         try {
            FileInputStream fis = null;
            ZipEntry entry;
-           File[] children = sourceFile.listFiles();
+           File[] children = sourceDirectory.listFiles();
            for (int i = 0; i < children.length; i++) {
                if (!children[i].isFile()) {
                    addResourcesToZip(children[i], out, base);
@@ -83,6 +92,15 @@ public class Zip {
         }
     }
 
+    /**
+     * Unzip a specified zip file into the given directory
+     * 
+     * NOTE: Missing directories will be created for you
+     * 
+     * @param sourceFile The source zip file to extract
+     * @param destinationDirectory The directory to which the extracted resource will be written
+     * @throws Exception
+     */
     public static void unzipDirectory (String sourceFile, String destinationDirectory) throws Exception {
         final String eLabel = "Zip.unzipDirectory: ";
         FileInputStream fis = null;
@@ -98,6 +116,10 @@ public class Zip {
            while((entry = zis.getNextEntry()) != null) {
                sb.setLength(0);
                targetResource = sb.append(destinationDirectory).append("/").append(entry.getName()).toString();
+               if (entry.isDirectory()) {
+                   FileUtils.verifyOutputDirectory(targetResource);
+                   continue;
+               }
                FileUtils.verifyFileOutputDirectory(targetResource);
                try {
                    fos = new FileOutputStream(targetResource);

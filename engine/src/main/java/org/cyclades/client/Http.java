@@ -107,6 +107,13 @@ public class Http {
     
     public static void execute (String url, STROMARequest stromaRequest, OutputStream out, int connectionTimeout, int readTimeout) throws Exception {
         StringBuilder requestURL = new StringBuilder(url);
+        // Tack on "action" as a query parameter, as for STROMA requests (HTTP), a STROMA embedded action is not readable until it
+        // is too late if a there exists another ActionHandler with the default POST alias that ignores STROMA parameters.
+        // In other words, make action explicit as a query parameter for all STROMA HTTP requests!
+        if (stromaRequest.getParameters().containsKey("action")) {
+            requestURL.append((url.indexOf("?") < 0) ? "?" : "&");
+            requestURL.append("action=").append(stromaRequest.getParameters().get("action").get(0));
+        }
         String stromaDataString = stromaRequest.generateData();
         InputStream is = null;
         try {

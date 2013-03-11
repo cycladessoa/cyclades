@@ -90,6 +90,8 @@ public class AddHandler extends ActionHandler {
             streamWriter.writeEndElement();
         } catch (Exception e) {
             getParentNyxlet().logStackTrace(e);
+            if (nyxletSession.rawResponseRequested()) nyxletSession.getHttpServletResponse().setStatus(
+                    Integer.parseInt(StatusCodeEnum.INTERNAL_ERROR.getCode()));
             handleException(nyxletSession, stromaResponseWriter, eLabel, e);
         } finally {
             stromaResponseWriter.done();

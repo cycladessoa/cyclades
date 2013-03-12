@@ -28,7 +28,7 @@
 package org.cyclades.engine.nyxlet;
 
 import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
+import java.io.InputStream;
 import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -42,6 +42,7 @@ import org.apache.log4j.Logger;
 import org.cyclades.engine.NyxletSession;
 import org.cyclades.engine.api.Nyxlet;
 import org.cyclades.engine.util.GenericXMLObject;
+import org.cyclades.io.Jar;
 import org.cyclades.xml.comparitor.XMLComparitor;
 import org.cyclades.xml.parser.XMLParserException;
 import org.cyclades.xml.parser.api.XMLGeneratedObject;
@@ -96,7 +97,7 @@ public class NyxletRepository {
             if( !name.equals(implied_nyxlet_name) ) {
                 throw new Exception("In '"+jarPath+"' declared nyxlet name '"+name+"' does not match with nyxlet file name.");
             }
-            Properties properties = getJarManifestProperties(jarFile);
+            Properties properties = Jar.getJarManifestMainAttributes(jarFile, JAR_MANIFEST);
             jarFile.close();
             jarFile = null;
             this.addNyxlet(Nyxlet.valueOf(nyxletXMLNode, this.loadLibrary(jarPath), properties));
@@ -152,47 +153,22 @@ public class NyxletRepository {
      */
     private String getManifestXMLString (JarFile jarFile) throws Exception {
         final String eLabel = "NyxletRepository.getManifestXMLString: ";
-        DataInputStream dis = null;
+        InputStream jarInputStream = null;
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
             JarEntry jarEntry = (JarEntry)jarFile.getEntry(NYXLET_MANIFEST);
             if (jarEntry == null) {
                 throw new Exception("Could not locate " + NYXLET_MANIFEST  + " in jar file");
             }
-            return new String(ByteStreams.toByteArray(jarFile.getInputStream(jarEntry)));
+            jarInputStream = jarFile.getInputStream(jarEntry);
+            return new String(ByteStreams.toByteArray(jarInputStream));
         } catch (Exception e) {
             throw new Exception(eLabel + e);
         } finally {
-            try {
-                dis.close();
-            } catch (Exception e) {};
-
-            try {
-                baos.close();
-            } catch (Exception e) {};
+            try { jarInputStream.close(); } catch (Exception e) {};
+            try { baos.close(); } catch (Exception e) {};
         }
 
-    }
-
-    /**
-     * No need to synchronize, called locally from a synchronized method
-     *
-     * @param jarFile
-     * @return Manifest Properties
-     * @throws Exception
-     */
-    private Properties getJarManifestProperties (JarFile jarFile) throws Exception {
-        final String eLabel = "NyxletRepository.getJarManifestProperties: ";
-        Properties jarManifestProperties = new Properties();
-        try {
-            JarEntry jarEntry = (JarEntry)jarFile.getEntry(JAR_MANIFEST);
-            if (jarEntry != null) {
-                jarManifestProperties.load(jarFile.getInputStream(jarEntry));
-            }
-            return jarManifestProperties;
-        } catch (Exception e) {
-            throw new Exception(eLabel + e);
-        }
     }
 
     public synchronized Set<String> keys () {

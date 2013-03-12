@@ -41,6 +41,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.cyclades.engine.exception.CycladesException;
+import org.cyclades.io.Jar;
 import com.google.common.base.Strings;
 import com.google.common.io.Files;
 
@@ -62,7 +63,8 @@ public class CycladesServlet extends HttpServlet {
         FileInputStream fis = null;
         try {
             fis = new FileInputStream(servletBase + "/META-INF/MANIFEST.MF");
-            buildProperties.load(fis);
+            buildProperties = Jar.getJarManifestMainAttributes(fis);
+            if (buildProperties.isEmpty()) logger.warn("No properties found in MANIFEST.MF");
         } catch (Exception e) {
             logger.warn("No MANIFEST.MF found for this war file deployment");
         } finally {

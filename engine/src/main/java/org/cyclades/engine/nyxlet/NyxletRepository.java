@@ -97,7 +97,7 @@ public class NyxletRepository {
             if( !name.equals(implied_nyxlet_name) ) {
                 throw new Exception("In '"+jarPath+"' declared nyxlet name '"+name+"' does not match with nyxlet file name.");
             }
-            Properties properties = Jar.getJarManifestMainAttributes(jarFile, JAR_MANIFEST);
+            Properties properties = Jar.attributesToProperties(Jar.getJarManifestMainAttributes(jarFile, JAR_MANIFEST));
             jarFile.close();
             jarFile = null;
             this.addNyxlet(Nyxlet.valueOf(nyxletXMLNode, this.loadLibrary(jarPath), properties));

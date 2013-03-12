@@ -63,7 +63,7 @@ public class CycladesServlet extends HttpServlet {
         FileInputStream fis = null;
         try {
             fis = new FileInputStream(servletBase + "/META-INF/MANIFEST.MF");
-            buildProperties = Jar.getJarManifestMainAttributes(fis);
+            buildProperties = Jar.attributesToProperties(Jar.getJarManifestMainAttributes(fis));
             if (buildProperties.isEmpty()) logger.warn("No properties found in MANIFEST.MF");
         } catch (Exception e) {
             logger.warn("No MANIFEST.MF found for this war file deployment");

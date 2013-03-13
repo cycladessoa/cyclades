@@ -51,7 +51,7 @@ public class ListJarManifestActionHandler extends ActionHandler {
     @Override
     public void handle (NyxletSession nyxletSession, Map<String, List<String>> baseParameters, 
             STROMAResponseWriter stromaResponseWriter) throws Exception {
-        final String eLabel = "ListJarManifestPropertiesActionHandler.handle: ";
+        final String eLabel = "ListJarManifestActionHandler.handle: ";
         try {
             /********************************************************************/
             /*******                  START CODE BLOCK                    *******/

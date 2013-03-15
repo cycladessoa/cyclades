@@ -111,11 +111,9 @@ public class Zip {
            zis = new ZipInputStream(fis);
            ZipEntry entry;
            FileUtils.verifyOutputDirectory(destinationDirectory);
-           StringBuilder sb = new StringBuilder();
-           String targetResource;
+           File targetResource;
            while((entry = zis.getNextEntry()) != null) {
-               sb.setLength(0);
-               targetResource = sb.append(destinationDirectory).append("/").append(entry.getName()).toString();
+              targetResource = new File(destinationDirectory, entry.getName());
                if (entry.isDirectory()) {
                    FileUtils.verifyOutputDirectory(targetResource);
                    continue;

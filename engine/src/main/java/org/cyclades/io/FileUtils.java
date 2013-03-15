@@ -96,17 +96,27 @@ public class FileUtils {
      * exist
      * example path: /tmp/mydir
      *
-     * @param path      Path denoting directory
+     * @param path Path String denoting directory
      * @throws Exception
      */
     public static void verifyOutputDirectory (String path) throws Exception {
+        verifyOutputDirectory(new File(path));
+    }
+    
+    /**
+     * This method will create the directory denoted by the parameter if it doesn't
+     * exist
+     *
+     * @param outDirectory File denoting directory
+     * @throws Exception
+     */
+    public static void verifyOutputDirectory (File outDirectory) throws Exception {
         final String eLabel = "FileUtils.verifyOutputDirectory: ";
         try {
-            File outDirectory = new File(path);
             if (!outDirectory.exists()) {
-                if (!outDirectory.mkdirs()) throw new Exception("Failed to create directory: " + path);
+                if (!outDirectory.mkdirs()) throw new Exception("Failed to create directory: " + outDirectory.getPath());
             } else if (!outDirectory.isDirectory()) {
-                throw new Exception("Path is to file, not directory: " + path);
+                throw new Exception("Path is to file, not directory: " + outDirectory.getPath());
             }
         } catch (Exception e) {
             throw new Exception(eLabel + e);
@@ -118,18 +128,26 @@ public class FileUtils {
      * The path parameter is expected to resolve to a file
      * example path: /tmp/mydir/file.txt
      *
-     * @param path Pathe denoting resource/file
+     * @param path Path denoting resource/file
      * @throws Exception
      */
     public static void verifyFileOutputDirectory (String path) throws Exception {
+        verifyFileOutputDirectory(new File(path));
+    }
+    
+    /**
+     * This method will create the directory denoted by the parameter if it doesn't exist.
+     * The outputFile parameter is expected to resolve to a file
+     * example path: /tmp/mydir/file.txt
+     *
+     * @param outputFile File denoting resource/file
+     * @throws Exception
+     */
+    public static void verifyFileOutputDirectory (File outputFile) throws Exception {
         final String eLabel = "FileUtils.verifyFileOutputDirectory: ";
         try {
-            int index = path.lastIndexOf("/");
-            String directoryPath = null;
-            if (index > -1) {
-                directoryPath = path.substring(0, index);
-            }
-            if (directoryPath != null && !directoryPath.trim().equals("")) verifyOutputDirectory(directoryPath);
+            File parentDirectory = outputFile.getParentFile();
+            if (parentDirectory != null) verifyOutputDirectory(parentDirectory);
         } catch (Exception e) {
             throw new Exception(eLabel + e);
         }

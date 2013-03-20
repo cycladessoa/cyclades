@@ -32,9 +32,13 @@ import java.util.Map;
 import javax.xml.stream.XMLStreamWriter;
 import org.cyclades.annotations.AHandler;
 import org.cyclades.engine.NyxletSession;
+import org.cyclades.engine.ResponseCodeEnum;
+import org.cyclades.engine.exception.CycladesException;
 import org.cyclades.engine.nyxlet.templates.stroma.STROMANyxlet;
 import org.cyclades.engine.nyxlet.templates.stroma.actionhandler.ActionHandler;
 import org.cyclades.engine.stroma.STROMAResponseWriter;
+import org.cyclades.engine.validator.FieldValidators;
+import org.cyclades.engine.validator.ValidationFaultElement;
 import org.cyclades.nyxlet.admin.util.Auth;
 import org.cyclades.nyxlet.admin.util.Resource;
 import org.cyclades.nyxlet.admin.util.StatusCodeEnum;
@@ -53,13 +57,20 @@ public class AddHandler extends ActionHandler {
 
     @Override
     public void init () throws Exception {
-        Auth.addPasswordValidation(this);
+        Auth.addPasswordValidation(this, localFieldValidators);
     }
 
     @Override
     public void handle (NyxletSession nyxletSession, Map<String, List<String>> baseParameters, STROMAResponseWriter stromaResponseWriter) throws Exception {
         final String eLabel = "AddHandler.handle: ";
         try {
+            // Because this is a PURE RESTful request, we need to verify a "different" set of field validators so we can validate
+            // later in the service dispatch path..and let this handler handle the Exception locally.
+            List<ValidationFaultElement> validationFaultElements = localFieldValidators.validate(nyxletSession, baseParameters);
+            if (validationFaultElements.size() > 0) {
+                throw new CycladesException(ValidationFaultElement.toString("VALIDATION_FAULT_ELEMENTS", validationFaultElements),
+                        ResponseCodeEnum.REQUEST_VALIDATION_FAULT.getCode());
+            }
             StatusCodeEnum statusCodeEnum = StatusCodeEnum.SUCCESS;
             String message;
             String resourceURI = Resource.getRequestResourcePath(nyxletSession, baseParameters, 1);
@@ -98,14 +109,10 @@ public class AddHandler extends ActionHandler {
         }
     }
 
-    /**
-     * Disable this to make the ActionHandler completely STROMA compliant...however,
-     * if you do this you must always specify at least an empty "data" parameter.
-     * We can always write a completely new capability that is completely STROMA compliant
-     * and leave this one as a convenience POST web service implementation.
-     */
     @Override
     public boolean ignoreSTROMAParameters () {
         return true;
     }
+    
+    private final FieldValidators localFieldValidators = new FieldValidators();
 }

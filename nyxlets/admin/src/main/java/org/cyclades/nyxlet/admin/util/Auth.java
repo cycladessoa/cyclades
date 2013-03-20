@@ -28,14 +28,19 @@
 package org.cyclades.nyxlet.admin.util;
 
 import org.cyclades.engine.nyxlet.templates.stroma.actionhandler.ActionHandler;
+import org.cyclades.engine.validator.FieldValidators;
 import org.cyclades.engine.validator.ParameterMatches;
 
 public class Auth {
 
     public static void addPasswordValidation (ActionHandler actionHandler) {
+        addPasswordValidation(actionHandler, actionHandler.getFieldValidators());
+    }
+    
+    public static void addPasswordValidation (ActionHandler actionHandler, FieldValidators fieldValidators) {
         if (actionHandler.getParentNyxlet().getExternalProperties().containsKey(PASSWORD)) {
-            actionHandler.getFieldValidators().add(
-                    new ParameterMatches(PASSWORD, actionHandler.getParentNyxlet().getExternalProperties().getProperty(PASSWORD)).showValues(false));
+            fieldValidators.add(new ParameterMatches(
+                    PASSWORD, actionHandler.getParentNyxlet().getExternalProperties().getProperty(PASSWORD)).showValues(false));
         }
     }
 

@@ -81,7 +81,9 @@ public class DevOps {
             try {
                 if (printResponses) System.out.println(eLabel + "Servicing URL: " + url);
                 lastNodesReponseList = executeXSTROMARequests(url, serviceBrokerName, requests, onFaultStrategy, printResponses);
+                if (printResponses) System.out.println(eLabel + "Success Servicing URL: " + url);
             } catch (Exception e) {
+                if (printResponses) System.out.println(eLabel + "Failed Servicing URL: " + url);
                 switch (OnFaultStrategy.valueOf(onFaultStrategy.toUpperCase())) {
                 case RETURN:
                      return lastNodesReponseList;
@@ -119,7 +121,8 @@ public class DevOps {
         List<Object> responseList = new ArrayList<Object>();
         for (XSTROMABrokerRequest request : requests) {
             String faultRaised = null;
-            String xstromaResponseString =  new String(Http.execute(url, request));
+            String xstromaResponseString =  new String(
+                    Http.execute(new StringBuilder(url).append("/").append(serviceBokerName).toString(), request));
             XSTROMABrokerResponse xstromaResponseObject = XSTROMABrokerResponse.parse(xstromaResponseString);
             if (!xstromaResponseObject.getServiceName().equals(serviceBokerName)) {
                 STROMAResponse response = new STROMAResponse(xstromaResponseString);
@@ -159,7 +162,8 @@ public class DevOps {
         System.out.println("transaction-data: " + xstromaResponseObject.getTransactionData());
         System.out.println("service-agent: " + xstromaResponseObject.getServiceAgent());
         System.out.println("duration: " + xstromaResponseObject.getDuration());
-        System.out.println("parameters:" + MapHelper.parameterMapToJSON(xstromaResponseObject.getParameters()));
+        System.out.println("parameters:" + MapHelper.parameterMapToJSON((xstromaResponseObject.getParameters() != null) ? 
+                xstromaResponseObject.getParameters() : new HashMap<String, List<String>>()));
         if (xstromaResponseObject.getErrorCode() != 0) {
             System.out.println("error-message: " + xstromaResponseObject.getErrorMessage());
             return;
@@ -185,7 +189,9 @@ public class DevOps {
             try {
                 if (printResponses) System.out.println(eLabel + "Servicing URL: " + url);
                 lastNodesReponseList = executeSTROMARequests(url, requests, onFaultStrategy, printResponses);
+                if (printResponses) System.out.println(eLabel + "Success Servicing URL: " + url);
             } catch (Exception e) {
+                if (printResponses) System.out.println(eLabel + "Failed Servicing URL: " + url);
                 switch (OnFaultStrategy.valueOf(onFaultStrategy.toUpperCase())) {
                 case RETURN:
                      return lastNodesReponseList;
@@ -213,7 +219,8 @@ public class DevOps {
             String onFaultStrategy, boolean printResponses) throws Exception {
         List<STROMAResponse> responseList = new ArrayList<STROMAResponse>();
         for (STROMARequest request : requests) {
-            STROMAResponse response = new STROMAResponse(new String(Http.execute(url + "/" + request.getServiceName(), request)));
+            STROMAResponse response = new STROMAResponse(new String(
+                    Http.execute(new StringBuilder(url).append("/").append(request.getServiceName()).toString(), request)));
             responseList.add(response);
             if (printResponses) printSTROMAResponse(response);
             if (response.getErrorCode() != 0) {
@@ -244,7 +251,8 @@ public class DevOps {
         System.out.println("\ttransaction-data: " + stromaResponse.getTransactionData());
         System.out.println("\tservice-agent: " + stromaResponse.getServiceAgent());
         System.out.println("\tduration: " + stromaResponse.getDuration());
-        System.out.println("\tparameters:" + MapHelper.parameterMapToJSON(stromaResponse.getParameters()));
+        System.out.println("\tparameters:" + MapHelper.parameterMapToJSON((stromaResponse.getParameters() != null) ? 
+                stromaResponse.getParameters() : new HashMap<String, List<String>>()));
         if (stromaResponse.getErrorCode() != 0) {
             System.out.println("\terror-message: " + stromaResponse.getErrorMessage());
         }
@@ -332,7 +340,7 @@ public class DevOps {
      */
     public static void reloadServiceEnginesOnCluster (String[] urls, String onFaultStrategy, boolean safetyMode,
             boolean printResponses) throws Exception {
-        final String eLabel = "DevOps.reloadServiceEnginesOnCluster";
+        final String eLabel = "DevOps.reloadServiceEnginesOnCluster: ";
         for (String url : urls) {
             try {
                 if (printResponses) System.out.println(eLabel + "Servicing URL: " + url);

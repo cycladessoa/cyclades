@@ -35,6 +35,11 @@ A specification and corresponding reference implementation for a service engine 
 	** Composition
 	** Chaining (i.e. Unix pipes and filters paradigm)
 * Service template generation and deployment
+        ** Custom services are trivial to develop, deploy and utilize. All services are automatically available via default transport mechanisms:
+            *** HTTP
+            *** RabbitMQ
+            *** ActiveMQ
+            *** Custom
         ** Services are hot loadable. They can be deployed/redeployed without interruption to existing requests
 * RabbitMQ Service Broker target implementations included
 	** Asynchronous capabilities for all services via RabbitMQ with no additional development effort
@@ -48,6 +53,12 @@ A specification and corresponding reference implementation for a service engine 
         ** RabbitMQ client targets included
         ** ActiveMQ client targets included
         ** Examples included in Groovy/Gradle build system, please see below
+* Effective DevOps orchestration engine... works well with build automation utilities like Gradle
+        ** Push/pull/zip/etc... resources to/on remote servers
+        ** Execute batches of orchestrations to clusters for reproducible rollouts/rollbacks
+        ** "exec" Nyxlet allows executing platform inspecific shell commands as part of your orchestrations
+        ** General HTTP DevOps utilities provided
+        ** Supported message queues can be utilized as an alternative to HTTP for rollout/rollback of applications and configurations asynchronously on a massive scale
 
 == Overview
 

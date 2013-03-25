@@ -56,7 +56,7 @@ A specification and corresponding reference implementation for a service engine 
 * Effective DevOps orchestration engine... works well with build automation utilities like Gradle
         ** Push/pull/zip/etc... resources to/on remote servers
         ** Execute batches of orchestrations to clusters for reproducible rollouts/rollbacks
-        ** "exec" Nyxlet allows executing platform inspecific shell commands as part of your orchestrations
+        ** "exec" Nyxlet allows executing multi platform shell commands as part of your orchestrations
         ** General HTTP DevOps utilities provided
         ** Supported message queues can be utilized as an alternative to HTTP for rollout/rollback of applications and configurations asynchronously on a massive scale
 

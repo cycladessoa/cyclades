@@ -41,12 +41,33 @@ import org.cyclades.engine.util.MapHelper;
 import org.cyclades.io.ResourceRequestUtils;
 import org.cyclades.io.StreamUtils;
 
+/**
+ * Helper class with methods for various DevOps tasks:
+ * 
+ *  - Clustered orchestration requests via HTTP
+ *  - Clustered file uploads
+ *  - Engine reloads
+ *  - Etc...
+ *  
+ *  This functionality can alternatively be written by a developer in Java or any other language...these are just provided for
+ *  convenience for folks that can reuse them from a Java friendly client.
+ */
 public class DevOps {
     
     private static enum OnFaultStrategy {
         NOTHING, RETURN, EXCEPTION;
     }
     
+    /**
+     * Execute one to N X-STROMA requests on one to N nodes/servers
+     * 
+     * @param urls List of urls to the nodes/servers to run the commands on
+     * @param requests The list of XSTROMABrokerRequests to execute
+     * @param onFaultStrategy The strategy to use if an orchestration fault is encountered...one of NOTHING, RETURN or EXCEPTION
+     * @param printResponses Verbose output if true
+     * @return The responses of the last node accessed successfully, also taking into account the onFaultStrategy specified 
+     * @throws Exception
+     */
     public static List<Object> executeClusteredXSTROMARequests (String[] urls, List<XSTROMABrokerRequest> requests, 
             String onFaultStrategy, boolean printResponses) throws Exception {
         return executeClusteredXSTROMARequests (urls, "servicebroker", requests, onFaultStrategy, printResponses);
@@ -83,6 +104,7 @@ public class DevOps {
      * @param url The url to the designated servicebroker implementation
      * @param requests The list of XSTROMABrokerRequests to execute
      * @param onFaultStrategy The strategy to use if an orchestration fault is encountered...one of NOTHING, RETURN or EXCEPTION
+     * @param printResponses Verbose output if true
      * @return A list of Objects, will be one of either XSTROMABrokerResponse or STROMAResponse if "chained" is set to
      *     "true" for an XSTROMABrokerRequest. Normally these will all be of the type XSTROMABrokerResponse
      * @throws Exception
@@ -124,8 +146,14 @@ public class DevOps {
         return responseList;
     }
     
+    /**
+     * Output the contents of a XSTROMABrokerResponse to stdout
+     * 
+     * @param xstromaResponseObject The response to output
+     * @throws Exception
+     */
     public static void printXSTROMAResponse (XSTROMABrokerResponse xstromaResponseObject) throws Exception {
-        if (xstromaResponseObject.getOrchestrationFault()) System.out.println("Orchestration Fault Raised!!!!!");
+        if (xstromaResponseObject.getOrchestrationFault()) System.out.println("[ORCHESTRATION FAULT RAISED]");
         System.out.println("\nX-STROMA Level Parameters");
         System.out.println("error-code: " + xstromaResponseObject.getErrorCode());
         System.out.println("transaction-data: " + xstromaResponseObject.getTransactionData());
@@ -139,6 +167,16 @@ public class DevOps {
         for (STROMAResponse sr : xstromaResponseObject.getResponses()) printSTROMAResponse(sr);
     }
     
+    /**
+     * Execute one to N STROMA requests on one to N nodes/servers
+     * 
+     * @param urls List of urls to the nodes/servers to run the commands on
+     * @param requests The list of STROMARequests to execute
+     * @param onFaultStrategy The strategy to use if a fault is encountered...one of NOTHING, RETURN or EXCEPTION
+     * @param printResponses Verbose output if true
+     * @return The responses of the last node accessed successfully, also taking into account the onFaultStrategy specified
+     * @throws Exception
+     */
     public static List<STROMAResponse> executeClusteredSTROMARequests (String[] urls, List<STROMARequest> requests, 
             String onFaultStrategy, boolean printResponses) throws Exception {
         final String eLabel = "DevOps.executeClusteredSTROMARequests: ";
@@ -165,8 +203,9 @@ public class DevOps {
      * Simple helper method to run a series of independent STROMABrokerRequests and return their responses in order. 
      * 
      * @param url The url to the designated Cyclades Service Engine
-     * @param requests The list of STROMABrokerRequests to execute
+     * @param requests The list of STROMARequests to execute
      * @param onFaultStrategy The strategy to use if a fault is encountered...one of NOTHING, RETURN or EXCEPTION
+     * @param printResponses Verbose output if true
      * @return A list of STROMAResponses
      * @throws Exception
      */
@@ -191,31 +230,49 @@ public class DevOps {
         return responseList;
     }
 
-    public static void printSTROMAResponse (STROMAResponse sr) throws Exception {
+    /**
+     * Output the contents of a XSTROMABrokerResponse to stdout
+     * 
+     * @param stromaResponse The response to output
+     * @throws Exception
+     */
+    public static void printSTROMAResponse (STROMAResponse stromaResponse) throws Exception {
         System.out.println("\n\tService (STROMA) Level Parameters");
-        System.out.println("\tservice: " + sr.getServiceName());
-        System.out.println("\taction: " + sr.getAction());
-        System.out.println("\terror-code: " + sr.getErrorCode());
-        System.out.println("\ttransaction-data: " + sr.getTransactionData());
-        System.out.println("\tservice-agent: " + sr.getServiceAgent());
-        System.out.println("\tduration: " + sr.getDuration());
-        System.out.println("\tparameters:" + MapHelper.parameterMapToJSON(sr.getParameters()));
-        if (sr.getErrorCode() != 0) {
-            System.out.println("\terror-message: " + sr.getErrorMessage());
+        System.out.println("\tservice: " + stromaResponse.getServiceName());
+        System.out.println("\taction: " + stromaResponse.getAction());
+        System.out.println("\terror-code: " + stromaResponse.getErrorCode());
+        System.out.println("\ttransaction-data: " + stromaResponse.getTransactionData());
+        System.out.println("\tservice-agent: " + stromaResponse.getServiceAgent());
+        System.out.println("\tduration: " + stromaResponse.getDuration());
+        System.out.println("\tparameters:" + MapHelper.parameterMapToJSON(stromaResponse.getParameters()));
+        if (stromaResponse.getErrorCode() != 0) {
+            System.out.println("\terror-message: " + stromaResponse.getErrorMessage());
         }
         // getData() retrieves any raw payload information embedded in the response (as a JSONObject or Node class type)
         // depending on the meta type requested
         //println "\t" + sr.getData().getClass()
     }
     
-    public static void uploadFIleToCluster (String[] urls, String password, String targetSourceUploadPath, 
-            String targetDestinationUploadPath, boolean deleteFirst, String onFaultStrategy, 
+    /**
+     * Upload a resource to one to N nodes/servers, via the "admin" service/Nyxlet
+     * 
+     * @param urls List of urls to the nodes/servers to run the commands on
+     * @param password The password for the target admin services (null OK if no password is set on target nodes)
+     * @param sourceResourcePath Path to the resource to upload (can also start with "http:" if a web resource)
+     * @param destinationUploadPath Path on the remote nodes to upload the resource
+     * @param deleteFirst Delete the resource at destinationUploadPath on the remote nodes if it exists
+     * @param onFaultStrategy The strategy to use if a fault is encountered...one of NOTHING, RETURN or EXCEPTION
+     * @param printResponses Verbose output if true
+     * @throws Exception
+     */
+    public static void uploadFIleToCluster (String[] urls, String password, String sourceResourcePath, 
+            String destinationUploadPath, boolean deleteFirst, String onFaultStrategy, 
             boolean printResponses) throws Exception {
         final String eLabel = "DevOps.uploadFIleToCluster: ";
         for (String url : urls) {
             try {
                 if (printResponses) System.out.println(eLabel + "Servicing URL: " + url);
-                uploadFile(url, password, targetSourceUploadPath, targetDestinationUploadPath, deleteFirst);
+                uploadFile(url, password, sourceResourcePath, destinationUploadPath, deleteFirst);
                 if (printResponses) System.out.println(eLabel + "Success Servicing URL: " + url);
             } catch (Exception e) {
                 if (printResponses) System.out.println(eLabel + "Failed Servicing URL: " + url);
@@ -231,15 +288,25 @@ public class DevOps {
         }
     }
     
-    public static void uploadFile (String url, String password, String targetSourceUploadPath, String targetDestinationUploadPath, 
+    /**
+     * Upload a resource to a node/server, via the "admin" service/Nyxlet
+     * 
+     * @param url the url of the node/server to run the command on
+     * @param password The password for the target admin service (null OK if no password is set on target node)
+     * @param sourceResourcePath Path to the resource to upload (can also start with "http:" if a web resource)
+     * @param destinationUploadPath Path on the remote node to upload the resource
+     * @param deleteFirst Delete the resource at destinationUploadPath on the remote node if it exists
+     * @throws Exception
+     */
+    public static void uploadFile (String url, String password, String sourceResourcePath, String destinationUploadPath, 
             boolean deleteFirst) throws Exception {
         InputStream sourceInputStream = null;
         InputStream responseInputStream = null;
         try {
-            StringBuilder requestURI = new StringBuilder("/admin?uri=").append(targetDestinationUploadPath);
+            StringBuilder requestURI = new StringBuilder("/admin?uri=").append(destinationUploadPath);
             if (password != null) requestURI.append("&password=").append(password);
             if (deleteFirst) ResourceRequestUtils.getData(url + requestURI.toString() + "&action=delete", null);
-            sourceInputStream = ResourceRequestUtils.getInputStream(targetSourceUploadPath, null);
+            sourceInputStream = ResourceRequestUtils.getInputStream(sourceResourcePath, null);
             Map<String, String> attributeMap = new HashMap<String, String>();
             attributeMap.put("Content-Type", "");
             HttpURLConnection connection = ResourceRequestUtils.getHttpURLConnection(url + 
@@ -254,8 +321,17 @@ public class DevOps {
         }
     }
     
-    public static void reloadServiceEnginesOnCluster (String[] urls, String onFaultStrategy, 
-            boolean printResponses, boolean safetyMode) throws Exception {
+    /**
+     * Reload the Cyclades Service Engines at the given urls
+     * 
+     * @param urls List of urls to the nodes/servers to run the commands on
+     * @param onFaultStrategy The strategy to use if a fault is encountered...one of NOTHING, RETURN or EXCEPTION
+     * @param safetyMode Reload the Cyclades Service Engine with only the "admin" service/Nyxlet loaded
+     * @param printResponses Verbose output if true
+     * @throws Exception
+     */
+    public static void reloadServiceEnginesOnCluster (String[] urls, String onFaultStrategy, boolean safetyMode,
+            boolean printResponses) throws Exception {
         final String eLabel = "DevOps.reloadServiceEnginesOnCluster";
         for (String url : urls) {
             try {
@@ -276,6 +352,13 @@ public class DevOps {
         }
     }
     
+    /**
+     * Reload the Cyclades Service Engine at the given url
+     * 
+     * @param url The url to the nodes/servers to run the commands on
+     * @param safetyMode Reload the Cyclades Service Engine with only the "admin" service/Nyxlet loaded
+     * @throws Exception
+     */
     public static void reloadServiceEngine (String url, boolean safetyMode) throws Exception {
         StringBuilder sb = new StringBuilder(url);
         sb.append("?action=reload");

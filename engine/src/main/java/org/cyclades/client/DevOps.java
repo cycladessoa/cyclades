@@ -273,10 +273,10 @@ public class DevOps {
      * @param printResponses Verbose output if true
      * @throws Exception
      */
-    public static void uploadFIleToCluster (String[] urls, String password, String sourceResourcePath, 
+    public static void uploadFileToCluster (String[] urls, String password, String sourceResourcePath, 
             String destinationUploadPath, boolean deleteFirst, String onFaultStrategy, 
             boolean printResponses) throws Exception {
-        final String eLabel = "DevOps.uploadFIleToCluster: ";
+        final String eLabel = "DevOps.uploadFileToCluster: ";
         for (String url : urls) {
             try {
                 if (printResponses) System.out.println(eLabel + "Servicing URL: " + url);
@@ -294,6 +294,16 @@ public class DevOps {
                 }
             }
         }
+    }
+    
+    /**
+     * Wrapper as not to break previously named (typo) initial version of this method.
+     */
+    public static void uploadFIleToCluster (String[] urls, String password, String sourceResourcePath, 
+            String destinationUploadPath, boolean deleteFirst, String onFaultStrategy, 
+            boolean printResponses) throws Exception {
+        uploadFileToCluster(urls, password, sourceResourcePath, destinationUploadPath, deleteFirst, onFaultStrategy, 
+                printResponses);
     }
     
     /**

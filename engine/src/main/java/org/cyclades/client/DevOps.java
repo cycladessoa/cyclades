@@ -297,7 +297,8 @@ public class DevOps {
     }
     
     /**
-     * Wrapper as not to break previously named (typo) initial version of this method.
+     * Wrapper as not to break previously named (typo) initial version of this method. Please use correctly named version 
+     * instead: "uploadFileToCluster"
      */
     public static void uploadFIleToCluster (String[] urls, String password, String sourceResourcePath, 
             String destinationUploadPath, boolean deleteFirst, String onFaultStrategy, 

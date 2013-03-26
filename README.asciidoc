@@ -53,7 +53,7 @@ A specification and corresponding reference implementation for a service engine 
         ** RabbitMQ client targets included
         ** ActiveMQ client targets included
         ** Examples included in Groovy/Gradle build system, please see below
-* Effective DevOps orchestration engine... works well with build automation utilities like Gradle
+* Effective DevOps orchestration engine... integrates nicely with build automation utilities like Gradle
         ** Push/pull/zip/etc... resources to/on remote servers
         ** Execute batches of orchestrations to clusters for reproducible rollouts/rollbacks
         ** "exec" Nyxlet allows executing multi platform shell commands as part of your orchestrations

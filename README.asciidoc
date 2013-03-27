@@ -59,6 +59,7 @@ A specification and corresponding reference implementation for a service engine 
         ** "exec" Nyxlet allows executing multi platform shell commands as part of your orchestrations
         ** General HTTP DevOps utilities provided
         ** Supported message queues can be utilized as an alternative to HTTP for rollout/rollback of applications and configurations asynchronously on a massive scale
+        ** See https://github.com/cycladessoa/devops-deployment-build-template for an example template
 
 == Overview
 

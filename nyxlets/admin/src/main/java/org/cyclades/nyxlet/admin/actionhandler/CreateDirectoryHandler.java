@@ -41,7 +41,7 @@ import org.cyclades.nyxlet.admin.util.Resource;
 import org.cyclades.nyxlet.admin.util.StatusCodeEnum;
 
 /**
- * ActionHandler to handle a directory copy.
+ * ActionHandler to handle a directory copy, or just a create if no "source" parameter is provided
  */
 @AHandler({"createdirectory"})
 public class CreateDirectoryHandler extends ActionHandler {
@@ -57,14 +57,14 @@ public class CreateDirectoryHandler extends ActionHandler {
 
     @Override
     public void handle (NyxletSession nyxletSession, Map<String, List<String>> baseParameters, STROMAResponseWriter stromaResponseWriter) throws Exception {
-        final String eLabel = "CopyDirectoryHandler.handle: ";
+        final String eLabel = "CreateDirectoryHandler.handle: ";
         try {
             StatusCodeEnum statusCodeEnum = StatusCodeEnum.SUCCESS;
             String message;
             String resourceURI = Resource.getRequestResourcePath(nyxletSession, baseParameters, 1);
             if (resourceURI == null) {
                 statusCodeEnum = StatusCodeEnum.REQUEST_FORMAT_ERROR;
-                message = "Cannot detect path source (uri)";
+                message = "Cannot detect destination path (uri)";
             } else {
                 //String absoluteResourceBaseURI = new StringBuilder(Resource.getDocumentRoot(this)).append("/").toString();
                 StringBuilder sb = new StringBuilder();

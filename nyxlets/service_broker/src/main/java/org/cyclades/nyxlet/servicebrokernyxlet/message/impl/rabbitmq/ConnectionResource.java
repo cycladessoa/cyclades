@@ -64,6 +64,7 @@ public class ConnectionResource {
             connection = factory.newConnection();
             channel = connection.createChannel();
             Map<String, Object> attributes = new HashMap<String, Object>();
+            if (parameters.containsKey(INACTIVITY_DELETE)) attributes.put("x-expires", Long.parseLong(parameters.get(INACTIVITY_DELETE)));
             if (parameters.containsKey(HA_POLICY)) attributes.put("x-ha-policy", parameters.get(HA_POLICY));
             boolean durable = parameters.containsKey(DURABLE) && parameters.get(DURABLE).equalsIgnoreCase("true");
             channel.queueDeclare(queueName, durable, false, false, attributes);
@@ -145,8 +146,9 @@ public class ConnectionResource {
     private int prefetchCount = -1;
     private ServiceBrokerNyxletImpl callBackServiceInstance;
     private volatile boolean killed = false;
-    public static final String CONSUMER_TYPE    = "consumer_type";
-    public static final String HA_POLICY        = "ha_policy";
-    public static final String DURABLE          = "durable";
+    public static final String CONSUMER_TYPE        = "consumer_type";
+    public static final String INACTIVITY_DELETE    = "inactivity_delete";
+    public static final String HA_POLICY            = "ha_policy";
+    public static final String DURABLE              = "durable";
 
 }

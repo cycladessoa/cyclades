@@ -56,7 +56,7 @@ public class Consumer implements MessageConsumer {
 
     @Override
     public void init (Map<String, String> initializationMap, MessageProcessor messageProcessor, ResponseProcessor responseProcessor, ServiceBrokerNyxletImpl callBackServiceInstance) throws Exception {
-        final String eLabel = "rabbitmq.Consumer.init: ";
+        final String eLabel = "activemq.Consumer.init: ";
         try {
             if (!initializationMap.containsKey(TARGET_QUEUE_CONFIG_PARAMETER)) throw new Exception("Initialization parameter missing: " + TARGET_QUEUE_CONFIG_PARAMETER);
             if (!initializationMap.containsKey(CONNECTION_STRING_CONFIG_PARAMETER)) throw new Exception("Initialization parameter missing: " + CONNECTION_STRING_CONFIG_PARAMETER);
@@ -102,7 +102,7 @@ public class Consumer implements MessageConsumer {
 
     @Override
     public void onMessage(Object... parameters) throws Exception {
-        final String eLabel = "rabbitmq.Consumer.onMessage: ";
+        final String eLabel = "activemq.Consumer.onMessage: ";
         // NO-OP...not needed...using a local class to do the dirty work in here.
         throw new UnsupportedOperationException("Not used or needed in this implementation");
     }

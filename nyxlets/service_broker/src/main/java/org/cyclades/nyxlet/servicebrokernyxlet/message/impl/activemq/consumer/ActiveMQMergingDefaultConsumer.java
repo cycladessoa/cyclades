@@ -46,6 +46,7 @@ import javax.jms.Session;
 import javax.jms.BytesMessage;
 import javax.jms.TextMessage;
 import javax.jms.Destination;
+import javax.jms.JMSException;
 
 public class ActiveMQMergingDefaultConsumer extends TimerTask implements ActiveMQConsumer {
 
@@ -61,6 +62,7 @@ public class ActiveMQMergingDefaultConsumer extends TimerTask implements ActiveM
             if (parameters.containsKey("accumulation_wait_mills")) accumulationWaitMills = Long.parseLong(parameters.get("accumulation_wait_mills"));
             if (parameters.containsKey("min_messages")) minMessages = Integer.parseInt(parameters.get("min_messages"));
             if (parameters.containsKey(REPLYTO_MESSAGE_DELIVERY_MODE)) replyToMessageDeliveryMode = Integer.parseInt(parameters.get(REPLYTO_MESSAGE_DELIVERY_MODE));
+            if (parameters.containsKey(MERGE_ON_REPLYTO) && parameters.get(MERGE_ON_REPLYTO) != null) mergeOnReplyTo = parameters.get(MERGE_ON_REPLYTO).equalsIgnoreCase("true");
             session = connectionResource.getConnection().createSession(false, Session.CLIENT_ACKNOWLEDGE);
             consumer = session.createConsumer(session.createQueue(connectionResource.getQueueName()));
             producer = session.createProducer(null);
@@ -122,15 +124,9 @@ public class ActiveMQMergingDefaultConsumer extends TimerTask implements ActiveM
             // are the same format (XML or JSON)
             //releaseAlternateFormatMessages();
             if (accumulationExpired()) {
-                // XXX - think about the policy here...this should work for most conditions...how can we make this better?
-                // Let's come back and revisit this as we test it.
-                byte[] accumulated = processMessages();
+                processMessages();
                 ackMessages();
                 releaseAlternateFormatMessages();
-                // XXX - Passing in "null" here as the value of the original request. Since the original request
-                // is actually an aggregation of multiple X-STROMA requests, we'll need to build in some sort of
-                // List structure to accommodate this later if needed
-                if (connectionResource.hasResponseProcessor()) connectionResource.fireResponseProcessor(accumulated, null);
             }
         } catch (Exception e) {
             throw new Exception(eLabel + e);
@@ -148,33 +144,46 @@ public class ActiveMQMergingDefaultConsumer extends TimerTask implements ActiveM
         }
     }
 
-    public synchronized byte[] processMessages () throws Exception {
+    public synchronized void processMessages () throws Exception {
         final String eLabel = "ActiveMQMergingDefaultConsumer.processMessage: ";
         try {
-            Destination replyTo;
-            Map<Destination, Integer> replyToQueueMap = new LinkedHashMap<Destination, Integer>();
-            List<String> messageList = new ArrayList<String>();
-            for (Message message : messages.getMessages()) {
-                messageList.add(new String(message.body, "UTF-8"));
-                replyTo = message.jmsMessage.getJMSReplyTo();
-                if (replyTo != null) replyToQueueMap.put(replyTo, 1);
-            }
-            //connectionResource.getCallBackServiceInstance().logError(connectionResource.getConsumerTag() + " Merging messages: " + messageList.size());
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            connectionResource.getCallBackServiceInstance().processXSTROMAMessagePayloads(baos, messageList,
-                    (messages.messageStartsWith == '{') ? MetaTypeEnum.JSON : MetaTypeEnum.XML);
-            byte[] message = baos.toByteArray();
-            if (replyToQueueMap.size() > 0) {                
-                for (Map.Entry<Destination, Integer> queueEntry : replyToQueueMap.entrySet()) {
-                    BytesMessage outMessage = session.createBytesMessage();
-                    outMessage.writeBytes(message);
-                    producer.send(queueEntry.getKey(), outMessage);
+            if (mergeOnReplyTo) {
+                for (Map.Entry<Destination, List<Message>> entry : messages.getMessagesByReplyTo().entrySet()) {
+                    processMessageBatch(entry.getValue());
                 }
+            } else {
+                processMessageBatch(messages.getMessages());
             }
-            return message;
         } catch (Exception e) {
             throw new Exception(eLabel + e);
         }
+    }
+    
+    public synchronized void processMessageBatch (List<Message> messageObjectList) throws Exception {
+        Destination replyTo;
+        Map<Destination, Integer> replyToQueueMap = new LinkedHashMap<Destination, Integer>();
+        List<String> messageList = new ArrayList<String>();
+        for (Message message : messageObjectList) {
+            messageList.add(new String(message.body, "UTF-8"));
+            replyTo = message.jmsMessage.getJMSReplyTo();
+            if (replyTo != null) replyToQueueMap.put(replyTo, 1);
+        }
+        //connectionResource.getCallBackServiceInstance().logError(connectionResource.getConsumerTag() + " Merging messages: " + messageList.size());
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        connectionResource.getCallBackServiceInstance().processXSTROMAMessagePayloads(baos, messageList,
+                (messages.messageStartsWith == '{') ? MetaTypeEnum.JSON : MetaTypeEnum.XML);
+        byte[] message = baos.toByteArray();
+        if (replyToQueueMap.size() > 0) {                
+            for (Map.Entry<Destination, Integer> queueEntry : replyToQueueMap.entrySet()) {
+                BytesMessage outMessage = session.createBytesMessage();
+                outMessage.writeBytes(message);
+                producer.send(queueEntry.getKey(), outMessage);
+            }
+        }
+        // XXX - Passing in "new byte[] {}" here as the value of the original request. Since the original request
+        // is actually an aggregation of multiple X-STROMA requests, we'll need to build in some sort of
+        // List structure to accommodate this later if needed
+        if (connectionResource.hasResponseProcessor()) connectionResource.fireResponseProcessor(message, new byte[] {});
     }
 
     public synchronized void ackMessages () throws Exception {
@@ -203,6 +212,8 @@ public class ActiveMQMergingDefaultConsumer extends TimerTask implements ActiveM
     private MessageProducer producer;
     private MessageListAggregate messages = new MessageListAggregate();
     private int replyToMessageDeliveryMode = -1;
+    private boolean mergeOnReplyTo = true;
+    private final static String MERGE_ON_REPLYTO = "merge_on_replyto";
 
 }
 
@@ -214,7 +225,7 @@ class MessageListAggregate {
             if (message.body.length < 1) throw new Exception("Message body is empty");
             if (messageStartsWith == null) messageStartsWith = (char)message.body[0];
             if (messageStartsWith == (char)message.body[0]) {
-                messages.add(message);
+                addValidMessages(message);
             } else {
                 alternateFormatMessages.add(message);
             }
@@ -222,20 +233,38 @@ class MessageListAggregate {
             throw new Exception(eLabel + e);
         }
     }
+    
+    private void addValidMessages (Message message) throws JMSException {
+        // Add to total aggregate List
+        messages.add(message);
+        // Also index by reply to value
+        List<Message> messageList = messagesByReplyTo.get(message.jmsMessage.getJMSReplyTo());
+        if (messageList == null) {
+            messageList = Collections.synchronizedList(new ArrayList<Message>());
+            messagesByReplyTo.put(message.jmsMessage.getJMSReplyTo(), messageList);
+        }
+        messageList.add(message);
+    }
 
     public void reset () {
         messages.clear();
         messageStartsWith = null;
+        messagesByReplyTo.clear();
     }
 
     public List<Message> getMessages () {
         return messages;
+    }
+    
+    public Map<Destination, List<Message>> getMessagesByReplyTo () {
+        return messagesByReplyTo;
     }
 
     public List<Message> getAlternateFormatMessages () {
         return alternateFormatMessages;
     }
 
+    Map<Destination, List<Message>> messagesByReplyTo = new LinkedHashMap<Destination, List<Message>>();
     List<Message> messages = Collections.synchronizedList(new ArrayList<Message>());
     List<Message> alternateFormatMessages = Collections.synchronizedList(new ArrayList<Message>());
     Character messageStartsWith = null;

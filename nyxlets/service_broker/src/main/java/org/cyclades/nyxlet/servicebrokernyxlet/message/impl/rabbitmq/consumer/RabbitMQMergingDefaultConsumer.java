@@ -153,10 +153,10 @@ public class RabbitMQMergingDefaultConsumer extends TimerTask implements RabbitM
                 connectionResource.getChannel().basicPublish("", queueEntry.getKey(), messageProps, message);
             }
         }
-        // XXX - Passing in "null" here as the value of the original request. Since the original request
+        // XXX - Passing in "new byte[] {}" here as the value of the original request. Since the original request
         // is actually an aggregation of multiple X-STROMA requests, we'll need to build in some sort of
         // List structure to accommodate this later if needed
-        if (connectionResource.hasResponseProcessor()) connectionResource.fireResponseProcessor(message, null);
+        if (connectionResource.hasResponseProcessor()) connectionResource.fireResponseProcessor(message, new byte[] {});
     }
 
     public synchronized void ackMessages () throws Exception {

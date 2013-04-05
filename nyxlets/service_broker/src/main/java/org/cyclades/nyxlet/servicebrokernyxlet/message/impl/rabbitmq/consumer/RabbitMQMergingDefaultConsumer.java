@@ -56,6 +56,7 @@ public class RabbitMQMergingDefaultConsumer extends TimerTask implements RabbitM
             if (parameters.containsKey("accumulation_wait_mills")) accumulationWaitMills = Long.parseLong(parameters.get("accumulation_wait_mills"));
             if (parameters.containsKey("min_messages")) minMessages = Integer.parseInt(parameters.get("min_messages"));
             if (parameters.containsKey(REPLYTO_MESSAGE_DELIVERY_MODE)) replyToMessageDeliveryMode = Integer.parseInt(parameters.get(REPLYTO_MESSAGE_DELIVERY_MODE));
+            if (parameters.containsKey(MERGE_ON_REPLYTO) && parameters.get(MERGE_ON_REPLYTO) != null) mergeOnReplyTo = parameters.get(MERGE_ON_REPLYTO).equalsIgnoreCase("true");
             timer = new Timer();
             timer.schedule(this, timerDelayMills, timerPeriodMills);
             return this;
@@ -94,14 +95,8 @@ public class RabbitMQMergingDefaultConsumer extends TimerTask implements RabbitM
             }
             releaseAlternateFormatMessages();
             if (accumulationExpired()) {
-                // XXX - think about the policy here...this should work for most conditions...how can we make this better?
-                // Let's come back and revisit this as we test it.
-                byte[] accumulated = processMessages();
+                processMessages();
                 ackMessages();
-                // XXX - Passing in "null" here as the value of the original request. Since the original request
-                // is actually an aggregation of multiple X-STROMA requests, we'll need to build in some sort of
-                // List structure to accommodate this later if needed
-                if (connectionResource.hasResponseProcessor()) connectionResource.fireResponseProcessor(accumulated, null);
             }
         } catch (Exception e) {
             throw new Exception(eLabel + e);
@@ -120,34 +115,48 @@ public class RabbitMQMergingDefaultConsumer extends TimerTask implements RabbitM
         }
     }
 
-    public synchronized byte[] processMessages () throws Exception {
+    public synchronized void processMessages () throws Exception {
         final String eLabel = "RabbitMQMergingDefaultConsumer.processMessage: ";
         try {
-            String replyTo;
-            Map<String, Integer> replyToQueueMap = new LinkedHashMap<String, Integer>();
-            List<String> messageList = new ArrayList<String>();
-            for (Message message : messages.getMessages()) {
-                messageList.add(new String(message.body));
-                replyTo = message.properties.getReplyTo();
-                if (replyTo != null && !replyTo.isEmpty()) replyToQueueMap.put(replyTo, 1);
-            }
-            //connectionResource.getCallBackServiceInstance().logError(connectionResource.getConsumerTag() + " Merging messages: " + messageList.size());
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            connectionResource.getCallBackServiceInstance().processXSTROMAMessagePayloads(baos, messageList,
-                    (messages.messageStartsWith == '{') ? MetaTypeEnum.JSON : MetaTypeEnum.XML);
-            byte[] message = baos.toByteArray();
-            if (replyToQueueMap.size() > 0) {
-                AMQP.BasicProperties.Builder propsBuilder = new AMQP.BasicProperties.Builder();
-                if (replyToMessageDeliveryMode > -1) propsBuilder.deliveryMode(replyToMessageDeliveryMode);
-                AMQP.BasicProperties messageProps = propsBuilder.build();
-                for (Map.Entry<String, Integer> queueEntry : replyToQueueMap.entrySet()) {
-                    connectionResource.getChannel().basicPublish("", queueEntry.getKey(), messageProps, message);
+            
+            if (mergeOnReplyTo) {
+                for (Map.Entry<String, List<Message>> entry : messages.getMessagesByReplyTo().entrySet()) {
+                    processMessageBatch(entry.getValue());
                 }
+            } else {
+                processMessageBatch(messages.getMessages());
             }
-            return message;
         } catch (Exception e) {
             throw new Exception(eLabel + e);
         }
+    }
+    
+    private synchronized void processMessageBatch (List<Message> messageObjectList) throws Exception {
+        String replyTo;
+        Map<String, Integer> replyToQueueMap = new LinkedHashMap<String, Integer>();
+        List<String> messageList = new ArrayList<String>();
+        for (Message message : messageObjectList) {
+            messageList.add(new String(message.body));
+            replyTo = message.properties.getReplyTo();
+            if (replyTo != null && !replyTo.isEmpty()) replyToQueueMap.put(replyTo, 1);
+        }
+        //connectionResource.getCallBackServiceInstance().logError(connectionResource.getConsumerTag() + " Merging messages: " + messageList.size());
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        connectionResource.getCallBackServiceInstance().processXSTROMAMessagePayloads(baos, messageList,
+                (messages.messageStartsWith == '{') ? MetaTypeEnum.JSON : MetaTypeEnum.XML);
+        byte[] message = baos.toByteArray();
+        if (replyToQueueMap.size() > 0) {
+            AMQP.BasicProperties.Builder propsBuilder = new AMQP.BasicProperties.Builder();
+            if (replyToMessageDeliveryMode > -1) propsBuilder.deliveryMode(replyToMessageDeliveryMode);
+            AMQP.BasicProperties messageProps = propsBuilder.build();
+            for (Map.Entry<String, Integer> queueEntry : replyToQueueMap.entrySet()) {
+                connectionResource.getChannel().basicPublish("", queueEntry.getKey(), messageProps, message);
+            }
+        }
+        // XXX - Passing in "null" here as the value of the original request. Since the original request
+        // is actually an aggregation of multiple X-STROMA requests, we'll need to build in some sort of
+        // List structure to accommodate this later if needed
+        if (connectionResource.hasResponseProcessor()) connectionResource.fireResponseProcessor(message, null);
     }
 
     public synchronized void ackMessages () throws Exception {
@@ -175,6 +184,8 @@ public class RabbitMQMergingDefaultConsumer extends TimerTask implements RabbitM
     ConnectionResource connectionResource;
     MessageListAggregate messages = new MessageListAggregate();
     private int replyToMessageDeliveryMode = -1;
+    private boolean mergeOnReplyTo = true;
+    private final static String MERGE_ON_REPLYTO = "merge_on_replyto";
 
 }
 
@@ -186,7 +197,7 @@ class MessageListAggregate {
             if (message.body.length < 1) throw new Exception("Message body is empty");
             if (messageStartsWith == null) messageStartsWith = (char)message.body[0];
             if (messageStartsWith == (char)message.body[0]) {
-                messages.add(message);
+                addValidMessages(message);
             } else {
                 alternateFormatMessages.add(message);
             }
@@ -194,20 +205,38 @@ class MessageListAggregate {
             throw new Exception(eLabel + e);
         }
     }
+    
+    private void addValidMessages (Message message) {
+        // Add to total aggregate List
+        messages.add(message);
+        // Also index by reply to value
+        List<Message> messageList = messagesByReplyTo.get(message.properties.getReplyTo());
+        if (messageList == null) {
+            messageList = Collections.synchronizedList(new ArrayList<Message>());
+            messagesByReplyTo.put(message.properties.getReplyTo(), messageList);
+        }
+        messageList.add(message);
+    }
 
     public void reset () {
         messages.clear();
         messageStartsWith = null;
+        messagesByReplyTo.clear();
     }
 
     public List<Message> getMessages () {
         return messages;
+    }
+    
+    public Map<String, List<Message>> getMessagesByReplyTo () {
+        return messagesByReplyTo;
     }
 
     public List<Message> getAlternateFormatMessages () {
         return alternateFormatMessages;
     }
 
+    Map<String, List<Message>> messagesByReplyTo = new LinkedHashMap<String, List<Message>>();
     List<Message> messages = Collections.synchronizedList(new ArrayList<Message>());
     List<Message> alternateFormatMessages = Collections.synchronizedList(new ArrayList<Message>());
     Character messageStartsWith = null;

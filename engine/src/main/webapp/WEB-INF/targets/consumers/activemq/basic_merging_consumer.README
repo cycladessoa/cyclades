@@ -14,6 +14,7 @@ Field definitions in lined with the JSON below:
     "class": "org.cyclades.nyxlet.servicebrokernyxlet.message.impl.activemq.Consumer", // The class that will be instantiated
     "target_init_data": {
         "consumer_type": "merging",                                                    // Specify this as a merging consumer
+        "merge_on_replyto": "true",                                                    // Batch the messages according to their replyto field
         "timer_period_mills": "10000",                                                 // Check for new messages every 10 seconds
         "accumulation_wait_mills": "60000",                                            // The maximum accumulation wait time before processing accumulated messages
         "min_messages": "1000",                                                        // The minumum amout of messages to accuulate before processing

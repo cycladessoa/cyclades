@@ -2,6 +2,7 @@
     "class": "org.cyclades.nyxlet.servicebrokernyxlet.message.impl.activemq.Consumer",
     "target_init_data": {
         "consumer_type": "merging",
+        "merge_on_replyto": "true",
         "timer_period_mills": "10000",
         "accumulation_wait_mills": "60000",
         "min_messages": "1000",

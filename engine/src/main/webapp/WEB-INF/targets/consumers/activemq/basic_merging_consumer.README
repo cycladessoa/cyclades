@@ -15,6 +15,7 @@ Field definitions in lined with the JSON below:
     "target_init_data": {
         "consumer_type": "merging",                                                    // Specify this as a merging consumer
         "merge_on_replyto": "true",                                                    // Batch the messages according to their replyto field
+        "replyto_unity_only": "false",                                                 // Only reply when there is one request...used for MapReduce like functionality...see docs for more info prior to enabling
         "timer_period_mills": "10000",                                                 // Check for new messages every 10 seconds
         "accumulation_wait_mills": "60000",                                            // The maximum accumulation wait time before processing accumulated messages
         "min_messages": "1000",                                                        // The minumum amout of messages to accuulate before processing

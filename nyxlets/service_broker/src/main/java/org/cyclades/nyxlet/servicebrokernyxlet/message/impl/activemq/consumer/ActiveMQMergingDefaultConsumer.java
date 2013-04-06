@@ -63,6 +63,7 @@ public class ActiveMQMergingDefaultConsumer extends TimerTask implements ActiveM
             if (parameters.containsKey("min_messages")) minMessages = Integer.parseInt(parameters.get("min_messages"));
             if (parameters.containsKey(REPLYTO_MESSAGE_DELIVERY_MODE)) replyToMessageDeliveryMode = Integer.parseInt(parameters.get(REPLYTO_MESSAGE_DELIVERY_MODE));
             if (parameters.containsKey(MERGE_ON_REPLYTO) && parameters.get(MERGE_ON_REPLYTO) != null) mergeOnReplyTo = parameters.get(MERGE_ON_REPLYTO).equalsIgnoreCase("true");
+            if (parameters.containsKey(REPLYTO_UNITY_ONLY) && parameters.get(REPLYTO_UNITY_ONLY) != null) replyToUnityOnly = parameters.get(REPLYTO_UNITY_ONLY).equalsIgnoreCase("true");
             session = connectionResource.getConnection().createSession(false, Session.CLIENT_ACKNOWLEDGE);
             consumer = session.createConsumer(session.createQueue(connectionResource.getQueueName()));
             producer = session.createProducer(null);
@@ -173,17 +174,18 @@ public class ActiveMQMergingDefaultConsumer extends TimerTask implements ActiveM
         connectionResource.getCallBackServiceInstance().processXSTROMAMessagePayloads(baos, messageList,
                 (messages.messageStartsWith == '{') ? MetaTypeEnum.JSON : MetaTypeEnum.XML);
         byte[] message = baos.toByteArray();
-        if (replyToQueueMap.size() > 0) {                
+        if (replyToQueueMap.size() > 0 && (!replyToUnityOnly || (replyToUnityOnly && messageObjectList.size() == 1))) {                
             for (Map.Entry<Destination, Integer> queueEntry : replyToQueueMap.entrySet()) {
                 BytesMessage outMessage = session.createBytesMessage();
                 outMessage.writeBytes(message);
                 producer.send(queueEntry.getKey(), outMessage);
             }
         }
-        // XXX - Passing in "new byte[] {}" here as the value of the original request. Since the original request
+        // XXX - Passing in the first request here as the value of the original request. Since the original request
         // is actually an aggregation of multiple X-STROMA requests, we'll need to build in some sort of
         // List structure to accommodate this later if needed
-        if (connectionResource.hasResponseProcessor()) connectionResource.fireResponseProcessor(message, new byte[] {});
+        if (connectionResource.hasResponseProcessor()) connectionResource.fireResponseProcessor(message, 
+                (!messageObjectList.isEmpty()) ? messageObjectList.get(0).body : new byte[] {});
     }
 
     public synchronized void ackMessages () throws Exception {
@@ -213,7 +215,9 @@ public class ActiveMQMergingDefaultConsumer extends TimerTask implements ActiveM
     private MessageListAggregate messages = new MessageListAggregate();
     private int replyToMessageDeliveryMode = -1;
     private boolean mergeOnReplyTo = true;
-    private final static String MERGE_ON_REPLYTO = "merge_on_replyto";
+    private boolean replyToUnityOnly = false;
+    private final static String MERGE_ON_REPLYTO    = "merge_on_replyto";
+    private final static String REPLYTO_UNITY_ONLY  = "replyto_unity_only";
 
 }
 

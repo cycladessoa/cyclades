@@ -78,7 +78,6 @@ find ${PNAME_DIR}/ -type f | while read file; do
     cat $file | sed "s/NYXLET_NAME/${PNAME}/g" > ${file}.new
     mv ${file}.new ${file}
 done
-cp -r ${SCRIPT_DIR}/.templates/secring.gpg ${PNAME_DIR}/
 
 touch ${PNAME_DIR}/README.TXT
 

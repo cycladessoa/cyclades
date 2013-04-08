@@ -94,7 +94,7 @@ public class ActiveMQMergingDefaultConsumer extends TimerTask implements ActiveM
         try {
             accumulateMessages();
         } catch (Exception e) {
-            connectionResource.getCallBackServiceInstance().logError(eLabel + e);
+            connectionResource.getCallBackServiceInstance().logStackTrace(e);
         }
     }
 
@@ -146,7 +146,7 @@ public class ActiveMQMergingDefaultConsumer extends TimerTask implements ActiveM
     }
 
     public synchronized void processMessages () throws Exception {
-        final String eLabel = "ActiveMQMergingDefaultConsumer.processMessage: ";
+        final String eLabel = "ActiveMQMergingDefaultConsumer.processMessages: ";
         try {
             if (mergeOnReplyTo) {
                 for (Map.Entry<Destination, List<Message>> entry : messages.getMessagesByReplyTo().entrySet()) {
@@ -183,13 +183,18 @@ public class ActiveMQMergingDefaultConsumer extends TimerTask implements ActiveM
         }
         // XXX - Passing in the first request here as the value of the original request. Since the original request
         // is actually an aggregation of multiple X-STROMA requests, we'll need to build in some sort of
-        // List structure to accommodate this later if needed
-        if (connectionResource.hasResponseProcessor()) connectionResource.fireResponseProcessor(message, 
-                (!messageObjectList.isEmpty()) ? messageObjectList.get(0).body : new byte[] {});
+        // List structure to accommodate this later if needed. 
+        // XXX - Exception policy: Exceptions are logged and we move on.
+        try {
+            if (connectionResource.hasResponseProcessor()) connectionResource.fireResponseProcessor(message, 
+                    (!messageObjectList.isEmpty()) ? messageObjectList.get(0).body : new byte[] {});
+        } catch (Exception e) {
+            connectionResource.getCallBackServiceInstance().logStackTrace(e);
+        }
     }
 
     public synchronized void ackMessages () throws Exception {
-        final String eLabel = "ActiveMQMergingDefaultConsumer.processMessage: ";
+        final String eLabel = "ActiveMQMergingDefaultConsumer.ackMessages: ";
         try {
             for (Message message : messages.getMessages()) message.jmsMessage.acknowledge();
             messages.reset();

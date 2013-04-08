@@ -81,7 +81,7 @@ public class RabbitMQMergingDefaultConsumer extends TimerTask implements RabbitM
         try {
             accumulateMessages();
         } catch (Exception e) {
-            connectionResource.getCallBackServiceInstance().logError(eLabel + e);
+            connectionResource.getCallBackServiceInstance().logStackTrace(e);
         }
     }
 
@@ -117,7 +117,7 @@ public class RabbitMQMergingDefaultConsumer extends TimerTask implements RabbitM
     }
 
     public synchronized void processMessages () throws Exception {
-        final String eLabel = "RabbitMQMergingDefaultConsumer.processMessage: ";
+        final String eLabel = "RabbitMQMergingDefaultConsumer.processMessages: ";
         try {
             
             if (mergeOnReplyTo) {
@@ -156,13 +156,18 @@ public class RabbitMQMergingDefaultConsumer extends TimerTask implements RabbitM
         }
         // XXX - Passing in the first request here as the value of the original request. Since the original request
         // is actually an aggregation of multiple X-STROMA requests, we'll need to build in some sort of
-        // List structure to accommodate this later if needed
-        if (connectionResource.hasResponseProcessor()) connectionResource.fireResponseProcessor(message, 
-                (!messageObjectList.isEmpty()) ? messageObjectList.get(0).body : new byte[] {});
+        // List structure to accommodate this later if needed.
+        // XXX - Exception policy: Exceptions are logged and we move on.
+        try {
+            if (connectionResource.hasResponseProcessor()) connectionResource.fireResponseProcessor(message, 
+                    (!messageObjectList.isEmpty()) ? messageObjectList.get(0).body : new byte[] {});
+        } catch (Exception e) {
+            connectionResource.getCallBackServiceInstance().logStackTrace(e);
+        }
     }
 
     public synchronized void ackMessages () throws Exception {
-        final String eLabel = "RabbitMQMergingDefaultConsumer.processMessage: ";
+        final String eLabel = "RabbitMQMergingDefaultConsumer.ackMessages: ";
         try {
             for (Message message : messages.getMessages()) {
                 connectionResource.getChannel().basicAck(message.envelope.getDeliveryTag(), false);

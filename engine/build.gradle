@@ -139,8 +139,8 @@ dependencies {
     compile group: 'net.sf.saxon', name: 'Saxon-HE', version: '9.4'
 }
 
-compileJava.options.compilerArgs = ['-Xlint:deprecation -Xlint:unchecked']
-compileTestJava.options.compilerArgs = ['-Xlint:deprecation -Xlint:unchecked']
+compileJava.options.compilerArgs = ['-Xlint:deprecation', '-Xlint:unchecked']
+compileTestJava.options.compilerArgs = ['-Xlint:deprecation', '-Xlint:unchecked']
 
 task copyToLib(type: Copy) {
     into "$buildDir/libs"

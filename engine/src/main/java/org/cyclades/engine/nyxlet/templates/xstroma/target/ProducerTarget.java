@@ -52,6 +52,7 @@ public class ProducerTarget {
      * @param isLocal               Mark this target as local if true
      * @throws Exception
      */
+    @SuppressWarnings("unchecked")
     public ProducerTarget (String authenticationData, boolean authDataForwarding, String theClass, JSONObject targetInitData, boolean isLocal, ServiceBrokerNyxletImpl service)  throws Exception {
         final String eLabel = "ProducerTarget.ProducerTarget: ";
         try {
@@ -79,6 +80,7 @@ public class ProducerTarget {
      * @param targetInitData        Initialization data in the form of a JSONObject, straight from the config file
      * @throws Exception
      */
+    @SuppressWarnings("unchecked")
     public ProducerTarget (String theClass, JSONObject targetInitData)  throws Exception {
         final String eLabel = "ProducerTarget.ProducerTarget: ";
         try {
@@ -168,7 +170,7 @@ public class ProducerTarget {
      * @return map of ProducerTargets
      * @throws Exception
      */
-    public static Map loadTargets (List<JSONObject> producerJSONObjectTargets, List<JSONObject> producerJSONObjectTargetAliases, ServiceBrokerNyxletImpl service) throws Exception {
+    public static Map<String, ProducerTarget> loadTargets (List<JSONObject> producerJSONObjectTargets, List<JSONObject> producerJSONObjectTargetAliases, ServiceBrokerNyxletImpl service) throws Exception {
         final String eLabel = "ProducerTarget.loadTargets: ";
         Map<String, ProducerTarget> targetsMap = null;
         try {

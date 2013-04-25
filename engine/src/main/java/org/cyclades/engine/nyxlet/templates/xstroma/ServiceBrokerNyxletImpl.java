@@ -356,7 +356,6 @@ public class ServiceBrokerNyxletImpl extends XSTROMANyxlet {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void init() throws CycladesException {
         final String eLabel = "ServiceBrokerNyxlet.init: ";
         try {

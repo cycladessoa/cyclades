@@ -39,6 +39,7 @@ import org.cyclades.engine.util.MapHelper;
 
 public class ConsumerTarget {
 
+    @SuppressWarnings("unchecked")
     public ConsumerTarget (String theClass, JSONObject initializationData, JSONObject messageProcessorData, JSONObject responseProcessorData, ServiceBrokerNyxletImpl service) throws Exception {
         final String eLabel = "ConsumerTarget.ConsumerTarget: ";
         try {
@@ -65,6 +66,7 @@ public class ConsumerTarget {
      * @param messageProcessor The message processor implementation for the consumer to use
      * @throws Exception
      */
+    @SuppressWarnings("unchecked")
     public ConsumerTarget (String theClass, JSONObject initializationData, MessageProcessor messageProcessor) throws Exception {
         final String eLabel = "ConsumerTarget.ConsumerTarget: ";
         try {

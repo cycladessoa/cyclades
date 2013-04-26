@@ -172,8 +172,8 @@ jar.doLast() {
     }
 }
 
-compileJava.options.compilerArgs = ['-Xlint:deprecation -Xlint:unchecked']
-compileTestJava.options.compilerArgs = ['-Xlint:deprecation -Xlint:unchecked']
+compileJava.options.compilerArgs = ['-Xlint:deprecation', '-Xlint:unchecked']
+compileTestJava.options.compilerArgs = ['-Xlint:deprecation', '-Xlint:unchecked']
 
 sourceSets.main.resources.srcDir 'conf'
 

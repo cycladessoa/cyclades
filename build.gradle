@@ -189,6 +189,7 @@ war.doFirst() {
         attributes 'Implementation-Vendor-Id': "Cyclades SOA"
         attributes 'Implementation-Version': version
         attributes 'Built-With': 'gradle-' + GradleVersion.current()
+        attributes 'Built-With-Java-Version': JavaVersion.current()
         attributes 'Built-By': System.getProperty('user.name')
         attributes 'Cyclades-Engine': engine_version + '-' + build_number
         attributes 'Nyxlet-hello_world': nyxlet_hello_world_version + '-' + build_number

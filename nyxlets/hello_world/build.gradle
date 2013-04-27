@@ -131,6 +131,7 @@ jar.doFirst() {
         attributes 'Implementation-Vendor-Id': "CycladesSOA"
         attributes 'Implementation-Version': version
         attributes 'Built-With': 'gradle-' + GradleVersion.current()
+        attributes 'Built-With-Java-Version': JavaVersion.current()
         attributes 'Built-By': System.getProperty("user.name")
 
         Map dynamicAttributes = new HashMap()

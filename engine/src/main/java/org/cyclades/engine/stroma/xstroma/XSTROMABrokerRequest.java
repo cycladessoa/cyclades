@@ -107,12 +107,32 @@ public class XSTROMABrokerRequest {
     public static XSTROMABrokerResponse execute (String brokerName, MetaTypeEnum metaTypeEnum, Map<String, List<String>> parameters, InputStream is) throws Exception {
         final String eLabel = "XSTROMABrokerRequest.execute: ";
         try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            execute(brokerName, metaTypeEnum, parameters, is, baos);
+            return new XSTROMABrokerResponse(metaTypeEnum, baos.toString());
+        } catch (Exception e) {
+            throw new Exception(eLabel + e);
+        }
+    }
+    
+    /**
+     * Static method that bypasses "data" parameter accumulation. The InputStream can also be utilized as the "data" section if no "data"
+     * parameter exists in the "parameters" argument.
+     * 
+     * @param brokerName
+     * @param metaTypeEnum
+     * @param parameters
+     * @param is
+     * @param os
+     * @throws Exception
+     */
+    public static void execute (String brokerName, MetaTypeEnum metaTypeEnum, Map<String, List<String>> parameters, InputStream is, OutputStream os) throws Exception {
+        final String eLabel = "XSTROMABrokerRequest.execute: ";
+        try {
             Nyxlet brokerNyxlet = NyxletRepository.getStaticInstance().getNyxlet(brokerName);
             if (brokerNyxlet == null) throw new Exception("Service not found: " + brokerName);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
             if (metaTypeEnum != null) parameters.put("data-type", new ArrayList<String>(Arrays.asList(metaTypeEnum.name().toLowerCase())));
-            brokerNyxlet.process(parameters, is, baos);
-            return new XSTROMABrokerResponse(metaTypeEnum, baos.toString());
+            brokerNyxlet.process(parameters, is, os);
         } catch (Exception e) {
             throw new Exception(eLabel + e);
         }
@@ -143,22 +163,31 @@ public class XSTROMABrokerRequest {
     }
 
     public void execute (OutputStream os) throws Exception {
-        final String eLabel = "XSTROMABrokerRequest.execute(OutputStream): ";
+        InputStream is = null;
+        execute(is, os);
+    }
+    
+    public void execute (InputStream is, OutputStream os) throws Exception {
+        final String eLabel = "XSTROMABrokerRequest.execute(InputStream, OutputStream): ";
         try {
             Nyxlet mod = NyxletRepository.getStaticInstance().getNyxlet(brokerName);
             if (mod == null) throw new Exception("Service not found: " + brokerName);
-            execute(mod, os);
+            execute(mod, is, os);
         } catch (Exception e) {
             throw new Exception(eLabel + e);
         }
     }
 
     public void execute (Nyxlet brokerNyxlet, OutputStream os) throws Exception {
-        final String eLabel = "XSTROMABrokerRequest.execute(Nyxlet, OutputStream): ";
+        execute(brokerNyxlet, null, os);
+    }
+    
+    public void execute (Nyxlet brokerNyxlet, InputStream is, OutputStream os) throws Exception {
+        final String eLabel = "XSTROMABrokerRequest.execute(Nyxlet, InputStream, OutputStream): ";
         try {
             parameters.put("data-type", new ArrayList<String>(Arrays.asList(metaTypeEnum.name().toLowerCase())));
-            parameters.put("data", new ArrayList<String>(Arrays.asList(generateData())));
-            brokerNyxlet.process(parameters, null, os);
+            if (is == null) parameters.put("data", new ArrayList<String>(Arrays.asList(generateData())));
+            brokerNyxlet.process(parameters, is, os);
         } catch (Exception e) {
             throw new Exception(eLabel + e);
         }

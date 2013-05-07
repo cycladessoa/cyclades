@@ -92,93 +92,122 @@ public class Message {
     }
      
     /**
-     * Send a XSTROMABrokerRequest message
+     * Send a XSTROMABrokerRequest message. This is simply a helper method, ProducerTarget can be used directly as an alternative.
      * 
      * @param producerClass     The class of the producer
      * @param producerJSON      The producer connection JSON descriptor
      * @param xstromaRequest    The message to send
-     * @param replyTo           The reply to queue, null means do not reply to
+     * @param @param replyTo           The replyto queue, null means do not reply, or that it already exists in the messageAttributes
+     *  passed in.
+     * @param messageAttributes Message attributes, this can be used for utilizing the same attributes for many messages without
+     *  re creating the Map for each message, i.e. you can do this by creating a Map, adding the "replyto" attribute to that
+     *  map and passing that in for each call to this method. A new Map will be created if this is null.
      * @throws Exception
      */
     public static void produce (String producerClass,JSONObject producerJSON, XSTROMABrokerRequest xstromaRequest, 
-            String replyTo) throws Exception {
-        produce(producerClass, producerJSON, xstromaRequest.toXSTROMAMessage(), replyTo);
+            String replyTo, Map<String, List<String>> messageAttributes) throws Exception {
+        produce(producerClass, producerJSON, xstromaRequest.toXSTROMAMessage(), replyTo, messageAttributes);
     }
     
     /**
-     * Send a XSTROMABrokerRequest message
+     * Send a XSTROMABrokerRequest message. This is simply a helper method, ProducerTarget can be used directly as an alternative.
      * 
      * @param pt                The ProducerTarget to use for sending the message
      * @param xstromaRequest    The message to send
-     * @param replyTo           The reply to queue, null means do not reply to
+     * @param replyTo           The replyto queue, null means do not reply, or that it already exists in the messageAttributes
+     *  passed in.
+     * @param messageAttributes Message attributes, this can be used for utilizing the same attributes for many messages without
+     *  re creating the Map for each message, i.e. you can do this by creating a Map, adding the "replyto" attribute to that
+     *  map and passing that in for each call to this method. A new Map will be created if this is null.
      * @throws Exception
      */
-    public static void produce (ProducerTarget pt, XSTROMABrokerRequest xstromaRequest, String replyTo) throws Exception {
-        produce(pt, xstromaRequest.toXSTROMAMessage(), replyTo);
+    public static void produce (ProducerTarget pt, XSTROMABrokerRequest xstromaRequest, String replyTo, 
+            Map<String, List<String>> messageAttributes) throws Exception {
+        produce(pt, xstromaRequest.toXSTROMAMessage(), replyTo, messageAttributes);
     }
      
     /**
-     * Send a String message
+     * Send a String message. This is simply a helper method, ProducerTarget can be used directly as an alternative.
      * 
      * @param producerClass The class of the producer
      * @param producerJSON  The producer connection JSON descriptor
      * @param message       The message to send
-     * @param replyTo       The reply to queue, null means do not reply to
+     * @param replyTo           The replyto queue, null means do not reply, or that it already exists in the messageAttributes
+     *  passed in.
+     * @param messageAttributes Message attributes, this can be used for utilizing the same attributes for many messages without
+     *  re creating the Map for each message, i.e. you can do this by creating a Map, adding the "replyto" attribute to that
+     *  map and passing that in for each call to this method. A new Map will be created if this is null.
      * @throws Exception
      */
-    public static void produce (String producerClass, JSONObject producerJSON, String message, String replyTo) throws Exception {
+    public static void produce (String producerClass, JSONObject producerJSON, String message, String replyTo, 
+            Map<String, List<String>> messageAttributes) throws Exception {
         ProducerTarget pt = null;
         try {
             pt = new ProducerTarget(producerClass, producerJSON);
-            produce(pt, message, replyTo);
+            produce(pt, message, replyTo, messageAttributes);
         } finally {
             try { pt.destroy(); } catch (Exception e) {};
         }
     }
     
     /**
-     * Send a String message
+     * Send a String message. This is simply a helper method, ProducerTarget can be used directly as an alternative.
      * 
-     * @param pt        The ProducerTarget to use for sending the message
-     * @param message   The message to send
-     * @param replyTo   The reply to queue, null means do not reply to
+     * @param pt                The ProducerTarget to use for sending the message
+     * @param message           The message to send
+     * @param replyTo           The replyto queue, null means do not reply, or that it already exists in the messageAttributes
+     *  passed in.
+     * @param messageAttributes Message attributes, this can be used for utilizing the same attributes for many messages without
+     *  re creating the Map for each message, i.e. you can do this by creating a Map, adding the "replyto" attribute to that
+     *  map and passing that in for each call to this method. A new Map will be created if this is null.
      * @throws Exception
      */
-    public static void produce (ProducerTarget pt, String message, String replyTo) throws Exception {
-        Map<String, List<String>> messageAttributes = new HashMap<String, List<String>>();
+    public static void produce (ProducerTarget pt, String message, String replyTo, 
+            Map<String, List<String>> messageAttributes) throws Exception {
+        if (messageAttributes == null) messageAttributes = new HashMap<String, List<String>>();
         if (replyTo != null) messageAttributes.put("replyto", new ArrayList<String>(Arrays.asList(replyTo)));
         pt.getMessageProducer().sendMessage(message, messageAttributes);
     }
     
     /**
-     * Send a byte[] message
+     * Send a byte[] message. This is simply a helper method, ProducerTarget can be used directly as an alternative.
      * 
-     * @param producerClass The class of the producer
-     * @param producerJSON  The producer connection JSON descriptor
-     * @param message       The message to send
-     * @param replyTo       The reply to queue, null means do not reply to
+     * @param producerClass     The class of the producer
+     * @param producerJSON      The producer connection JSON descriptor
+     * @param message           The message to send
+     * @param replyTo           The replyto queue, null means do not reply, or that it already exists in the messageAttributes
+     *  passed in.
+     * @param messageAttributes Message attributes, this can be used for utilizing the same attributes for many messages without
+     *  re creating the Map for each message, i.e. you can do this by creating a Map, adding the "replyto" attribute to that
+     *  map and passing that in for each call to this method. A new Map will be created if this is null.
      * @throws Exception
      */
-    public static void produce (String producerClass, JSONObject producerJSON, byte[] message, String replyTo) throws Exception {
+    public static void produce (String producerClass, JSONObject producerJSON, byte[] message, String replyTo, 
+            Map<String, List<String>> messageAttributes) throws Exception {
         ProducerTarget pt = null;
         try {
             pt = new ProducerTarget(producerClass, producerJSON);
-            produce(pt, message, replyTo);
+            produce(pt, message, replyTo, messageAttributes);
         } finally {
             try { pt.destroy(); } catch (Exception e) {};
         }
     }
     
     /**
-     * Send a byte[] message
+     * Send a byte[] message. This is simply a helper method, ProducerTarget can be used directly as an alternative.
      * 
-     * @param pt        The ProducerTarget to use for sending the message
-     * @param message   The message to send
-     * @param replyTo   The reply to queue, null means do not reply to
+     * @param pt                The ProducerTarget to use for sending the message
+     * @param message           The message to send
+     * @param replyTo           The replyto queue, null means do not reply, or that it already exists in the messageAttributes
+     *  passed in.
+     * @param messageAttributes Message attributes, this can be used for utilizing the same attributes for many messages without
+     *  re creating the Map for each message, i.e. you can do this by creating a Map, adding the "replyto" attribute to that
+     *  map and passing that in for each call to this method. A new Map will be created if this is null.
      * @throws Exception
      */
-    public static void produce (ProducerTarget pt, byte[] message, String replyTo) throws Exception {
-        Map<String, List<String>> messageAttributes = new HashMap<String, List<String>>();
+    public static void produce (ProducerTarget pt, byte[] message, String replyTo, 
+            Map<String, List<String>> messageAttributes) throws Exception {
+        if (messageAttributes == null) messageAttributes = new HashMap<String, List<String>>();
         if (replyTo != null) messageAttributes.put("replyto", new ArrayList<String>(Arrays.asList(replyTo)));
         ((RawMessageProducer)pt.getMessageProducer()).sendMessage(message, messageAttributes);
     }

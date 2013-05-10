@@ -97,7 +97,7 @@ public class Message {
      * @param producerClass     The class of the producer
      * @param producerJSON      The producer connection JSON descriptor
      * @param xstromaRequest    The message to send
-     * @param @param replyTo           The replyto queue, null means do not reply, or that it already exists in the messageAttributes
+     * @param replyTo           The replyto queue, null means do not reply, or that it already exists in the messageAttributes
      *  passed in.
      * @param messageAttributes Message attributes, this can be used for utilizing the same attributes for many messages without
      *  re creating the Map for each message, i.e. you can do this by creating a Map, adding the "replyto" attribute to that

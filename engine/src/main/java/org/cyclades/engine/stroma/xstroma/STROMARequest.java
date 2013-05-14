@@ -106,6 +106,10 @@ public class STROMARequest extends STROMAServiceRequest {
     public void setParameters (Map<String, List<String>> parameters) {
         this.parameters = parameters;
     }
+    
+    public MetaTypeEnum getMetaTypeEnum () {
+        return metaTypeEnum;
+    }
 
     public String toJSONString () throws Exception {
         final String eLabel = "STROMARequest.toRequestString: ";

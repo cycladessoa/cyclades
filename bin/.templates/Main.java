@@ -158,7 +158,7 @@ public class Main extends STROMANyxlet {
             //setActive(true);
             return true;
         } else {
-            //logError("Deactiviating the service");
+            //logError("Deactivating the service");
             //setActive(false);
             return false;
         }

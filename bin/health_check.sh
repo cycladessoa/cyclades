@@ -27,41 +27,49 @@
 #*******************************************************************************
 #!/bin/sh
 
-if [ $# -lt 4 ]; then 
+if [ $# -lt 5 ]; then 
 	echo ""
 	echo "This is the Health Check Monitor Script (HCMS). It is intended to be run periodically, "
 	echo "for instance as a cron job.";
 	echo ""
-	echo "usage: cmd url fail_condition_pattern temp_output_file id [mailing_list_file(file contains comma-seperated email list)]"
+	echo "usage: cmd url fail_condition_pattern temp_output_file id lock_file [mailing_list_file(file contains comma-seperated email list)]"
 	echo ""
-	echo "url:				The URL whose response we will be searching"
-	echo "fail_condition_pattern:		The pattern to look for that, if found, will flag an error condition"
-	echo "temp_output_file:		The URI to the file that the response will be written to (if failure is detected)"
-	echo "id:				An identifier to include in the email subject lines"
-	echo "mailing_list_file(optional):	a file containing one line comprised of a comma seperated list of email addresses to send notifications"
+	echo "url:                         The URL whose response we will be searching"
+	echo "fail_condition_pattern:      The pattern to look for that, if found, will flag an error condition"
+	echo "temp_output_file:            The URI to the file that the response will be written to (if failure is detected)"
+	echo "id:                          An identifier to include in the email subject lines"
+        echo "lock_file                    The path to the file that, if present, will prevent this script from running the health check"
+	echo "mailing_list_file(optional): A file containing one line comprised of a comma seperated list of email addresses to send notifications"
 	echo ""
 	echo "NOTE: Notifications will be sent in the following scenarios:"
 	echo "    - A failure state is detected following a non failure state"
 	echo "    - A different failure state is detected following a failure state (a delta in the health output between two consecutive failure states)"
 	echo "    - A non failure state is detected following a failure state"
+        echo "    - A lock_file is present when the script runs and then is not present the next time it runs" 
 	echo ""
 	echo "NOTE: The email subject will be in the following format:"
 	echo "    [HCMS][host name][id parameter][FAIL|SUCCESS]"
 	echo "    The body of the email will be the health check response itself"
 	echo ""
 	echo "Example of using the health_check.sh script to trigger a  health diagnosis of the Cyclades Engine and all Nyxlets every 5 minutes:"
-	echo "*/5 * * * * /.../cyclades/bin/health_check.sh http://localhost:8080/cyclades?action=healthcheck false /tmp/cron_out 12345 /opt/my_email_list >/dev/null 2>&1"
+	echo "*/5 * * * * /.../cyclades/bin/health_check.sh http://localhost:8080/cyclades?action=healthcheck false /tmp/cron_out 12345 /tmp/health_check.sh.lock /opt/my_email_list >/dev/null 2>&1"
 	echo ""
 	exit 1
 fi
 
 TEMP_OUT_FILE=$3
 TRANSACTION_ID=$4
+LOCK_OUT_FILE=$5
 EMAIL_SUBJECT_FAILURE="[HCMS][$(hostname)][$TRANSACTION_ID][FAIL]"
 EMAIL_SUBJECT_RECOVERY="[HCMS][$(hostname)][$TRANSACTION_ID][SUCCESS]"
 
-if [ $# -gt 4 ]; then
-        EMAIL_LIST=`cat $5`
+if [ $# -gt 5 ]; then
+        EMAIL_LIST=`cat $6`
+fi
+
+if [ -e $LOCK_OUT_FILE ]; then
+    echo "lockout file exists, not running health check:[$LOCK_OUT_FILE]" | tee $TEMP_OUT_FILE
+    exit 2
 fi
 
 HEALTH_RESPONSE=`curl -D $TEMP_OUT_FILE.header  $1`

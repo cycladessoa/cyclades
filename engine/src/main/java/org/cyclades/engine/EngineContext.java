@@ -53,6 +53,7 @@ public class EngineContext {
             extractNotificationEmailData(servletConfig.getInitParameter(NOTIFICATION_EMAIL_DATA));
             String notificationLoggerString = servletConfig.getInitParameter(NOTIFICATION_LOGGER);
             this.notificationLogger = Logger.getLogger((notificationLoggerString != null) ? notificationLoggerString : DEFAULT_NOTIFICATION_LOGGER);
+            this.hostName = getHostName();
         } catch (Exception e) {
             throw new Exception(eLabel + e);
         }
@@ -71,6 +72,15 @@ public class EngineContext {
         } catch (Exception e) {
             throw new Exception(eLabel + e);
         }
+    }
+    
+    private String getHostName() {
+        String hostName = null;
+        try {
+            hostName = InetAddress.getLocalHost().getHostName();
+        } catch (Exception e) {
+        }
+        return String.valueOf(hostName);
     }
 
     public void setNyxletTargets (String nyxletRegistry) throws Exception {
@@ -179,9 +189,10 @@ public class EngineContext {
     private String notificationFromEmail;
     private String notificationSMTPHost;
     private LoggingEnum notificationLevel;
-    private String hostName = InetAddress.getLocalHost().getHostName();
+    private final String hostName;
     private final Logger notificationLogger;
     public static final String NOTIFICATION_EMAIL_DATA      = "notificationEmailData";
     public static final String NOTIFICATION_LOGGER          = "notificationLogger";
     public static final String DEFAULT_NOTIFICATION_LOGGER  = "notify";
+    
 }

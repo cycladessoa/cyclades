@@ -35,7 +35,7 @@ import org.cyclades.engine.NyxletSession;
  * This class will return the value of the "then" validator if the "if" validator
  * succeeds. This facilitates an "if then" capability with validators.
  */
-public class IfThen extends FieldValidator {
+public class IfThen extends AbstractValidator {
 
     public IfThen (FieldValidator ifValidator, FieldValidator thenValidator) {
         super();
@@ -51,7 +51,7 @@ public class IfThen extends FieldValidator {
 
     @Override
     public ValidationEnum getValidationType() {
-        return ValidationEnum.IF_THEN;
+        return ValidationEnum.ABSTRACT_VALIDATOR;
     }
 
     public ValidationFaultElement validate (NyxletSession nyxletSession, Map<String, List<String>> parameters) throws Exception {

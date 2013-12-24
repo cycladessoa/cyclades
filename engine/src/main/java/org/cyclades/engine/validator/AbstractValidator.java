@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, THE BOARD OF TRUSTEES OF THE LELAND STANFORD JUNIOR UNIVERSITY
+ * Copyright (c) 2013, THE BOARD OF TRUSTEES OF THE LELAND STANFORD JUNIOR UNIVERSITY
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -27,24 +27,24 @@
  *******************************************************************************/
 package org.cyclades.engine.validator;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.cyclades.engine.NyxletSession;
 
 /**
- * This class will be comprised of a list of child FieldValidators.
- * This FieldValidator will return success (null) if all of the child FieldValidators succeed.
- * This FieldValidator will return failure (ValidationFaultElement) if at least one of the child FieldValidators fails.
- * All FieldValidators will be executed, even if one or more fail, reporting all error conditions.
+ *  Extend this class to create a basic validator that provides all data possible in the validate signature (the NyxletSession and
+ *  all parameters)
  */
-public class AllOf extends AbstractValidator {
+public abstract class AbstractValidator extends FieldValidator {
+    
+    public abstract ValidationFaultElement validate (NyxletSession nyxletSession, Map<String, List<String>> parameters) 
+            throws Exception;
 
-    public AllOf () {
+    public AbstractValidator () {
         super();
     }
 
-    public AllOf (boolean terminal) {
+    public AbstractValidator (final boolean terminal) {
         super(terminal);
     }
 
@@ -52,32 +52,5 @@ public class AllOf extends AbstractValidator {
     public ValidationEnum getValidationType() {
         return ValidationEnum.ABSTRACT_VALIDATOR;
     }
-
-    /**
-     * Add a child FieldValidator
-     *
-     * @param fieldValidator
-     * @return this
-     */
-    public AllOf add (FieldValidator fieldValidator) {
-        fieldValidators.add(fieldValidator);
-        return this;
-    }
-
-    public ValidationFaultElement validate (NyxletSession nyxletSession, Map<String, List<String>> parameters) throws Exception {
-        ValidationFaultElement vfe = null;
-        List<ValidationFaultElement> vfeList = new ArrayList<ValidationFaultElement>();
-        for (FieldValidator fv : fieldValidators) {
-            try {
-                vfe = fv.validate(nyxletSession, parameters);
-            } catch (Exception e) {
-                vfe = new ValidationFaultElement(e);
-            }
-            if (vfe != null) vfeList.add(vfe);
-        }
-        return ((vfeList.size() > 0) ? new ValidationFaultElement(ValidationFaultElement.toString(FAULT_PREFIX, vfeList)) : null);
-    }
-
-    private List<FieldValidator> fieldValidators = new ArrayList<FieldValidator>();
-    private static final String FAULT_PREFIX = "ALL_OF_VALIDATION_FAULT_ELEMENTS";
+   
 }

@@ -38,7 +38,7 @@ import org.cyclades.engine.NyxletSession;
  * processing will take place after one of the child FieldValidators succeeds.
  * This FieldValidator will return failure (ValidationFaultElement) if none of the child FieldValidators succeed.
  */
-public class OneOf extends FieldValidator {
+public class OneOf extends AbstractValidator {
 
     public OneOf () {
         super();
@@ -50,7 +50,7 @@ public class OneOf extends FieldValidator {
 
     @Override
     public ValidationEnum getValidationType() {
-        return ValidationEnum.ONE_OF;
+        return ValidationEnum.ABSTRACT_VALIDATOR;
     }
 
     /**

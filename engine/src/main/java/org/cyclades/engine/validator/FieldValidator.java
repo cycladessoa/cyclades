@@ -58,31 +58,11 @@ public abstract class FieldValidator {
     }
 
     static enum ValidationEnum  {
-        ONE_OF {
+        ABSTRACT_VALIDATOR {
             public ValidationFaultElement validate (FieldValidator validator, NyxletSession nyxletSession, Map<String, List<String>> parameters) throws Exception {
-                final String eLabel = "FieldValidator.ValidationEnum.ONE_OF.validate: ";
+                final String eLabel = "FieldValidator.ValidationEnum.ABSTRACT_VALIDATOR.validate: ";
                 try {
-                    return ((OneOf)validator).validate(nyxletSession, parameters);
-                } catch (Exception e) {
-                    throw new Exception(eLabel + e);
-                }
-            }
-        },
-        ALL_OF {
-            public ValidationFaultElement validate (FieldValidator validator, NyxletSession nyxletSession, Map<String, List<String>> parameters) throws Exception {
-                final String eLabel = "FieldValidator.ValidationEnum.ALL_OF.validate: ";
-                try {
-                    return ((AllOf)validator).validate(nyxletSession, parameters);
-                } catch (Exception e) {
-                    throw new Exception(eLabel + e);
-                }
-            }
-        },
-        IF_THEN {
-            public ValidationFaultElement validate (FieldValidator validator, NyxletSession nyxletSession, Map<String, List<String>> parameters) throws Exception {
-                final String eLabel = "FieldValidator.ValidationEnum.IF_THEN.validate: ";
-                try {
-                    return ((IfThen)validator).validate(nyxletSession, parameters);
+                    return ((AbstractValidator)validator).validate(nyxletSession, parameters);
                 } catch (Exception e) {
                     throw new Exception(eLabel + e);
                 }

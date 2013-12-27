@@ -27,12 +27,15 @@
  *******************************************************************************/
 package org.cyclades.engine.validator;
 
-import org.w3c.dom.Node;
+import java.util.List;
+import java.util.Map;
+import org.cyclades.engine.MetaTypeEnum;
+import org.cyclades.engine.NyxletSession;
 
 /**
- * Validate the data-type is not XML
+ * Validate the data-type is not XML, both input and output
  */
-public class NoXML extends XMLValidator {
+public class NoXML extends AbstractValidator {
 
     public NoXML () {
         super();
@@ -43,8 +46,12 @@ public class NoXML extends XMLValidator {
     }
 
     @Override
-    public ValidationFaultElement validate(Node node) throws Exception {
-        return new ValidationFaultElement("XML input is not supported");
+    public ValidationFaultElement validate(NyxletSession nyxletSession, Map<String, List<String>> parameters) throws Exception {
+        if (nyxletSession.getMetaTypeEnum().equals(MetaTypeEnum.XML) || 
+                nyxletSession.getResponseMetaTypeEnum().equals(MetaTypeEnum.XML)) {
+            return new ValidationFaultElement("XML input/output is not supported");
+        }    
+        return null;      
     }
 
 }

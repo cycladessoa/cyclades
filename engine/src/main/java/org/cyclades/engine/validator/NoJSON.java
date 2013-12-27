@@ -27,13 +27,16 @@
  *******************************************************************************/
 package org.cyclades.engine.validator;
 
-import org.json.JSONObject;
+import java.util.List;
+import java.util.Map;
+import org.cyclades.engine.MetaTypeEnum;
+import org.cyclades.engine.NyxletSession;
 
 /**
- * Validate the data-type is not JSON
+ * Validate the data-type is not JSON, both input and output.
  */
-public class NoJSON extends JSONValidator {
-
+public class NoJSON extends AbstractValidator {
+    
     public NoJSON () {
         super();
     }
@@ -43,8 +46,12 @@ public class NoJSON extends JSONValidator {
     }
 
     @Override
-    public ValidationFaultElement validate(JSONObject jsonObject) throws Exception {
-        return new ValidationFaultElement("JSON input is not supported");
+    public ValidationFaultElement validate(NyxletSession nyxletSession, Map<String, List<String>> parameters) throws Exception {
+        if (nyxletSession.getMetaTypeEnum().equals(MetaTypeEnum.JSON) || 
+                nyxletSession.getResponseMetaTypeEnum().equals(MetaTypeEnum.JSON)) {
+            return new ValidationFaultElement("JSON input/output is not supported");
+        }    
+        return null;      
     }
 
 }

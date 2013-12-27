@@ -53,9 +53,9 @@ uploadArchives {
                 authentication(userName: sonatypeUsername, password: sonatypePassword)
             }
             pom.project {
-               name 'Cyclades Nyxlet for Log'
+               name 'Cyclades Nyxlet'
                packaging 'jar'
-               description 'Log Nyxlet used within Cyclades'
+               description 'Nyxlet used within Cyclades'
                url 'http://github.com/cycladessoa'
                scm {
                    url 'scm:git@github.com:cycladessoa/cyclades.git'
@@ -101,7 +101,6 @@ task sourcesJar(type: Jar) {
 jar.enabled = true
 artifacts {
     archives jar
-
     archives javadocJar
     archives sourcesJar
 }
@@ -115,22 +114,28 @@ jar {
     // save the extension as *.nyxlet
     extension = 'nyxlet'
     dependsOn classes
-    from { configurations.newConf.collect { it.isDirectory() ? it : zipTree(it) }}
+    from { configurations.bundle.collect { it.isDirectory() ? it : zipTree(it) }}
 }
 
 jar.doFirst() {
     List<String> listKey = new ArrayList<String>()
     List<String> listValue = new ArrayList<String>()
-    configurations.runtime.each { f->
+    int libCount = 1;
+    configurations.compile.each { f->
         RelativePath rp = RelativePath.parse(true, "$f")
         String[] pathParts = rp.getSegments()
-        listKey.add(pathParts[pathParts.size() - 5])
+        if ((pathParts.size() - 5) >= 0 && pathParts[pathParts.size() - 1].indexOf(pathParts[pathParts.size() - 5]) > -1) {
+            listKey.add(pathParts[pathParts.size() - 5])
+        } else {
+            listKey.add("Anon-Compile-Item-" + libCount++)
+        }
         listValue.add(pathParts[pathParts.size() - 1])
     }
-    configurations.newConf.each { f->
+    libCount = 1;
+    configurations.bundle.each { f->
         RelativePath rp = RelativePath.parse(true, "$f")
         String[] pathParts = rp.getSegments()
-        listKey.add(pathParts[pathParts.size() - 5])
+        listKey.add("Packaged-Item-" + libCount++)
         listValue.add(pathParts[pathParts.size() - 1])
     }
     manifest {
@@ -143,7 +148,6 @@ jar.doFirst() {
         attributes 'Built-With': 'gradle-' + GradleVersion.current()
         attributes 'Built-With-Java-Version': JavaVersion.current()
         attributes 'Built-By': System.getProperty("user.name")
-
         Map dynamicAttributes = new HashMap()
         String key;
         for (int i = 0; i < listKey.size(); i++) {
@@ -179,7 +183,7 @@ compileTestJava.options.compilerArgs = ['-Xlint:deprecation', '-Xlint:unchecked'
 sourceSets.main.resources.srcDir 'conf'
 
 configurations {
-   newConf
+   bundle
 }
 
 dependencies {
@@ -208,13 +212,13 @@ dependencies {
     //
     // NOTE: Specify a "compile" dependency if that dependency will exist in
     //   the target Cyclades Service Engine deployment. Specify an additional 
-    //   "newConf" dependency if that dependency will not exist in the target Cyclades
+    //   "bundle" dependency if that dependency will not exist in the target Cyclades
     //   Service Engine deployment and you want to package that dependency for
     //   deployment with this Nyxlet. 
     //
     // Use
     // compile ... for Build time compilation
-    // newConf ... for Build output packaging
+    // bundle  ... for Build output packaging
     // -------------------------------------------------------------------
 
 }
